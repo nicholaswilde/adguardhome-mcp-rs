@@ -9,5 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Implement a feature to read config files, which should be TOML, YAML, and JSON. Reference ../qbittorrent-mcp-rs/ and mirror its method.**
+- [x] **Track: Implement a feature to read config files, which should be TOML, YAML, and JSON. Reference ../qbittorrent-mcp-rs/ and mirror its method.**
 *Link: [./tracks/config_files_20260131/](./tracks/config_files_20260131/)*
