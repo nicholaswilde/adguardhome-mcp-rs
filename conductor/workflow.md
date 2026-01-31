@@ -89,6 +89,7 @@ All tasks follow a strict lifecycle:
 Before marking any task complete, verify:
 
 - [ ] All tests pass
+- [ ] New tools/functions are covered by Docker integration tests
 - [ ] Code coverage meets requirements (>80%)
 - [ ] Code follows project's code style guidelines
 - [ ] All public functions/methods are documented
@@ -125,6 +126,11 @@ task check
 - Mock external dependencies (e.g., AdGuard Home API).
 - Test both success and failure cases.
 
+### Integration Testing
+- All new MCP tools and core functionality MUST be added to `tests/docker_integration_test.rs`.
+- Integration tests must verify functionality against a real AdGuard Home Docker container.
+- Tests should cover both authenticated and unauthenticated scenarios if applicable.
+
 ## Commit Guidelines
 
 ### Message Format
@@ -156,6 +162,7 @@ A task is complete when:
 5. Code passes all configured linting and static analysis checks (`cargo clippy`)
 6. Changes staged and ready for phase-end commit
 7. Implementation notes prepared for git notes
+8. New MCP tools or core functions are verified via `tests/docker_integration_test.rs`
 
 ## Deployment Workflow
 
