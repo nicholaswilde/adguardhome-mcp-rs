@@ -135,4 +135,12 @@ impl ToolRegistry {
         result.sort_by(|a, b| a["name"].as_str().cmp(&b["name"].as_str()));
         result
     }
+
+    pub fn is_tool_enabled(&self, name: &str) -> bool {
+        self.enabled_tools.contains(name)
+    }
+
+    pub fn get_tool(&self, name: &str) -> Option<Tool> {
+        self.tools.get(name).cloned()
+    }
 }

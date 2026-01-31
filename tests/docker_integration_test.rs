@@ -1,5 +1,8 @@
 use adguardhome_mcp_rs::adguard::AdGuardClient;
 use adguardhome_mcp_rs::config::AppConfig;
+use adguardhome_mcp_rs::server::http::run_http_server;
+use adguardhome_mcp_rs::server::mcp::McpServer;
+use adguardhome_mcp_rs::tools::ToolRegistry;
 use anyhow::Result;
 use std::io::Write;
 use testcontainers::core::{ContainerPort, Mount, WaitFor};
@@ -57,6 +60,79 @@ async fn start_adguard_container(
 }
 
 #[tokio::test]
+async fn test_mcp_http_transport() -> Result<()> {
+    // Skip if RUN_DOCKER_TESTS is not set to true in CI
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
+        return Ok(());
+    }
+
+    let (_container, base_url) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_url: base_url.clone(),
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "http".to_string(),
+        lazy_mode: false,
+        http_port: 0, // OS assigned
+        http_auth_token: Some("test-token".to_string()),
+        log_level: "info".to_string(),
+    };
+
+    let adguard_client = AdGuardClient::new(config.clone());
+    let registry = ToolRegistry::new(&config);
+    let server = McpServer::new(adguard_client, registry, config.clone());
+
+    // Start server on random port
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
+    let port = listener.local_addr()?.port();
+    drop(listener);
+
+    let server_handle = server.clone();
+    tokio::spawn(async move {
+        run_http_server(
+            server_handle,
+            "127.0.0.1",
+            port,
+            Some("test-token".to_string()),
+        )
+        .await
+        .unwrap();
+    });
+
+    // Wait for server to start
+    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+
+    let client = reqwest::Client::new();
+    let mcp_url = format!("http://127.0.0.1:{}", port);
+
+    // 1. Test unauthorized
+    let resp = client.get(format!("{}/sse", mcp_url)).send().await?;
+    assert_eq!(resp.status(), reqwest::StatusCode::UNAUTHORIZED);
+
+    // 2. Test authorized SSE
+    let resp = client
+        .get(format!("{}/sse", mcp_url))
+        .header("Authorization", "Bearer test-token")
+        .send()
+        .await?;
+    assert_eq!(resp.status(), reqwest::StatusCode::OK);
+    // Check if it's SSE
+    assert_eq!(
+        resp.headers().get("content-type").unwrap(),
+        "text/event-stream"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_adguardhome_no_auth() -> Result<()> {
     // Skip if RUN_DOCKER_TESTS is not set to true in CI
     if std::env::var("CI").is_ok()
@@ -79,6 +155,7 @@ async fn test_adguardhome_no_auth() -> Result<()> {
         mcp_transport: "stdio".to_string(),
         lazy_mode: false,
         http_port: 3000,
+        http_auth_token: None,
         log_level: "info".to_string(),
     };
     let client = AdGuardClient::new(config);
@@ -140,6 +217,7 @@ users:
         mcp_transport: "stdio".to_string(),
         lazy_mode: false,
         http_port: 3000,
+        http_auth_token: None,
         log_level: "info".to_string(),
     };
     let client_no_auth = AdGuardClient::new(config_no_auth);
@@ -177,6 +255,7 @@ users:
         mcp_transport: "stdio".to_string(),
         lazy_mode: false,
         http_port: 3000,
+        http_auth_token: None,
         log_level: "info".to_string(),
     };
     let client_auth = AdGuardClient::new(config_auth);

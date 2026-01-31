@@ -2,6 +2,7 @@ pub mod adguard;
 pub mod config;
 pub mod error;
 pub mod mcp;
+pub mod server;
 pub mod tools;
 
 #[cfg(test)]

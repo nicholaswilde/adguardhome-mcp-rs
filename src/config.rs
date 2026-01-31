@@ -16,6 +16,7 @@ pub struct AppConfig {
     pub lazy_mode: bool,
     #[serde(default = "default_http_port")]
     pub http_port: u16,
+    pub http_auth_token: Option<String>,
     #[serde(default = "default_log_level")]
     pub log_level: String,
 }
@@ -94,6 +95,9 @@ impl AppConfig {
         if let Some(port) = matches.get_one::<u16>("http_port") {
             builder = builder.set_override("http_port", *port)?;
         }
+        if let Some(token) = matches.get_one::<String>("http_auth_token") {
+            builder = builder.set_override("http_auth_token", token.as_str())?;
+        }
         if let Some(level) = matches.get_one::<String>("log_level") {
             builder = builder.set_override("log_level", level.as_str())?;
         }
@@ -144,6 +148,11 @@ fn parse_args(args: Vec<String>) -> ArgMatches {
                 .help("Port for HTTP transport")
                 .value_parser(clap::value_parser!(u16)),
         )
+        .arg(
+            Arg::new("http_auth_token")
+                .long("http-token")
+                .help("Authentication token for HTTP transport"),
+        )
         .arg(Arg::new("log_level").long("log-level").help("Log level"));
 
     if args.is_empty() {
@@ -175,6 +184,7 @@ mod tests {
             mcp_transport: "stdio".to_string(),
             lazy_mode: false,
             http_port: 3000,
+            http_auth_token: None,
             log_level: "info".to_string(),
         });
 
