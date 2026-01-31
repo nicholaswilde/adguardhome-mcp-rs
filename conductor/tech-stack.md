@@ -7,6 +7,7 @@
 ## Infrastructure and Runtime
 - **Tokio:** The industry-standard asynchronous runtime for Rust, providing the foundation for high-performance I/O operations.
 - **Serde:** A high-performance framework for serializing and deserializing Rust data structures, essential for handling MCP JSON-RPC messages and AdGuard Home API responses.
+- **go-task:** A task runner / build tool that uses a simple `Taskfile.yml` to define and run development tasks.
 
 ## Networking and API Interaction
 - **Reqwest:** An ergonomic and powerful HTTP client used to interact with the AdGuard Home REST API.

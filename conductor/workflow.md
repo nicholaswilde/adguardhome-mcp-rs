@@ -100,22 +100,20 @@ Before marking any task complete, verify:
 
 ### Setup
 ```bash
-cargo fetch
+task setup
 ```
 
 ### Daily Development
 ```bash
-cargo run
-cargo test
-cargo clippy
-cargo fmt
+task run
+task test
+task lint
+task format
 ```
 
 ### Before Committing
 ```bash
-cargo fmt --all -- --check
-cargo clippy -- -D warnings
-cargo test
+task check
 ```
 
 ## Testing Requirements
