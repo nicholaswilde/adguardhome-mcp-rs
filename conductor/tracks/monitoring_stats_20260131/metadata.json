@@ -1,0 +1,8 @@
+{
+  "track_id": "monitoring_stats_20260131",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-31T13:30:00Z",
+  "updated_at": "2026-01-31T13:30:00Z",
+  "description": "Add MCP server tools to retrieve global statistics and search query logs from AdGuard Home"
+}

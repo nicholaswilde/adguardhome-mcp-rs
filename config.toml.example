@@ -1,0 +1,32 @@
+# AdGuard Home MCP Server Configuration Example
+
+# AdGuard Home Connection Settings
+# URL of your AdGuard Home instance (Required)
+adguard_url = "http://192.168.1.10:8080"
+
+# AdGuard Home Authentication (Optional if not enabled on instance)
+adguard_username = "admin"
+adguard_password = "yourpassword"
+
+# MCP Server Settings
+# Transport mode: "stdio" (local) or "http" (network)
+# Default: "stdio"
+mcp_transport = "stdio"
+
+# HTTP Transport Settings (Only used if mcp_transport = "http")
+# Port to listen on. Default: 3000
+http_port = 3000
+
+# Bearer token for HTTP security (Recommended for HTTP mode)
+# Clients must provide this in the Authorization header: "Bearer <token>"
+http_auth_token = "your-secure-token"
+
+# Performance & Token Optimization
+# Enable "Lazy Mode" to initially expose fewer tools to save AI context tokens.
+# Default: false
+lazy_mode = false
+
+# Logging
+# Log level: "error", "warn", "info", "debug", "trace"
+# Default: "info"
+log_level = "info"

@@ -1,0 +1,8 @@
+{
+  "track_id": "ssl_verification_20260131",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-31T12:45:00Z",
+  "updated_at": "2026-01-31T12:45:00Z",
+  "description": "add a verify ssl option to optionally verify the ssl connection. Use qbittorrent-mcp-rs as an example"
+}

@@ -9,10 +9,17 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
 
 ## :sparkles: Features
 
-- **Protocol:** JSON-RPC 2.0 over Stdio (MCP standard).
-- **Authentication:** Supports AdGuard Home username and password authentication.
+- **Multi-Transport Support:**
+  - **Stdio:** Default transport for local integrations (e.g., Claude Desktop).
+  - **HTTP/SSE:** Network-accessible transport for remote clients.
+- **Robust Configuration:** Supports configuration via CLI arguments, environment variables, and configuration files (TOML, YAML, JSON).
+- **Authentication:**
+  - Connects to AdGuard Home using username/password.
+  - Secures HTTP transport with Bearer Token authentication.
+- **Token Optimization:** "Lazy Mode" initially exposes a minimal toolset to save AI context tokens, loading more tools only on demand.
 - **Tools:**
   - `get_status`: Get AdGuard Home status, version, and protection state.
+  - `manage_tools`: (Lazy Mode only) List and enable/disable available tools.
 
 ## :hammer_and_wrench: Build
 
@@ -26,25 +33,43 @@ The binary will be available at `target/release/adguardhome-mcp-rs`.
 
 ## :rocket: Usage
 
-You can run the server directly from the command line.
-
 ### :keyboard: Command Line Interface
 
-The server is configured via environment variables for security.
+The server can be configured via CLI arguments or environment variables.
 
 ```bash
-export ADGUARD_URL="http://192.168.1.10:8080"
-export ADGUARD_USERNAME="admin"
-export ADGUARD_PASSWORD="yourpassword"
-
-./target/release/adguardhome-mcp-rs
+./target/release/adguardhome-mcp-rs --adguard-url "http://192.168.1.10:8080" --adguard-username "admin" --adguard-password "yourpassword"
 ```
 
-### :earth_africa: Environment Variables
+#### Available Arguments
 
-- `ADGUARD_URL`: The base URL of your AdGuard Home instance (e.g., `http://192.168.1.10:8080`).
-- `ADGUARD_USERNAME`: Your AdGuard Home username.
-- `ADGUARD_PASSWORD`: Your AdGuard Home password.
+| Argument | Environment Variable | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `-c, --config` | - | Path to configuration file | `config.toml` |
+| `--adguard-url` | `ADGUARD_URL` | AdGuard Home instance URL | (Required) |
+| `--adguard-username` | `ADGUARD_USERNAME` | AdGuard Home username | - |
+| `--adguard-password` | `ADGUARD_PASSWORD` | AdGuard Home password | - |
+| `--transport` | `ADGUARD_MCP_TRANSPORT` | Transport mode (`stdio` or `http`) | `stdio` |
+| `--http-port` | `ADGUARD_HTTP_PORT` | Port for HTTP transport | `3000` |
+| `--http-token` | `ADGUARD_HTTP_AUTH_TOKEN` | Bearer token for HTTP security | - |
+| `--lazy` | `ADGUARD_LAZY_MODE` | Enable token-optimized lazy loading | `false` |
+| `--log-level` | `ADGUARD_LOG_LEVEL` | Log level (`info`, `debug`, etc.) | `info` |
+
+### :file_folder: Configuration File
+
+The server automatically looks for `config.toml`, `config.yaml`, or `config.json` in the current directory and `~/.config/adguardhome-mcp-rs/`.
+
+Example `config.toml`:
+
+```toml
+adguard_url = "http://192.168.1.10:8080"
+adguard_username = "admin"
+adguard_password = "yourpassword"
+mcp_transport = "http"
+http_port = 3000
+http_auth_token = "your-secure-token"
+lazy_mode = true
+```
 
 ### :robot: Configuration Example (Claude Desktop)
 
@@ -55,11 +80,11 @@ Add the following to your `claude_desktop_config.json`:
   "mcpServers": {
     "adguardhome": {
       "command": "/path/to/adguardhome-mcp-rs/target/release/adguardhome-mcp-rs",
-      "env": {
-        "ADGUARD_URL": "http://192.168.1.10:8080",
-        "ADGUARD_USERNAME": "admin",
-        "ADGUARD_PASSWORD": "yourpassword"
-      }
+      "args": [
+        "--adguard-url", "http://192.168.1.10:8080",
+        "--adguard-username", "admin",
+        "--adguard-password", "yourpassword"
+      ]
     }
   }
 }
@@ -67,23 +92,22 @@ Add the following to your `claude_desktop_config.json`:
 
 ## :test_tube: Testing
 
-### Using Taskfile
-The project uses [go-task](https://taskfile.dev/) for common development tasks.
+The project uses [go-task](https://taskfile.dev/) for development tasks.
 
 ```bash
-# Run all checks (format, lint, test)
-task check
+# Run all checks (format, lint, unit tests)
+task test:ci
 
-# Run unit tests
+# Run unit tests only
 task test
 
 # Run Docker integration tests (requires Docker)
-RUN_DOCKER_TESTS=true task test
+RUN_DOCKER_TESTS=true task test:integration
 ```
 
 ## :handshake: Contributing
 
-Contributions are welcome! Please follow standard Rust coding conventions and include tests for new features.
+Contributions are welcome! Please follow standard Rust coding conventions and ensure all tests pass (`task check`) before submitting features.
 
 ## :balance_scale: License
 
