@@ -29,7 +29,7 @@ This plan follows a Test-Driven Development (TDD) approach as defined in the pro
     - [x] Wire the `get_status` tool to the API client
 - [x] Task: Conductor - User Manual Verification 'AdGuard Home Integration' (Protocol in workflow.md)
 
-## Phase 4: Docker Integration Testing
+## Phase 4: Docker Integration Testing [checkpoint: 36aefae]
 - [x] Task: Implement Docker Integration Test
     - [x] Add testcontainers dependency
     - [x] Create integration test using adguard/adguardhome image
