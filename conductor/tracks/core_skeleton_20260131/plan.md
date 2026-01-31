@@ -18,7 +18,7 @@ This plan follows a Test-Driven Development (TDD) approach as defined in the pro
 - [x] Task: Implement Tool Dispatcher
     - [x] Write tests for tool registration and lookup
     - [x] Implement a basic dispatcher to handle `list_tools` and `call_tool`
-- [ ] Task: Conductor - User Manual Verification 'MCP Server Foundation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'MCP Server Foundation' (Protocol in workflow.md)
 
 ## Phase 3: AdGuard Home Integration
 - [x] Task: Implement AdGuard Home API Client
