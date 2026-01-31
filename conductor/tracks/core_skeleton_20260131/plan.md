@@ -11,7 +11,7 @@ This plan follows a Test-Driven Development (TDD) approach as defined in the pro
     - [x] Implement `Config` struct and custom `Error` enum
 - [x] Task: Conductor - User Manual Verification 'Project Scaffolding' (Protocol in workflow.md)
 
-## Phase 2: MCP Server Foundation
+## Phase 2: MCP Server Foundation [checkpoint: d9e2a22]
 - [x] Task: Implement stdio transport and message loop
     - [x] Write unit tests for JSON-RPC message parsing
     - [x] Implement the main async loop to read from stdin and write to stdout
