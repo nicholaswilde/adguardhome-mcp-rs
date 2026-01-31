@@ -10,6 +10,9 @@
 - **go-task:** A task runner / build tool that uses a simple `Taskfile.yml` to define and run development tasks.
 - **Config:** A configuration management library that layers default values, files (TOML, YAML, JSON), environment variables, and CLI arguments.
 - **Clap:** A command-line argument parser for Rust.
+- **Axum:** A web framework for Rust, used to implement the HTTP/SSE transport.
+- **DashMap:** A high-performance concurrent hash map, used for session management.
+- **UUID:** Used for generating unique session identifiers.
 
 ## Networking and API Interaction
 - **Reqwest:** An ergonomic and powerful HTTP client used to interact with the AdGuard Home REST API.
