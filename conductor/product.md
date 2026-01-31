@@ -13,5 +13,6 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 
 ## Key Features
 - **Core Protection Management:** Tools to instantly toggle global protection and specific filtering services (e.g., safe search, individual blocklists).
+- **Real-time Status Retrieval:** Capability to query the current AdGuard Home version and protection state.
 - **Log Intelligence (RAG):** Capabilities for retrieval-augmented generation to allow AI models to analyze historical logs and identify trends or anomalies.
 - **Smart Client Management:** Automated discovery and configuration of network clients using AI-driven commands.

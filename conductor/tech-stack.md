@@ -15,3 +15,6 @@
 ## Observability and Error Handling
 - **Tracing:** A framework for application-level tracing and structured logging, ensuring deep visibility into the MCP server's operations.
 - **Thiserror / Anyhow:** Libraries for defining and managing custom error types, providing robust and idiomatic error handling across the codebase.
+
+## Testing
+- **Testcontainers:** Used for integration testing with real AdGuard Home Docker containers.
