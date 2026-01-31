@@ -34,4 +34,4 @@ This plan follows a Test-Driven Development (TDD) approach as defined in the pro
     - [x] Add testcontainers dependency
     - [x] Create integration test using adguard/adguardhome image
     - [x] Verify connectivity and get_status tool against a real instance
-- [ ] Task: Conductor - User Manual Verification 'Docker Integration Testing' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Docker Integration Testing' (Protocol in workflow.md)
