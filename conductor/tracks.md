@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Build the core MCP server skeleton and implement basic AdGuard Home status retrieval.**
+- [~] **Track: Build the core MCP server skeleton and implement basic AdGuard Home status retrieval.**
   *Link: [./tracks/core_skeleton_20260131/](./tracks/core_skeleton_20260131/)*
