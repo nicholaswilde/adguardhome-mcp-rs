@@ -2,7 +2,7 @@
 
 This plan follows a Test-Driven Development (TDD) approach as defined in the project workflow.
 
-## Phase 1: Project Scaffolding
+## Phase 1: Project Scaffolding [checkpoint: 5890d85]
 - [x] Task: Initialize Cargo project and configure dependencies
     - [x] Run `cargo init`
     - [x] Add `tokio`, `serde`, `serde_json`, `reqwest`, `tracing`, `thiserror` to `Cargo.toml`
