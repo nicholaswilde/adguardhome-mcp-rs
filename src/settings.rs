@@ -6,6 +6,7 @@ pub struct Settings {
     pub adguard_url: String,
     pub adguard_username: Option<String>,
     pub adguard_password: Option<String>,
+    pub lazy_mode: bool,
 }
 
 impl Settings {
@@ -15,11 +16,15 @@ impl Settings {
 
         let adguard_username = env::var("ADGUARD_USERNAME").ok();
         let adguard_password = env::var("ADGUARD_PASSWORD").ok();
+        let lazy_mode = env::var("LAZY_MODE")
+            .map(|v| v.to_lowercase() == "true")
+            .unwrap_or(false);
 
         Ok(Self {
             adguard_url,
             adguard_username,
             adguard_password,
+            lazy_mode,
         })
     }
 }
@@ -45,11 +50,29 @@ mod tests {
             env::set_var("ADGUARD_URL", "http://localhost:8080");
             env::set_var("ADGUARD_USERNAME", "admin");
             env::set_var("ADGUARD_PASSWORD", "password");
+            env::remove_var("LAZY_MODE");
         }
 
         let settings = Settings::from_env().unwrap();
         assert_eq!(settings.adguard_url, "http://localhost:8080");
         assert_eq!(settings.adguard_username, Some("admin".to_string()));
         assert_eq!(settings.adguard_password, Some("password".to_string()));
+        assert_eq!(settings.lazy_mode, false);
+    }
+
+    #[test]
+    fn test_settings_lazy_mode() {
+        unsafe {
+            env::set_var("ADGUARD_URL", "http://localhost:8080");
+            env::set_var("LAZY_MODE", "true");
+        }
+        let settings = Settings::from_env().unwrap();
+        assert!(settings.lazy_mode);
+
+        unsafe {
+            env::set_var("LAZY_MODE", "false");
+        }
+        let settings = Settings::from_env().unwrap();
+        assert!(!settings.lazy_mode);
     }
 }

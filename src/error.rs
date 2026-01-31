@@ -16,6 +16,9 @@ pub enum Error {
 
     #[error("JSON error: {0}")]
     Json(#[from] serde_json::Error),
+
+    #[error("MCP error: {0:?}")]
+    Mcp(crate::mcp::ResponseError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
