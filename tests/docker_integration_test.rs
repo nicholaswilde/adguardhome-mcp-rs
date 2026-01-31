@@ -3,16 +3,13 @@ use adguardhome_mcp_rs::settings::Settings;
 use anyhow::Result;
 use std::io::Write;
 use testcontainers::core::{ContainerPort, Mount, WaitFor};
-use testcontainers::{GenericImage, ImageExt};
 use testcontainers::runners::AsyncRunner;
+use testcontainers::{GenericImage, ImageExt};
 use tokio::io::AsyncBufReadExt;
 
 async fn start_adguard_container(
     config_path: Option<String>,
-) -> Result<(
-    testcontainers::ContainerAsync<GenericImage>,
-    String,
-)> {
+) -> Result<(testcontainers::ContainerAsync<GenericImage>, String)> {
     println!("🐳 Starting AdGuard Home container...");
 
     let image = GenericImage::new("adguard/adguardhome", "latest")
@@ -147,7 +144,7 @@ users:
     // However, if we can't auth, we can't check readiness via status.
     // We assume the log message "AdGuard Home is available" in start_adguard_container meant it's up.
     // But sometimes it takes a moment.
-    
+
     // We'll try to call it. If it returns 401, we know it's reachable and enforcing auth.
     // If it returns connection error, we might need to retry.
     for _ in 0..10 {
@@ -164,15 +161,15 @@ users:
                     success = true;
                     break;
                 } else if err_msg.contains("connect") || err_msg.contains("receive") {
-                     // Still starting up?
-                     tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-                     continue;
+                    // Still starting up?
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                    continue;
                 } else {
                     println!("Got unexpected error: {}", err_msg);
-                     // Might be 403 or something else?
-                     // AdGuard Home usually returns 401 for unauthorized.
-                     // We'll retry a bit in case it's a transient startup error.
-                     tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+                    // Might be 403 or something else?
+                    // AdGuard Home usually returns 401 for unauthorized.
+                    // We'll retry a bit in case it's a transient startup error.
+                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 }
             }
         }

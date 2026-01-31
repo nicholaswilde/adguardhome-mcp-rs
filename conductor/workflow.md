@@ -32,8 +32,9 @@ All tasks follow a strict lifecycle:
    - With the safety of passing tests, refactor the implementation code and the test code to improve clarity, remove duplication, and enhance performance without changing the external behavior.
    - Rerun tests to ensure they still pass after refactoring.
 
-6. **Verify Coverage:** Run coverage reports using the project's chosen tools (e.g., `cargo-tarpaulin` or `grcov`).
-   Target: >80% coverage for new code.
+6. **Verify Coverage & Compliance:**
+   - Run `task test:ci` to ensure all tests pass, code is formatted, and no linting errors exist.
+   - Run coverage reports (if not covered by `test:ci`).
 
 7. **Document Deviations:** If implementation differs from tech stack:
    - **STOP** implementation
@@ -57,7 +58,7 @@ All tasks follow a strict lifecycle:
     -   **Step 2.3: Verify and Create Tests:** Ensure all new or modified code files have corresponding tests that validate the functionality described in the phase's tasks.
 
 3.  **Execute Automated Tests with Proactive Debugging:**
-    -   Announce the test command (e.g., `cargo test`).
+    -   Announce the test command (e.g., `task test:ci`).
     -   Execute the command.
     -   If tests fail, debug and fix (maximum of two attempts before asking the user).
 

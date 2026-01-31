@@ -102,7 +102,7 @@ async fn main() -> anyhow::Result<()> {
                         }));
                         // Deduplicate just in case, though not expected
                     }
-                    
+
                     mcp::Response {
                         jsonrpc: "2.0".to_string(),
                         id: req.id,
@@ -111,7 +111,7 @@ async fn main() -> anyhow::Result<()> {
                         })),
                         error: None,
                     }
-                },
+                }
                 "call_tool" => {
                     let tool_name = req
                         .params
@@ -127,7 +127,10 @@ async fn main() -> anyhow::Result<()> {
                         .cloned();
 
                     if tool_name == "manage_tools" && settings.lazy_mode {
-                        let action = args.as_ref().and_then(|a| a.get("action")).and_then(|s| s.as_str());
+                        let action = args
+                            .as_ref()
+                            .and_then(|a| a.get("action"))
+                            .and_then(|s| s.as_str());
                         match action {
                             Some("list") => {
                                 let available = registry.list_available_tools();
@@ -144,26 +147,30 @@ async fn main() -> anyhow::Result<()> {
                                 }
                             }
                             Some("enable") => {
-                                let tools_to_enable = args.as_ref()
+                                let tools_to_enable = args
+                                    .as_ref()
                                     .and_then(|a| a.get("tools"))
                                     .and_then(|t| t.as_array())
-                                    .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
+                                    .map(|arr| {
+                                        arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>()
+                                    })
                                     .unwrap_or_default();
-                                
+
                                 let mut enabled_count = 0;
                                 for name in tools_to_enable {
                                     if registry.enable_tool(name) {
                                         enabled_count += 1;
                                     }
                                 }
-                                
+
                                 if enabled_count > 0 {
                                     // Send notification
-                                    let notification = mcp::Message::Notification(mcp::Notification {
-                                        jsonrpc: "2.0".to_string(),
-                                        method: "notifications/tools/list_changed".to_string(),
-                                        params: None,
-                                    });
+                                    let notification =
+                                        mcp::Message::Notification(mcp::Notification {
+                                            jsonrpc: "2.0".to_string(),
+                                            method: "notifications/tools/list_changed".to_string(),
+                                            params: None,
+                                        });
                                     let note_json = serde_json::to_string(&notification)? + "\n";
                                     stdout.write_all(note_json.as_bytes()).await?;
                                     stdout.flush().await?;
@@ -182,12 +189,15 @@ async fn main() -> anyhow::Result<()> {
                                 }
                             }
                             Some("disable") => {
-                                let tools_to_disable = args.as_ref()
+                                let tools_to_disable = args
+                                    .as_ref()
                                     .and_then(|a| a.get("tools"))
                                     .and_then(|t| t.as_array())
-                                    .map(|arr| arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>())
+                                    .map(|arr| {
+                                        arr.iter().filter_map(|v| v.as_str()).collect::<Vec<_>>()
+                                    })
                                     .unwrap_or_default();
-                                
+
                                 let mut disabled_count = 0;
                                 for name in tools_to_disable {
                                     if registry.disable_tool(name) {
@@ -197,11 +207,12 @@ async fn main() -> anyhow::Result<()> {
 
                                 if disabled_count > 0 {
                                     // Send notification
-                                    let notification = mcp::Message::Notification(mcp::Notification {
-                                        jsonrpc: "2.0".to_string(),
-                                        method: "notifications/tools/list_changed".to_string(),
-                                        params: None,
-                                    });
+                                    let notification =
+                                        mcp::Message::Notification(mcp::Notification {
+                                            jsonrpc: "2.0".to_string(),
+                                            method: "notifications/tools/list_changed".to_string(),
+                                            params: None,
+                                        });
                                     let note_json = serde_json::to_string(&notification)? + "\n";
                                     stdout.write_all(note_json.as_bytes()).await?;
                                     stdout.flush().await?;
@@ -228,7 +239,7 @@ async fn main() -> anyhow::Result<()> {
                                     message: "Invalid or missing 'action' argument".to_string(),
                                     data: None,
                                 }),
-                            }
+                            },
                         }
                     } else {
                         match registry.call_tool(tool_name, &adguard_client, args).await {

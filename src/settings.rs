@@ -32,9 +32,13 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_settings_from_env_missing_url() {
+        let _guard = ENV_LOCK.lock().unwrap();
         unsafe {
             env::remove_var("ADGUARD_URL");
         }
@@ -46,6 +50,7 @@ mod tests {
 
     #[test]
     fn test_settings_from_env_success() {
+        let _guard = ENV_LOCK.lock().unwrap();
         unsafe {
             env::set_var("ADGUARD_URL", "http://localhost:8080");
             env::set_var("ADGUARD_USERNAME", "admin");
@@ -57,11 +62,12 @@ mod tests {
         assert_eq!(settings.adguard_url, "http://localhost:8080");
         assert_eq!(settings.adguard_username, Some("admin".to_string()));
         assert_eq!(settings.adguard_password, Some("password".to_string()));
-        assert_eq!(settings.lazy_mode, false);
+        assert!(!settings.lazy_mode);
     }
 
     #[test]
     fn test_settings_lazy_mode() {
+        let _guard = ENV_LOCK.lock().unwrap();
         unsafe {
             env::set_var("ADGUARD_URL", "http://localhost:8080");
             env::set_var("LAZY_MODE", "true");
