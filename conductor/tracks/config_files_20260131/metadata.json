@@ -1,0 +1,8 @@
+{
+  "track_id": "config_files_20260131",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-31T11:58:00Z",
+  "updated_at": "2026-01-31T11:58:00Z",
+  "description": "Implement a feature to read config files, which should be TOML, YAML, and JSON. Reference ../qbittorrent-mcp-rs/ and mirror its method."
+}

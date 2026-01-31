@@ -1,11 +1,11 @@
+use crate::config::AppConfig;
 use crate::error::Result;
-use crate::settings::Settings;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct AdGuardClient {
     pub client: reqwest::Client,
-    pub settings: Settings,
+    pub config: AppConfig,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -16,22 +16,21 @@ pub struct Status {
 }
 
 impl AdGuardClient {
-    pub fn new(settings: Settings) -> Self {
+    pub fn new(config: AppConfig) -> Self {
         let client = reqwest::Client::new();
-        Self { client, settings }
+        Self { client, config }
     }
 
     pub async fn get_status(&self) -> Result<Status> {
         let url = format!(
             "{}/control/status",
-            self.settings.adguard_url.trim_end_matches('/')
+            self.config.adguard_url.trim_end_matches('/')
         );
         let mut request = self.client.get(&url);
 
-        if let (Some(user), Some(pass)) = (
-            &self.settings.adguard_username,
-            &self.settings.adguard_password,
-        ) {
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
             request = request.basic_auth(user, Some(pass));
         }
 

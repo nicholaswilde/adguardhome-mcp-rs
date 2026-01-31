@@ -1,5 +1,5 @@
 use adguardhome_mcp_rs::adguard::AdGuardClient;
-use adguardhome_mcp_rs::settings::Settings;
+use adguardhome_mcp_rs::config::AppConfig;
 use anyhow::Result;
 use std::io::Write;
 use testcontainers::core::{ContainerPort, Mount, WaitFor};
@@ -72,13 +72,16 @@ async fn test_adguardhome_no_auth() -> Result<()> {
     };
 
     // Initialize the client
-    let settings = Settings {
+    let config = AppConfig {
         adguard_url: base_url.clone(),
         adguard_username: None,
         adguard_password: None,
+        mcp_transport: "stdio".to_string(),
         lazy_mode: false,
+        http_port: 3000,
+        log_level: "info".to_string(),
     };
-    let client = AdGuardClient::new(settings);
+    let client = AdGuardClient::new(config);
 
     // Testing get_status
     println!("Testing get_status (No Auth)...");
@@ -130,45 +133,35 @@ users:
     };
 
     // 1. Test without credentials (expect failure)
-    let settings_no_auth = Settings {
+    let config_no_auth = AppConfig {
         adguard_url: base_url.clone(),
         adguard_username: None,
         adguard_password: None,
+        mcp_transport: "stdio".to_string(),
         lazy_mode: false,
+        http_port: 3000,
+        log_level: "info".to_string(),
     };
-    let client_no_auth = AdGuardClient::new(settings_no_auth);
+    let client_no_auth = AdGuardClient::new(config_no_auth);
 
     println!("Testing get_status (Expected Failure)...");
     let mut success = false;
-    // We expect it to fail, but we need to wait for it to be ready first.
-    // However, if we can't auth, we can't check readiness via status.
-    // We assume the log message "AdGuard Home is available" in start_adguard_container meant it's up.
-    // But sometimes it takes a moment.
-
-    // We'll try to call it. If it returns 401, we know it's reachable and enforcing auth.
-    // If it returns connection error, we might need to retry.
     for _ in 0..10 {
         match client_no_auth.get_status().await {
             Ok(_) => {
                 panic!("Expected authentication failure, but got success");
             }
             Err(e) => {
-                // Check if it is a 401 Unauthorized
-                // e is anyhow::Error, we need to downcast or check string representation
                 let err_msg = e.to_string();
                 if err_msg.contains("401") {
                     println!("✅ Got expected 401 Unauthorized");
                     success = true;
                     break;
                 } else if err_msg.contains("connect") || err_msg.contains("receive") {
-                    // Still starting up?
                     tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                     continue;
                 } else {
                     println!("Got unexpected error: {}", err_msg);
-                    // Might be 403 or something else?
-                    // AdGuard Home usually returns 401 for unauthorized.
-                    // We'll retry a bit in case it's a transient startup error.
                     tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 }
             }
@@ -177,13 +170,16 @@ users:
     assert!(success, "Did not receive 401 Unauthorized as expected");
 
     // 2. Test with credentials (expect success)
-    let settings_auth = Settings {
+    let config_auth = AppConfig {
         adguard_url: base_url.clone(),
         adguard_username: Some("admin".to_string()),
         adguard_password: Some("password".to_string()),
+        mcp_transport: "stdio".to_string(),
         lazy_mode: false,
+        http_port: 3000,
+        log_level: "info".to_string(),
     };
-    let client_auth = AdGuardClient::new(settings_auth);
+    let client_auth = AdGuardClient::new(config_auth);
 
     println!("Testing get_status (With Auth)...");
     let mut status = None;

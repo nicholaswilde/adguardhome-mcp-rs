@@ -1,0 +1,8 @@
+{
+  "track_id": "multi_transport_20260131",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-31T11:42:00Z",
+  "updated_at": "2026-01-31T11:42:00Z",
+  "description": "add a mode option to run the server in stdio mode or http mode. stdio should be default. for http mode, add an authentication method"
+}

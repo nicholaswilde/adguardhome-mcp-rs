@@ -1,6 +1,6 @@
 use crate::adguard::AdGuardClient;
+use crate::config::AppConfig;
 use crate::error::Result;
-use crate::settings::Settings;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::pin::Pin;
@@ -28,11 +28,11 @@ pub struct ToolRegistry {
 }
 
 impl ToolRegistry {
-    pub fn new(settings: &Settings) -> Self {
+    pub fn new(config: &AppConfig) -> Self {
         Self {
             tools: HashMap::new(),
             enabled_tools: HashSet::new(),
-            lazy_mode: settings.lazy_mode,
+            lazy_mode: config.lazy_mode,
         }
     }
 

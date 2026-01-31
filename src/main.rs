@@ -1,6 +1,6 @@
 use adguardhome_mcp_rs::adguard::AdGuardClient;
+use adguardhome_mcp_rs::config::AppConfig;
 use adguardhome_mcp_rs::mcp;
-use adguardhome_mcp_rs::settings::Settings;
 use adguardhome_mcp_rs::tools::ToolRegistry;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
@@ -8,15 +8,11 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let settings = Settings::from_env().unwrap_or_else(|_| Settings {
-        adguard_url: "http://localhost:8080".to_string(),
-        adguard_username: None,
-        adguard_password: None,
-        lazy_mode: false,
-    });
+    // Load configuration
+    let config = AppConfig::load(None, std::env::args().collect())?;
 
-    let adguard_client = AdGuardClient::new(settings.clone());
-    let mut registry = ToolRegistry::new(&settings);
+    let adguard_client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
 
     // Register get_status
     registry.register(
@@ -79,7 +75,7 @@ async fn main() -> anyhow::Result<()> {
                 },
                 "list_tools" => {
                     let mut tools = registry.list_tools();
-                    if settings.lazy_mode {
+                    if config.lazy_mode {
                         tools.push(serde_json::json!({
                             "name": "manage_tools",
                             "description": "Manage available tools (enable/disable) to save tokens.",
@@ -126,7 +122,7 @@ async fn main() -> anyhow::Result<()> {
                         .and_then(|p| p.get("arguments"))
                         .cloned();
 
-                    if tool_name == "manage_tools" && settings.lazy_mode {
+                    if tool_name == "manage_tools" && config.lazy_mode {
                         let action = args
                             .as_ref()
                             .and_then(|a| a.get("action"))
