@@ -9,12 +9,12 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
 - [x] Task: Conductor - User Manual Verification 'API Client Expansion' (Protocol in workflow.md)
 
 ## Phase 2: MCP Tool Implementation
-- [ ] Task: Register DNS Rewrite tools in `McpServer`
-    - [ ] Add `list_dns_rewrites` tool definition and handler.
-    - [ ] Add `add_dns_rewrite` tool definition and handler.
-    - [ ] Add `remove_dns_rewrite` tool definition and handler.
-    - [ ] Verify tool registration via binary execution (`list_tools`).
-- [ ] Task: Conductor - User Manual Verification 'MCP Tool Implementation' (Protocol in workflow.md)
+- [x] Task: Register DNS Rewrite tools in `McpServer`
+    - [x] Add `list_dns_rewrites` tool definition and handler.
+    - [x] Add `add_dns_rewrite` tool definition and handler.
+    - [x] Add `remove_dns_rewrite` tool definition and handler.
+    - [x] Verify tool registration via binary execution (`list_tools`).
+- [~] Task: Conductor - User Manual Verification 'MCP Tool Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Integration Testing
 - [ ] Task: Add Docker Integration Tests for DNS Rewrites
