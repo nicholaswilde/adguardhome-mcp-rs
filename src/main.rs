@@ -242,6 +242,134 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register set_protection_state
+    registry.register(
+        "set_protection_state",
+        "Enable or disable global AdGuard Home protection",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "True to enable protection, false to disable"
+                }
+            },
+            "required": ["enabled"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let enabled = params["enabled"].as_bool().unwrap_or(true);
+            async move {
+                client.set_protection(enabled).await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": format!("Global protection {}", if enabled { "enabled" } else { "disabled" })
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
+    // Register set_safe_search
+    registry.register(
+        "set_safe_search",
+        "Enable or disable enforced safe search",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "True to enable safe search, false to disable"
+                }
+            },
+            "required": ["enabled"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let enabled = params["enabled"].as_bool().unwrap_or(true);
+            async move {
+                client.set_safe_search(enabled).await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": format!("Safe search {}", if enabled { "enabled" } else { "disabled" })
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
+    // Register set_safe_browsing
+    registry.register(
+        "set_safe_browsing",
+        "Enable or disable safe browsing (protection against malicious domains)",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "True to enable safe browsing, false to disable"
+                }
+            },
+            "required": ["enabled"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let enabled = params["enabled"].as_bool().unwrap_or(true);
+            async move {
+                client.set_safe_browsing(enabled).await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": format!("Safe browsing {}", if enabled { "enabled" } else { "disabled" })
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
+    // Register set_parental_control
+    registry.register(
+        "set_parental_control",
+        "Enable or disable parental control (filtering of adult content)",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "True to enable parental control, false to disable"
+                }
+            },
+            "required": ["enabled"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let enabled = params["enabled"].as_bool().unwrap_or(true);
+            async move {
+                client.set_parental_control(enabled).await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": format!("Parental control {}", if enabled { "enabled" } else { "disabled" })
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
     let server = McpServer::new(adguard_client, registry, config.clone());
 
     match config.mcp_transport.as_str() {

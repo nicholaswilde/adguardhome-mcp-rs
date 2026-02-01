@@ -2,17 +2,17 @@
 
 This plan follows the Test-Driven Development (TDD) approach and the Phase Completion Verification protocol defined in the project workflow.
 
-## Phase 1: API Client Expansion (Protection)
+## Phase 1: API Client Expansion (Protection) [checkpoint: 66c52f11b967b70085f4ee53282d7a02b2ce8171]
 - [x] Task: Implement Protection methods in `AdGuardClient`
     - [x] Add `set_protection`, `set_safe_search`, `set_safe_browsing`, and `set_parental_control` methods to `src/adguard.rs`.
     - [x] Add unit tests for all new methods.
-- [~] Task: Conductor - User Manual Verification 'API Client Expansion (Protection)' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'API Client Expansion (Protection)' (Protocol in workflow.md)
 
 ## Phase 2: MCP Tool Implementation (Protection)
-- [ ] Task: Register Protection tools in `McpServer`
-    - [ ] Add `set_protection_state`, `set_safe_search`, `set_safe_browsing`, and `set_parental_control` tool definitions and handlers.
-    - [ ] Verify tool registration via `list_tools`.
-- [ ] Task: Conductor - User Manual Verification 'MCP Tool Implementation (Protection)' (Protocol in workflow.md)
+- [x] Task: Register Protection tools in `McpServer`
+    - [x] Add `set_protection_state`, `set_safe_search`, `set_safe_browsing`, and `set_parental_control` tool definitions and handlers.
+    - [x] Verify tool registration via `list_tools`.
+- [x] Task: Conductor - User Manual Verification 'MCP Tool Implementation (Protection)' (Protocol in workflow.md)
 
 ## Phase 3: Integration Testing (Protection)
 - [ ] Task: Add Docker Integration Tests for Protection
