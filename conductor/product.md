@@ -12,7 +12,7 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 - **Deep Insights:** Offer sophisticated log analysis and real-time notifications via the Model Context Protocol, allowing for proactive network management.
 
 ## Key Features
-- **Core Protection Management:** Tools to instantly toggle global protection and specific filtering services (e.g., safe search, individual blocklists).
+- **Core Protection Management:** Tools to instantly toggle global protection and specific safety features like Safe Search, Safe Browsing, and Parental Control.
 - **Activity Monitoring & Stats:** Tools to retrieve global network statistics and search through DNS query logs for detailed activity analysis.
 - **Token-Optimized Lazy Loading:** "Lazy Mode" to reduce context usage by loading tools on demand.
 - **Network Accessibility:** Support for HTTP/SSE transport, allowing connection over the network with Bearer Token authentication.
