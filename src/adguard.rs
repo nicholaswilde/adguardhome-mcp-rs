@@ -53,6 +53,44 @@ pub struct QueryLogResponse {
     pub data: Vec<QueryLogEntry>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Filter {
+    pub url: String,
+    pub name: String,
+    pub id: u64,
+    pub enabled: bool,
+    pub last_updated: Option<String>,
+    pub rules_count: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FilteringConfig {
+    pub enabled: bool,
+    pub interval: u32,
+    pub filters: Vec<Filter>,
+    pub whitelist_filters: Vec<Filter>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AddFilterRequest {
+    pub name: String,
+    pub url: String,
+    pub whitelist: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetFilterUrlRequest {
+    pub url: String,
+    pub data: SetFilterUrlData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetFilterUrlData {
+    pub enabled: bool,
+    pub name: String,
+    pub url: String,
+}
+
 impl AdGuardClient {
     pub fn new(config: AppConfig) -> Self {
         let client = reqwest::Client::builder()
@@ -255,6 +293,65 @@ impl AdGuardClient {
             self.config.adguard_host, self.config.adguard_port, path
         );
         let mut request = self.client.post(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn list_filters(&self) -> Result<FilteringConfig> {
+        let url = format!(
+            "http://{}:{}/control/filtering/config",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let config = response.json::<FilteringConfig>().await?;
+        Ok(config)
+    }
+
+    pub async fn add_filter(&self, name: String, url: String, whitelist: bool) -> Result<()> {
+        let endpoint = format!(
+            "http://{}:{}/control/filtering/add_url",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&endpoint).json(&AddFilterRequest {
+            name,
+            url,
+            whitelist,
+        });
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn toggle_filter(&self, url: String, name: String, enabled: bool) -> Result<()> {
+        let endpoint = format!(
+            "http://{}:{}/control/filtering/set_url",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&endpoint).json(&SetFilterUrlRequest {
+            url: url.clone(),
+            data: SetFilterUrlData { enabled, name, url },
+        });
 
         if let (Some(user), Some(pass)) =
             (&self.config.adguard_username, &self.config.adguard_password)
@@ -594,5 +691,126 @@ mod tests {
             .await;
 
         client.set_parental_control(true).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_list_filters() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/filtering/config"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "enabled": true,
+                "interval": 1,
+                "filters": [
+                    {
+                        "url": "https://example.com/filter.txt",
+                        "name": "Example Filter",
+                        "id": 1,
+                        "enabled": true,
+                        "last_updated": "2021-01-01T00:00:00Z",
+                        "rules_count": 100
+                    }
+                ],
+                "whitelist_filters": []
+            })))
+            .mount(&server)
+            .await;
+
+        let filtering = client.list_filters().await.unwrap();
+        assert!(filtering.enabled);
+        assert_eq!(filtering.filters.len(), 1);
+        assert_eq!(filtering.filters[0].name, "Example Filter");
+    }
+
+    #[tokio::test]
+    async fn test_add_filter() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/filtering/add_url"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client
+            .add_filter(
+                "New Filter".to_string(),
+                "https://example.com/new.txt".to_string(),
+                false,
+            )
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_toggle_filter() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/filtering/set_url"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client
+            .toggle_filter(
+                "https://example.com/filter.txt".to_string(),
+                "Example Filter".to_string(),
+                false,
+            )
+            .await
+            .unwrap();
     }
 }

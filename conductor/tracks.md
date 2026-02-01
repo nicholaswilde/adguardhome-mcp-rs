@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Filtering & Blocklist Management Tools**
+- [~] **Track: Filtering & Blocklist Management Tools**
 *Link: [./tracks/filtering_management_20260131/](./tracks/filtering_management_20260131/)*
 
 ---
