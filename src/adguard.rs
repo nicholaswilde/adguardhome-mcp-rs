@@ -1,6 +1,7 @@
 use crate::config::AppConfig;
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct AdGuardClient {
@@ -29,6 +30,12 @@ pub struct Stats {
     pub num_replaced_safesearch: u64,
     pub num_replaced_parental: u64,
     pub avg_processing_time: f64,
+    #[serde(default)]
+    pub top_queried_domains: Vec<HashMap<String, u64>>,
+    #[serde(default)]
+    pub top_blocked_domains: Vec<HashMap<String, u64>>,
+    #[serde(default)]
+    pub top_clients: Vec<HashMap<String, u64>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -69,6 +76,12 @@ pub struct FilteringConfig {
     pub interval: u32,
     pub filters: Vec<Filter>,
     pub whitelist_filters: Vec<Filter>,
+    pub user_rules: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetRulesRequest {
+    pub rules: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -105,6 +118,82 @@ pub struct AdGuardClientDevice {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientsResponse {
     pub clients: Vec<AdGuardClientDevice>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BlockedService {
+    pub id: String,
+    pub name: String,
+    pub icon_svg: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BlockedServicesAllResponse {
+    pub services: Vec<BlockedService>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetBlockedServicesRequest {
+    pub ids: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateClientRequest {
+    pub name: String,
+    pub data: AdGuardClientDevice,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteClientRequest {
+    pub name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DhcpLease {
+    pub mac: String,
+    pub ip: String,
+    pub hostname: String,
+    pub expires: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct StaticLease {
+    pub mac: String,
+    pub ip: String,
+    pub hostname: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DnsConfig {
+    pub upstream_dns: Vec<String>,
+    pub upstream_dns_file: String,
+    pub bootstrap_dns: Vec<String>,
+    pub fallback_dns: Vec<String>,
+    pub all_servers: bool,
+    pub fastest_addr: bool,
+    pub fastest_timeout: u32,
+    pub cache_size: u32,
+    pub cache_ttl_min: u32,
+    pub cache_ttl_max: u32,
+    pub cache_optimistic: bool,
+    pub upstream_mode: String,
+    pub use_private_ptr_resolvers: bool,
+    pub local_ptr_upstreams: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DhcpStatus {
+    pub enabled: bool,
+    pub interface_name: String,
+    pub leases: Vec<DhcpLease>,
+    pub static_leases: Vec<StaticLease>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AccessList {
+    pub allowed_clients: Vec<String>,
+    pub disallowed_clients: Vec<String>,
+    pub blocked_hosts: Vec<String>,
 }
 
 impl AdGuardClient {
@@ -406,6 +495,274 @@ impl AdGuardClient {
                 crate::error::Error::Generic(format!("Client not found: {}", identifier))
             })
     }
+
+    pub async fn get_user_rules(&self) -> Result<Vec<String>> {
+        let config = self.list_filters().await?;
+        Ok(config.user_rules)
+    }
+
+    pub async fn set_user_rules(&self, rules: Vec<String>) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/filtering/set_rules",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&SetRulesRequest { rules });
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn list_all_services(&self) -> Result<Vec<BlockedService>> {
+        let url = format!(
+            "http://{}:{}/control/blocked_services/all",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let all_response = response.json::<BlockedServicesAllResponse>().await?;
+        Ok(all_response.services)
+    }
+
+    pub async fn list_blocked_services(&self) -> Result<Vec<String>> {
+        let url = format!(
+            "http://{}:{}/control/blocked_services/list",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let blocked_ids = response.json::<Vec<String>>().await?;
+        Ok(blocked_ids)
+    }
+
+    pub async fn set_blocked_services(&self, ids: Vec<String>) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/blocked_services/set",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&ids);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn add_client(&self, client: AdGuardClientDevice) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/clients/add",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&client);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn update_client(&self, old_name: String, client: AdGuardClientDevice) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/clients/update",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&UpdateClientRequest {
+            name: old_name,
+            data: client,
+        });
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn delete_client(&self, name: String) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/clients/delete",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&DeleteClientRequest { name });
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn get_dhcp_status(&self) -> Result<DhcpStatus> {
+        let url = format!(
+            "http://{}:{}/control/dhcp/status",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let status = response.json::<DhcpStatus>().await?;
+        Ok(status)
+    }
+
+    pub async fn add_static_lease(&self, lease: StaticLease) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/dhcp/add_static_lease",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&lease);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn remove_static_lease(&self, lease: StaticLease) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/dhcp/remove_static_lease",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&lease);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn get_dns_info(&self) -> Result<DnsConfig> {
+        let url = format!(
+            "http://{}:{}/control/dns_info",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let config = response.json::<DnsConfig>().await?;
+        Ok(config)
+    }
+
+    pub async fn set_dns_config(&self, config: DnsConfig) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/dns_config",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&config);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn clear_dns_cache(&self) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/cache_clear",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn get_access_list(&self) -> Result<AccessList> {
+        let url = format!(
+            "http://{}:{}/control/access/list",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let list = response.json::<AccessList>().await?;
+        Ok(list)
+    }
+
+    pub async fn set_access_list(&self, list: AccessList) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/access/set",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&list);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -561,7 +918,10 @@ mod tests {
                 "num_replaced_safebrowsing": 5,
                 "num_replaced_safesearch": 2,
                 "num_replaced_parental": 1,
-                "avg_processing_time": 0.05
+                "avg_processing_time": 0.05,
+                "top_queried_domains": [{"google.com": 50}],
+                "top_blocked_domains": [{"doubleclick.net": 10}],
+                "top_clients": [{"192.168.1.100": 100}]
             })))
             .mount(&server)
             .await;
@@ -773,7 +1133,8 @@ mod tests {
                         "rules_count": 100
                     }
                 ],
-                "whitelist_filters": []
+                "whitelist_filters": [],
+                "user_rules": []
             })))
             .mount(&server)
             .await;
@@ -900,5 +1261,599 @@ mod tests {
         let clients = client.list_clients().await.unwrap();
         assert_eq!(clients.len(), 1);
         assert_eq!(clients[0].name, "Test Client");
+    }
+
+    #[tokio::test]
+    async fn test_get_user_rules() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/filtering/config"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "enabled": true,
+                "interval": 1,
+                "filters": [],
+                "whitelist_filters": [],
+                "user_rules": ["rule1", "rule2"]
+            })))
+            .mount(&server)
+            .await;
+
+        let rules = client.get_user_rules().await.unwrap();
+        assert_eq!(rules.len(), 2);
+        assert_eq!(rules[0], "rule1");
+    }
+
+    #[tokio::test]
+    async fn test_set_user_rules() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/filtering/set_rules"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client
+            .set_user_rules(vec!["rule1".to_string()])
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_list_all_services() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/blocked_services/all"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "services": [
+                    { "id": "youtube", "name": "YouTube" },
+                    { "id": "facebook", "name": "Facebook" }
+                ]
+            })))
+            .mount(&server)
+            .await;
+
+        let services = client.list_all_services().await.unwrap();
+        assert_eq!(services.len(), 2);
+        assert_eq!(services[0].id, "youtube");
+    }
+
+    #[tokio::test]
+    async fn test_list_blocked_services() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/blocked_services/list"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(vec!["youtube"]))
+            .mount(&server)
+            .await;
+
+        let blocked = client.list_blocked_services().await.unwrap();
+        assert_eq!(blocked.len(), 1);
+        assert_eq!(blocked[0], "youtube");
+    }
+
+    #[tokio::test]
+    async fn test_set_blocked_services() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/blocked_services/set"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client
+            .set_blocked_services(vec!["youtube".to_string()])
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_add_client() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/clients/add"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let device = AdGuardClientDevice {
+            name: "New Client".to_string(),
+            ids: vec!["1.2.3.4".to_string()],
+            use_global_settings: true,
+            filtering_enabled: true,
+            parental_enabled: false,
+            safebrowsing_enabled: true,
+            safesearch_enabled: false,
+        };
+        client.add_client(device).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_update_client() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/clients/update"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let device = AdGuardClientDevice {
+            name: "Updated Client".to_string(),
+            ids: vec!["1.2.3.4".to_string()],
+            use_global_settings: true,
+            filtering_enabled: true,
+            parental_enabled: false,
+            safebrowsing_enabled: true,
+            safesearch_enabled: false,
+        };
+        client
+            .update_client("Old Client".to_string(), device)
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_delete_client() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/clients/delete"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client
+            .delete_client("Client to Delete".to_string())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_get_dhcp_status() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/dhcp/status"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "enabled": true,
+                "interface_name": "eth0",
+                "leases": [
+                    { "mac": "00:11:22:33:44:55", "ip": "192.168.1.50", "hostname": "device1", "expires": "2021-01-01T00:00:00Z" }
+                ],
+                "static_leases": [
+                    { "mac": "66:77:88:99:AA:BB", "ip": "192.168.1.10", "hostname": "server1" }
+                ]
+            })))
+            .mount(&server)
+            .await;
+
+        let status = client.get_dhcp_status().await.unwrap();
+        assert!(status.enabled);
+        assert_eq!(status.interface_name, "eth0");
+        assert_eq!(status.leases.len(), 1);
+        assert_eq!(status.static_leases.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_add_static_lease() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/dhcp/add_static_lease"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let lease = StaticLease {
+            mac: "00:11:22:33:44:55".to_string(),
+            ip: "192.168.1.10".to_string(),
+            hostname: "server1".to_string(),
+        };
+        client.add_static_lease(lease).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_remove_static_lease() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/dhcp/remove_static_lease"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let lease = StaticLease {
+            mac: "00:11:22:33:44:55".to_string(),
+            ip: "192.168.1.10".to_string(),
+            hostname: "server1".to_string(),
+        };
+        client.remove_static_lease(lease).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_get_dns_info() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/dns_info"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "upstream_dns": ["8.8.8.8"],
+                "upstream_dns_file": "",
+                "bootstrap_dns": ["1.1.1.1"],
+                "fallback_dns": [],
+                "all_servers": false,
+                "fastest_addr": false,
+                "fastest_timeout": 0,
+                "cache_size": 4096,
+                "cache_ttl_min": 0,
+                "cache_ttl_max": 0,
+                "cache_optimistic": false,
+                "upstream_mode": "",
+                "use_private_ptr_resolvers": true,
+                "local_ptr_upstreams": []
+            })))
+            .mount(&server)
+            .await;
+
+        let dns_info = client.get_dns_info().await.unwrap();
+        assert_eq!(dns_info.upstream_dns.len(), 1);
+        assert_eq!(dns_info.upstream_dns[0], "8.8.8.8");
+    }
+
+    #[tokio::test]
+    async fn test_set_dns_config() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/dns_config"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let dns_config = DnsConfig {
+            upstream_dns: vec!["8.8.8.8".to_string()],
+            upstream_dns_file: "".to_string(),
+            bootstrap_dns: vec!["1.1.1.1".to_string()],
+            fallback_dns: vec![],
+            all_servers: false,
+            fastest_addr: false,
+            fastest_timeout: 0,
+            cache_size: 4096,
+            cache_ttl_min: 0,
+            cache_ttl_max: 0,
+            cache_optimistic: false,
+            upstream_mode: "".to_string(),
+            use_private_ptr_resolvers: true,
+            local_ptr_upstreams: vec![],
+        };
+        client.set_dns_config(dns_config).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_clear_dns_cache() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/cache_clear"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client.clear_dns_cache().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_get_access_list() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/access/list"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "allowed_clients": ["192.168.1.10"],
+                "disallowed_clients": [],
+                "blocked_hosts": ["malicious.com"]
+            })))
+            .mount(&server)
+            .await;
+
+        let list = client.get_access_list().await.unwrap();
+        assert_eq!(list.allowed_clients.len(), 1);
+        assert_eq!(list.blocked_hosts[0], "malicious.com");
+    }
+
+    #[tokio::test]
+    async fn test_set_access_list() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/access/set"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let list = AccessList {
+            allowed_clients: vec!["192.168.1.10".to_string()],
+            disallowed_clients: vec![],
+            blocked_hosts: vec!["malicious.com".to_string()],
+        };
+        client.set_access_list(list).await.unwrap();
     }
 }

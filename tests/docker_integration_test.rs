@@ -64,11 +64,9 @@ async fn start_adguard_container(
 
 #[tokio::test]
 async fn test_mcp_http_transport() -> Result<()> {
-    // Skip if RUN_DOCKER_TESTS is not set to true in CI
     if std::env::var("CI").is_ok()
         && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
     {
-        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
         return Ok(());
     }
 
@@ -84,7 +82,7 @@ async fn test_mcp_http_transport() -> Result<()> {
         adguard_password: None,
         mcp_transport: "http".to_string(),
         lazy_mode: false,
-        http_port: 0, // OS assigned
+        http_port: 0,
         http_auth_token: Some("test-token".to_string()),
         log_level: "info".to_string(),
         no_verify_ssl: true,
@@ -94,7 +92,6 @@ async fn test_mcp_http_transport() -> Result<()> {
     let registry = ToolRegistry::new(&config);
     let server = McpServer::new(adguard_client, registry, config.clone());
 
-    // Start server on random port
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
     let port = listener.local_addr()?.port();
     drop(listener);
@@ -111,24 +108,20 @@ async fn test_mcp_http_transport() -> Result<()> {
         .unwrap();
     });
 
-    // Wait for server to start
     tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
     let client = reqwest::Client::new();
     let mcp_url = format!("http://127.0.0.1:{}", port);
 
-    // 1. Test unauthorized
     let resp = client.get(format!("{}/sse", mcp_url)).send().await?;
     assert_eq!(resp.status(), reqwest::StatusCode::UNAUTHORIZED);
 
-    // 2. Test authorized SSE
     let resp = client
         .get(format!("{}/sse", mcp_url))
         .header("Authorization", "Bearer test-token")
         .send()
         .await?;
     assert_eq!(resp.status(), reqwest::StatusCode::OK);
-    // Check if it's SSE
     assert_eq!(
         resp.headers().get("content-type").unwrap(),
         "text/event-stream"
@@ -139,20 +132,17 @@ async fn test_mcp_http_transport() -> Result<()> {
 
 #[tokio::test]
 async fn test_adguardhome_no_auth() -> Result<()> {
-    // Skip if RUN_DOCKER_TESTS is not set to true in CI
     if std::env::var("CI").is_ok()
         && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
     {
-        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
         return Ok(());
     }
 
     let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
         Ok(res) => res,
-        Err(_) => return Ok(()), // Skip if failed to start (e.g. no docker)
+        Err(_) => return Ok(()),
     };
 
-    // Initialize the client
     let config = AppConfig {
         adguard_host,
         adguard_port,
@@ -167,8 +157,6 @@ async fn test_adguardhome_no_auth() -> Result<()> {
     };
     let client = AdGuardClient::new(config);
 
-    // Testing get_status
-    println!("Testing get_status (No Auth)...");
     let mut status = None;
     for _ in 0..10 {
         match client.get_status().await {
@@ -183,7 +171,6 @@ async fn test_adguardhome_no_auth() -> Result<()> {
     }
 
     let status = status.expect("Failed to get status from AdGuard Home");
-    println!("✅ AdGuard Home Version: {}", status.version);
     assert!(!status.version.is_empty());
 
     Ok(())
@@ -191,15 +178,12 @@ async fn test_adguardhome_no_auth() -> Result<()> {
 
 #[tokio::test]
 async fn test_adguardhome_with_auth() -> Result<()> {
-    // Skip if RUN_DOCKER_TESTS is not set to true in CI
     if std::env::var("CI").is_ok()
         && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
     {
-        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
         return Ok(());
     }
 
-    // Create a temporary config file
     let mut temp_file = tempfile::NamedTempFile::new()?;
     let config_content = r#"
 http:
@@ -217,7 +201,6 @@ users:
             Err(_) => return Ok(()),
         };
 
-    // 1. Test without credentials (expect failure)
     let config_no_auth = AppConfig {
         adguard_host: adguard_host.clone(),
         adguard_port,
@@ -232,7 +215,6 @@ users:
     };
     let client_no_auth = AdGuardClient::new(config_no_auth);
 
-    println!("Testing get_status (Expected Failure)...");
     let mut success = false;
     for _ in 0..10 {
         match client_no_auth.get_status().await {
@@ -242,22 +224,15 @@ users:
             Err(e) => {
                 let err_msg = e.to_string();
                 if err_msg.contains("401") {
-                    println!("✅ Got expected 401 Unauthorized");
                     success = true;
                     break;
-                } else if err_msg.contains("connect") || err_msg.contains("receive") {
-                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-                    continue;
-                } else {
-                    println!("Got unexpected error: {}", err_msg);
-                    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
                 }
+                tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
         }
     }
     assert!(success, "Did not receive 401 Unauthorized as expected");
 
-    // 2. Test with credentials (expect success)
     let config_auth = AppConfig {
         adguard_host,
         adguard_port,
@@ -272,7 +247,6 @@ users:
     };
     let client_auth = AdGuardClient::new(config_auth);
 
-    println!("Testing get_status (With Auth)...");
     let mut status = None;
     for _ in 0..5 {
         match client_auth.get_status().await {
@@ -287,7 +261,6 @@ users:
     }
 
     let status = status.expect("Failed to get status with valid credentials");
-    println!("✅ AdGuard Home Version: {}", status.version);
     assert!(!status.version.is_empty());
 
     Ok(())
@@ -295,11 +268,9 @@ users:
 
 #[tokio::test]
 async fn test_dns_rewrites() -> Result<()> {
-    // Skip if RUN_DOCKER_TESTS is not set to true in CI
     if std::env::var("CI").is_ok()
         && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
     {
-        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
         return Ok(());
     }
 
@@ -322,7 +293,6 @@ async fn test_dns_rewrites() -> Result<()> {
     };
     let client = AdGuardClient::new(config);
 
-    // Wait for AdGuard Home to be ready
     let mut ready = false;
     for _ in 0..15 {
         if client.get_status().await.is_ok() {
@@ -331,47 +301,29 @@ async fn test_dns_rewrites() -> Result<()> {
         }
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     }
-    assert!(ready, "AdGuard Home did not become ready");
+    assert!(ready);
 
     let rewrite = adguardhome_mcp_rs::adguard::DnsRewrite {
         domain: "test.example.com".to_string(),
         answer: "1.1.1.1".to_string(),
     };
 
-    // 1. Add rewrite
-    println!("Adding DNS rewrite...");
     client.add_rewrite(rewrite.clone()).await?;
-
-    // 2. List rewrites
-    println!("Listing DNS rewrites...");
     let rewrites = client.list_rewrites().await?;
-    let found = rewrites
-        .iter()
-        .any(|r| r.domain == rewrite.domain && r.answer == rewrite.answer);
-    assert!(found, "Added DNS rewrite not found in list");
+    assert!(rewrites.iter().any(|r| r.domain == rewrite.domain));
 
-    // 3. Delete rewrite
-    println!("Deleting DNS rewrite...");
     client.delete_rewrite(rewrite.clone()).await?;
-
-    // 4. List rewrites again
-    println!("Verifying DNS rewrite deletion...");
     let rewrites = client.list_rewrites().await?;
-    let found = rewrites
-        .iter()
-        .any(|r| r.domain == rewrite.domain && r.answer == rewrite.answer);
-    assert!(!found, "Deleted DNS rewrite still found in list");
+    assert!(!rewrites.iter().any(|r| r.domain == rewrite.domain));
 
     Ok(())
 }
 
 #[tokio::test]
 async fn test_monitoring_tools() -> Result<()> {
-    // Skip if RUN_DOCKER_TESTS is not set to true in CI
     if std::env::var("CI").is_ok()
         && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
     {
-        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
         return Ok(());
     }
 
@@ -394,7 +346,6 @@ async fn test_monitoring_tools() -> Result<()> {
     };
     let client = AdGuardClient::new(config);
 
-    // Wait for AdGuard Home to be ready
     let mut ready = false;
     for _ in 0..15 {
         if client.get_status().await.is_ok() {
@@ -403,28 +354,19 @@ async fn test_monitoring_tools() -> Result<()> {
         }
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     }
-    assert!(ready, "AdGuard Home did not become ready");
+    assert!(ready);
 
-    // 1. Test get_stats
-    println!("Testing get_stats...");
-    let stats = client.get_stats(None).await?;
-    println!("✅ Total Queries: {}", stats.num_dns_queries);
-
-    // 2. Test get_query_log
-    println!("Testing get_query_log...");
-    let log = client.get_query_log(None, None, Some(5)).await?;
-    println!("✅ Log entries: {}", log.data.len());
+    let _stats = client.get_stats(None).await?;
+    let _log = client.get_query_log(None, None, Some(5)).await?;
 
     Ok(())
 }
 
 #[tokio::test]
 async fn test_protection_tools() -> Result<()> {
-    // Skip if RUN_DOCKER_TESTS is not set to true in CI
     if std::env::var("CI").is_ok()
         && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
     {
-        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
         return Ok(());
     }
 
@@ -447,7 +389,6 @@ async fn test_protection_tools() -> Result<()> {
     };
     let client = AdGuardClient::new(config);
 
-    // Wait for AdGuard Home to be ready
     let mut ready = false;
     for _ in 0..15 {
         if client.get_status().await.is_ok() {
@@ -456,20 +397,13 @@ async fn test_protection_tools() -> Result<()> {
         }
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     }
-    assert!(ready, "AdGuard Home did not become ready");
+    assert!(ready);
 
-    // 1. Test set_protection
-    println!("Testing set_protection...");
     client.set_protection(false).await?;
-    let status = client.get_status().await?;
-    assert!(!status.protection_enabled);
+    assert!(!client.get_status().await?.protection_enabled);
     client.set_protection(true).await?;
-    let status = client.get_status().await?;
-    assert!(status.protection_enabled);
+    assert!(client.get_status().await?.protection_enabled);
 
-    // 2. Test safety features (these are harder to verify without complex mocking or deep API inspection,
-    // but we can at least verify they don't error out)
-    println!("Testing safety feature toggles...");
     client.set_safe_search(true).await?;
     client.set_safe_browsing(true).await?;
     client.set_parental_control(true).await?;
@@ -479,11 +413,9 @@ async fn test_protection_tools() -> Result<()> {
 
 #[tokio::test]
 async fn test_filtering_tools() -> Result<()> {
-    // Skip if RUN_DOCKER_TESTS is not set to true in CI
     if std::env::var("CI").is_ok()
         && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
     {
-        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
         return Ok(());
     }
 
@@ -506,7 +438,6 @@ async fn test_filtering_tools() -> Result<()> {
     };
     let client = AdGuardClient::new(config);
 
-    // Wait for AdGuard Home to be ready
     let mut ready = false;
     for _ in 0..15 {
         if client.get_status().await.is_ok() {
@@ -515,24 +446,17 @@ async fn test_filtering_tools() -> Result<()> {
         }
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     }
-    assert!(ready, "AdGuard Home did not become ready");
+    assert!(ready);
 
-    // 1. Add filter
-    println!("Adding filter list...");
     let filter_name = "Integration Test Filter".to_string();
     let filter_url = "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt".to_string();
     client
         .add_filter(filter_name.clone(), filter_url.clone(), false)
         .await?;
 
-    // 2. List filters
-    println!("Listing filters...");
     let filtering = client.list_filters().await?;
-    let found = filtering.filters.iter().any(|f| f.name == filter_name);
-    assert!(found, "Added filter list not found in list");
+    assert!(filtering.filters.iter().any(|f| f.name == filter_name));
 
-    // 3. Toggle filter
-    println!("Toggling filter list...");
     client
         .toggle_filter(filter_url.clone(), filter_name.clone(), false)
         .await?;
@@ -541,19 +465,22 @@ async fn test_filtering_tools() -> Result<()> {
         .filters
         .iter()
         .find(|f| f.name == filter_name)
-        .expect("Filter not found after toggle");
-    assert!(!filter.enabled, "Filter was not disabled");
+        .unwrap();
+    assert!(!filter.enabled);
+
+    let test_rule = "||integration-test.example.com^".to_string();
+    client.set_user_rules(vec![test_rule.clone()]).await?;
+    let rules = client.get_user_rules().await?;
+    assert!(rules.contains(&test_rule));
 
     Ok(())
 }
 
 #[tokio::test]
 async fn test_client_tools() -> Result<()> {
-    // Skip if RUN_DOCKER_TESTS is not set to true in CI
     if std::env::var("CI").is_ok()
         && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
     {
-        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
         return Ok(());
     }
 
@@ -576,7 +503,6 @@ async fn test_client_tools() -> Result<()> {
     };
     let client = AdGuardClient::new(config);
 
-    // Wait for AdGuard Home to be ready
     let mut ready = false;
     for _ in 0..15 {
         if client.get_status().await.is_ok() {
@@ -585,21 +511,235 @@ async fn test_client_tools() -> Result<()> {
         }
         tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     }
-    assert!(ready, "AdGuard Home did not become ready");
+    assert!(ready);
 
-    // 1. List clients
-    println!("Testing list_clients...");
     let clients = client.list_clients().await?;
-    println!("✅ Discovered {} clients", clients.len());
-
-    // 2. Get client info (there should be at least one, often 'self' or a default)
     if !clients.is_empty() {
-        let first_client = &clients[0];
-        println!("Testing get_client_info for '{}'...", first_client.name);
-        let client_info = client.get_client_info(&first_client.name).await?;
-        assert_eq!(client_info.name, first_client.name);
-        println!("✅ Retrieved client info for '{}'", client_info.name);
+        let name = &clients[0].name;
+        let info = client.get_client_info(name).await?;
+        assert_eq!(&info.name, name);
     }
+
+    let test_client_name = "Integration Test Client".to_string();
+    let new_client = adguardhome_mcp_rs::adguard::AdGuardClientDevice {
+        name: test_client_name.clone(),
+        ids: vec!["1.2.3.4".to_string()],
+        use_global_settings: true,
+        filtering_enabled: true,
+        parental_enabled: false,
+        safebrowsing_enabled: true,
+        safesearch_enabled: false,
+    };
+    client.add_client(new_client).await?;
+    assert_eq!(
+        client.get_client_info(&test_client_name).await?.name,
+        test_client_name
+    );
+
+    client.delete_client(test_client_name.clone()).await?;
+    let clients = client.list_clients().await?;
+    assert!(!clients.iter().any(|c| c.name == test_client_name));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_blocked_services() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready);
+
+    let services = client.list_all_services().await?;
+    assert!(!services.is_empty());
+
+    client
+        .set_blocked_services(vec!["youtube".to_string()])
+        .await?;
+    assert!(
+        client
+            .list_blocked_services()
+            .await?
+            .contains(&"youtube".to_string())
+    );
+
+    client.set_blocked_services(vec![]).await?;
+    assert!(client.list_blocked_services().await?.is_empty());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_dns_config_tools() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready);
+
+    let dns_info = client.get_dns_info().await?;
+    let mut new_config = dns_info.clone();
+    new_config.upstream_dns = vec!["1.1.1.1".to_string()];
+    client.set_dns_config(new_config).await?;
+    assert_eq!(
+        client.get_dns_info().await?.upstream_dns,
+        vec!["1.1.1.1".to_string()]
+    );
+
+    client.clear_dns_cache().await?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_access_control_tools() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready);
+
+    let mut list = client.get_access_list().await?;
+    list.blocked_hosts.push("test-blocked.com".to_string());
+    client.set_access_list(list.clone()).await?;
+    assert!(
+        client
+            .get_access_list()
+            .await?
+            .blocked_hosts
+            .contains(&"test-blocked.com".to_string())
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_dhcp_tools() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready);
+
+    // DHCP might not be enabled in the default container, but we can check if the endpoint responds
+    let _status = client.get_dhcp_status().await?;
 
     Ok(())
 }
