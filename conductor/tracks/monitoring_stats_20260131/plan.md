@@ -9,7 +9,7 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
     - [x] Add unit tests for both methods, mocking various API responses.
 - [x] Task: Conductor - User Manual Verification 'API Client Expansion (Monitoring)' (Protocol in workflow.md)
 
-## Phase 2: MCP Tool Implementation (Monitoring)
+## Phase 2: MCP Tool Implementation (Monitoring) [checkpoint: c01feeac89f2d44400f016d8c17e92d535fd6945]
 - [x] Task: Register Monitoring tools in `McpServer`
     - [x] Add `get_stats` tool definition and handler.
     - [x] Add `get_query_log` tool definition and handler.
