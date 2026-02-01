@@ -12,7 +12,7 @@ use tokio::io::AsyncBufReadExt;
 
 async fn start_adguard_container(
     config_path: Option<String>,
-) -> Result<(testcontainers::ContainerAsync<GenericImage>, String)> {
+) -> Result<(testcontainers::ContainerAsync<GenericImage>, String, u16)> {
     println!("🐳 Starting AdGuard Home container...");
 
     let image = GenericImage::new("adguard/adguardhome", "latest")
@@ -52,11 +52,14 @@ async fn start_adguard_container(
     });
 
     let port = container.get_host_port_ipv4(80).await?;
-    let base_url = format!("http://localhost:{}", port);
+    let host = "localhost".to_string();
 
-    println!("✅ AdGuard Home container started at {}", base_url);
+    println!(
+        "✅ AdGuard Home container started at http://{}:{}",
+        host, port
+    );
 
-    Ok((container, base_url))
+    Ok((container, host, port))
 }
 
 #[tokio::test]
@@ -69,13 +72,14 @@ async fn test_mcp_http_transport() -> Result<()> {
         return Ok(());
     }
 
-    let (_container, base_url) = match start_adguard_container(None).await {
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
         Ok(res) => res,
         Err(_) => return Ok(()),
     };
 
     let config = AppConfig {
-        adguard_url: base_url.clone(),
+        adguard_host,
+        adguard_port,
         adguard_username: None,
         adguard_password: None,
         mcp_transport: "http".to_string(),
@@ -142,14 +146,15 @@ async fn test_adguardhome_no_auth() -> Result<()> {
         return Ok(());
     }
 
-    let (_container, base_url) = match start_adguard_container(None).await {
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
         Ok(res) => res,
         Err(_) => return Ok(()), // Skip if failed to start (e.g. no docker)
     };
 
     // Initialize the client
     let config = AppConfig {
-        adguard_url: base_url.clone(),
+        adguard_host,
+        adguard_port,
         adguard_username: None,
         adguard_password: None,
         mcp_transport: "stdio".to_string(),
@@ -204,14 +209,16 @@ users:
     write!(temp_file, "{}", config_content)?;
     let config_path = temp_file.path().to_str().unwrap().to_string();
 
-    let (_container, base_url) = match start_adguard_container(Some(config_path)).await {
-        Ok(res) => res,
-        Err(_) => return Ok(()),
-    };
+    let (_container, adguard_host, adguard_port) =
+        match start_adguard_container(Some(config_path)).await {
+            Ok(res) => res,
+            Err(_) => return Ok(()),
+        };
 
     // 1. Test without credentials (expect failure)
     let config_no_auth = AppConfig {
-        adguard_url: base_url.clone(),
+        adguard_host: adguard_host.clone(),
+        adguard_port,
         adguard_username: None,
         adguard_password: None,
         mcp_transport: "stdio".to_string(),
@@ -249,7 +256,8 @@ users:
 
     // 2. Test with credentials (expect success)
     let config_auth = AppConfig {
-        adguard_url: base_url.clone(),
+        adguard_host,
+        adguard_port,
         adguard_username: Some("admin".to_string()),
         adguard_password: Some("password".to_string()),
         mcp_transport: "stdio".to_string(),

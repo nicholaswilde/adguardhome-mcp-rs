@@ -13,7 +13,7 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
     - [x] Run `task test:ci` and ensure unit tests pass.
 - [x] Task: Conductor - User Manual Verification 'Configuration Refactoring' (Protocol in workflow.md)
 
-## Phase 2: Client and Core Logic Refactoring
+## Phase 2: Client and Core Logic Refactoring [checkpoint: 5b79f8ecb66a2323762d222fecf22d17f3bcaa37]
 - [x] Task: Update `AdGuardClient` Implementation
     - [x] Update `src/adguard.rs` to store `adguard_host` and `adguard_port`.
     - [x] Update URL construction logic in `get_status` to use `http://{host}:{port}`.
@@ -24,8 +24,8 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
 - [x] Task: Conductor - User Manual Verification 'Client and Core Logic Refactoring' (Protocol in workflow.md)
 
 ## Phase 3: Integration Test Synchronization
-- [ ] Task: Update Docker Integration Tests
-    - [ ] Update `tests/docker_integration_test.rs` to provide host and port separately to the client and config objects.
-- [ ] Task: Final Quality Gate
-    - [ ] Run `task test:ci` to ensure all tests (unit and integration) pass.
-- [ ] Task: Conductor - User Manual Verification 'Integration Test Synchronization' (Protocol in workflow.md)
+- [x] Task: Update Docker Integration Tests
+    - [x] Update `tests/docker_integration_test.rs` to provide host and port separately to the client and config objects.
+- [x] Task: Final Quality Gate
+    - [x] Run `task test:ci` to ensure all tests (unit and integration) pass.
+- [x] Task: Conductor - User Manual Verification 'Integration Test Synchronization' (Protocol in workflow.md)
