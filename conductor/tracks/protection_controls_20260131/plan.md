@@ -3,10 +3,10 @@
 This plan follows the Test-Driven Development (TDD) approach and the Phase Completion Verification protocol defined in the project workflow.
 
 ## Phase 1: API Client Expansion (Protection)
-- [ ] Task: Implement Protection methods in `AdGuardClient`
-    - [ ] Add `set_protection`, `set_safe_search`, `set_safe_browsing`, and `set_parental_control` methods to `src/adguard.rs`.
-    - [ ] Add unit tests for all new methods.
-- [ ] Task: Conductor - User Manual Verification 'API Client Expansion (Protection)' (Protocol in workflow.md)
+- [x] Task: Implement Protection methods in `AdGuardClient`
+    - [x] Add `set_protection`, `set_safe_search`, `set_safe_browsing`, and `set_parental_control` methods to `src/adguard.rs`.
+    - [x] Add unit tests for all new methods.
+- [~] Task: Conductor - User Manual Verification 'API Client Expansion (Protection)' (Protocol in workflow.md)
 
 ## Phase 2: MCP Tool Implementation (Protection)
 - [ ] Task: Register Protection tools in `McpServer`

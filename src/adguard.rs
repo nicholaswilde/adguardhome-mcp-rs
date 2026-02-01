@@ -191,6 +191,80 @@ impl AdGuardClient {
         request.send().await?.error_for_status()?;
         Ok(())
     }
+
+    pub async fn set_protection(&self, enabled: bool) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/protection",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self
+            .client
+            .post(&url)
+            .json(&serde_json::json!({ "enabled": enabled }));
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn set_safe_search(&self, enabled: bool) -> Result<()> {
+        let path = if enabled { "enable" } else { "disable" };
+        let url = format!(
+            "http://{}:{}/control/safesearch/{}",
+            self.config.adguard_host, self.config.adguard_port, path
+        );
+        let mut request = self.client.post(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn set_safe_browsing(&self, enabled: bool) -> Result<()> {
+        let path = if enabled { "enable" } else { "disable" };
+        let url = format!(
+            "http://{}:{}/control/safebrowsing/{}",
+            self.config.adguard_host, self.config.adguard_port, path
+        );
+        let mut request = self.client.post(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn set_parental_control(&self, enabled: bool) -> Result<()> {
+        let path = if enabled { "enable" } else { "disable" };
+        let url = format!(
+            "http://{}:{}/control/parental/{}",
+            self.config.adguard_host, self.config.adguard_port, path
+        );
+        let mut request = self.client.post(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -400,5 +474,125 @@ mod tests {
         let log = client.get_query_log(None, None, None).await.unwrap();
         assert_eq!(log.data.len(), 1);
         assert_eq!(log.data[0].question.name, "google.com");
+    }
+
+    #[tokio::test]
+    async fn test_set_protection() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/protection"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client.set_protection(true).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_set_safe_search() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/safesearch/enable"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client.set_safe_search(true).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_set_safe_browsing() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/safebrowsing/enable"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client.set_safe_browsing(true).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_set_parental_control() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/parental/enable"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client.set_parental_control(true).await.unwrap();
     }
 }
