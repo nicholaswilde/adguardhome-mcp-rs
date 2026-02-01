@@ -3,10 +3,10 @@
 This plan follows the Test-Driven Development (TDD) approach and the Phase Completion Verification protocol defined in the project workflow.
 
 ## Phase 1: API Client Expansion (Clients)
-- [ ] Task: Implement Client methods in `AdGuardClient`
-    - [ ] Add `list_clients` and `get_client_info` methods to `src/adguard.rs`.
-    - [ ] Add unit tests for client API calls.
-- [ ] Task: Conductor - User Manual Verification 'API Client Expansion (Clients)' (Protocol in workflow.md)
+- [x] Task: Implement Client methods in `AdGuardClient`
+    - [x] Add `list_clients` and `get_client_info` methods to `src/adguard.rs`.
+    - [x] Add unit tests for client API calls.
+- [~] Task: Conductor - User Manual Verification 'API Client Expansion (Clients)' (Protocol in workflow.md)
 
 ## Phase 2: MCP Tool Implementation (Clients)
 - [ ] Task: Register Client tools in `McpServer`

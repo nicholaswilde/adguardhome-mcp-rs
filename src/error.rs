@@ -19,6 +19,9 @@ pub enum Error {
 
     #[error("MCP error: {0:?}")]
     Mcp(crate::mcp::ResponseError),
+
+    #[error("Error: {0}")]
+    Generic(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -91,6 +91,22 @@ pub struct SetFilterUrlData {
     pub url: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AdGuardClientDevice {
+    pub name: String,
+    pub ids: Vec<String>,
+    pub use_global_settings: bool,
+    pub filtering_enabled: bool,
+    pub parental_enabled: bool,
+    pub safebrowsing_enabled: bool,
+    pub safesearch_enabled: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClientsResponse {
+    pub clients: Vec<AdGuardClientDevice>,
+}
+
 impl AdGuardClient {
     pub fn new(config: AppConfig) -> Self {
         let client = reqwest::Client::builder()
@@ -361,6 +377,34 @@ impl AdGuardClient {
 
         request.send().await?.error_for_status()?;
         Ok(())
+    }
+
+    pub async fn list_clients(&self) -> Result<Vec<AdGuardClientDevice>> {
+        let url = format!(
+            "http://{}:{}/control/clients",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let clients_response = response.json::<ClientsResponse>().await?;
+        Ok(clients_response.clients)
+    }
+
+    pub async fn get_client_info(&self, identifier: &str) -> Result<AdGuardClientDevice> {
+        let clients = self.list_clients().await?;
+        clients
+            .into_iter()
+            .find(|c| c.name == identifier || c.ids.iter().any(|id| id == identifier))
+            .ok_or_else(|| {
+                crate::error::Error::Generic(format!("Client not found: {}", identifier))
+            })
     }
 }
 
@@ -812,5 +856,49 @@ mod tests {
             )
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_list_clients() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/clients"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "clients": [
+                    {
+                        "name": "Test Client",
+                        "ids": ["192.168.1.100"],
+                        "use_global_settings": true,
+                        "filtering_enabled": true,
+                        "parental_enabled": false,
+                        "safebrowsing_enabled": true,
+                        "safesearch_enabled": false
+                    }
+                ]
+            })))
+            .mount(&server)
+            .await;
+
+        let clients = client.list_clients().await.unwrap();
+        assert_eq!(clients.len(), 1);
+        assert_eq!(clients[0].name, "Test Client");
     }
 }
