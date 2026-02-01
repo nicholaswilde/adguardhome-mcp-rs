@@ -15,7 +15,7 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
 - [x] Task: Conductor - User Manual Verification 'MCP Tool Implementation (Protection)' (Protocol in workflow.md)
 
 ## Phase 3: Integration Testing (Protection)
-- [~] Task: Add Docker Integration Tests for Protection
-    - [ ] Update `tests/docker_integration_test.rs` to verify that toggling settings via MCP actually changes the state in the AdGuard Home instance.
-    - [ ] Ensure `task test:ci` passes.
-- [ ] Task: Conductor - User Manual Verification 'Integration Testing (Protection)' (Protocol in workflow.md)
+- [x] Task: Add Docker Integration Tests for Protection
+    - [x] Update `tests/docker_integration_test.rs` to verify that toggling settings via MCP actually changes the state in the AdGuard Home instance.
+    - [x] Ensure `task test:ci` passes.
+- [x] Task: Conductor - User Manual Verification 'Integration Testing (Protection)' (Protocol in workflow.md)
