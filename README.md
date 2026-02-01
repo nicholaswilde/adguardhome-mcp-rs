@@ -25,6 +25,9 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
     - `list_dns_rewrites`: List all DNS rewrites.
     - `add_dns_rewrite`: Add a new DNS rewrite (domain, answer).
     - `remove_dns_rewrite`: Remove a DNS rewrite (domain, answer).
+  - **Monitoring:**
+    - `get_stats`: Get global statistics (total queries, blocked, etc.).
+    - `get_query_log`: Search and filter the DNS query log.
   - **Management (Lazy Mode only):**
     - `manage_tools`: List and enable/disable available tools.
 
