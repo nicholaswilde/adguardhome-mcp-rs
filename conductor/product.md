@@ -20,3 +20,4 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 - **Smart Client Management:** Automated discovery and configuration of network clients using AI-driven commands.
 - **Dynamic DNS Rewrites:** Tools to list, add, and remove DNS rewrite entries, enabling AI-driven network-wide domain redirections.
 - **Blocklist Management:** Comprehensive management of filtering lists, allowing AI models to audit, toggle, and add community-driven blocklists and allowlists.
+- **Network Device Inventory:** Tools to list and inspect network clients, providing AI models with a complete view of devices and their individual protection status.
