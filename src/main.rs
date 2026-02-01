@@ -497,6 +497,65 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register list_clients
+    registry.register(
+        "list_clients",
+        "List all configured and discovered clients",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                let clients = client.list_clients().await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": serde_json::to_string_pretty(&clients)?
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
+    // Register get_client_info
+    registry.register(
+        "get_client_info",
+        "Get detailed information for a specific client",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "description": "IP, MAC, or Name of the client"
+                }
+            },
+            "required": ["identifier"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let identifier = params["identifier"]
+                .as_str()
+                .unwrap_or_default()
+                .to_string();
+            async move {
+                let client_info = client.get_client_info(&identifier).await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": serde_json::to_string_pretty(&client_info)?
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
     let server = McpServer::new(adguard_client, registry, config.clone());
 
     match config.mcp_transport.as_str() {
