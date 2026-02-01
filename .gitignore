@@ -20,7 +20,26 @@ target
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+config.toml
+config.json
+config.yaml
+config.yml
+
+*.log
+*.json
+!Cargo.toml
+!package.json
+!composer.json
+!init_request.json.example # Keep if any example is needed, but I don't see any.
+# Actually let's just ignore the specific ones I saw.
+init_request*.json
+output*.json
+tools_test.json
+server.log
+test_bg.log
 
 # Added by cargo
 
 /target
+
+**/settings.json

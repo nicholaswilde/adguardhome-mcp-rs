@@ -4,8 +4,10 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {
-    #[serde(alias = "url")]
-    pub adguard_url: String,
+    #[serde(alias = "host")]
+    pub adguard_host: String,
+    #[serde(alias = "port", default = "default_adguard_port")]
+    pub adguard_port: u16,
     #[serde(alias = "username")]
     pub adguard_username: Option<String>,
     #[serde(alias = "password")]
@@ -23,6 +25,10 @@ pub struct AppConfig {
 
 fn default_transport() -> String {
     "stdio".to_string()
+}
+
+fn default_adguard_port() -> u16 {
+    3000
 }
 
 fn default_http_port() -> u16 {
@@ -77,8 +83,11 @@ impl AppConfig {
         );
 
         // 5. Apply CLI overrides
-        if let Some(url) = matches.get_one::<String>("adguard_url") {
-            builder = builder.set_override("adguard_url", url.as_str())?;
+        if let Some(host) = matches.get_one::<String>("adguard_host") {
+            builder = builder.set_override("adguard_host", host.as_str())?;
+        }
+        if let Some(port) = matches.get_one::<u16>("adguard_port") {
+            builder = builder.set_override("adguard_port", *port)?;
         }
         if let Some(username) = matches.get_one::<String>("adguard_username") {
             builder = builder.set_override("adguard_username", username.as_str())?;
@@ -117,9 +126,15 @@ fn parse_args(args: Vec<String>) -> ArgMatches {
                 .help("Path to configuration file"),
         )
         .arg(
-            Arg::new("adguard_url")
-                .long("adguard-url")
-                .help("AdGuard Home URL"),
+            Arg::new("adguard_host")
+                .long("adguard-host")
+                .help("AdGuard Home host"),
+        )
+        .arg(
+            Arg::new("adguard_port")
+                .long("adguard-port")
+                .help("AdGuard Home port")
+                .value_parser(clap::value_parser!(u16)),
         )
         .arg(
             Arg::new("adguard_username")
@@ -173,12 +188,14 @@ mod tests {
         // Ensure env vars don't interfere
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         unsafe {
-            std::env::remove_var("ADGUARD_URL");
+            std::env::remove_var("ADGUARD_HOST");
+            std::env::remove_var("ADGUARD_PORT");
             std::env::remove_var("ADGUARD_MCP_TRANSPORT");
         }
 
         let _config = AppConfig::load(None, vec![]).unwrap_or_else(|_| AppConfig {
-            adguard_url: "".to_string(),
+            adguard_host: "".to_string(),
+            adguard_port: 3000,
             adguard_username: None,
             adguard_password: None,
             mcp_transport: "stdio".to_string(),
@@ -187,23 +204,16 @@ mod tests {
             http_auth_token: None,
             log_level: "info".to_string(),
         });
-
-        // adguard_url is required, so it might fail if not set?
-        // AppConfig::load calls builder.build()?.try_deserialize().
-        // If adguard_url is missing, deserialization fails?
-        // We should check if it returns Err.
-        // Actually, we define adguard_url as String without default.
-        // So yes, it should fail if not provided.
     }
 
     #[test]
     fn test_load_required_fields() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         unsafe {
-            std::env::remove_var("ADGUARD_URL");
+            std::env::remove_var("ADGUARD_HOST");
         }
         let res = AppConfig::load(None, vec![]);
-        assert!(res.is_err(), "Should fail without adguard_url");
+        assert!(res.is_err(), "Should fail without adguard_host");
     }
 
     #[test]
@@ -211,8 +221,10 @@ mod tests {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let args = vec![
             "app".to_string(),
-            "--adguard-url".to_string(),
-            "http://cli.com".to_string(),
+            "--adguard-host".to_string(),
+            "cli.com".to_string(),
+            "--adguard-port".to_string(),
+            "4000".to_string(),
             "--transport".to_string(),
             "http".to_string(),
             "--http-port".to_string(),
@@ -220,7 +232,8 @@ mod tests {
             "--lazy".to_string(),
         ];
         let config = AppConfig::load(None, args).unwrap();
-        assert_eq!(config.adguard_url, "http://cli.com");
+        assert_eq!(config.adguard_host, "cli.com");
+        assert_eq!(config.adguard_port, 4000);
         assert_eq!(config.mcp_transport, "http");
         assert_eq!(config.http_port, 8080);
         assert!(config.lazy_mode);
@@ -230,7 +243,8 @@ mod tests {
     fn test_env_override() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         unsafe {
-            std::env::set_var("ADGUARD_URL", "http://env.com");
+            std::env::set_var("ADGUARD_HOST", "env.com");
+            std::env::set_var("ADGUARD_PORT", "5050");
             std::env::set_var("ADGUARD_MCP_TRANSPORT", "http");
             std::env::set_var("ADGUARD_HTTP_PORT", "9090");
         }
@@ -238,12 +252,14 @@ mod tests {
         let config = AppConfig::load(None, vec![]).unwrap();
 
         unsafe {
-            std::env::remove_var("ADGUARD_URL");
+            std::env::remove_var("ADGUARD_HOST");
+            std::env::remove_var("ADGUARD_PORT");
             std::env::remove_var("ADGUARD_MCP_TRANSPORT");
             std::env::remove_var("ADGUARD_HTTP_PORT");
         }
 
-        assert_eq!(config.adguard_url, "http://env.com");
+        assert_eq!(config.adguard_host, "env.com");
+        assert_eq!(config.adguard_port, 5050);
         assert_eq!(config.mcp_transport, "http");
         assert_eq!(config.http_port, 9090);
     }
@@ -252,19 +268,20 @@ mod tests {
     fn test_file_override() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         unsafe {
-            std::env::remove_var("ADGUARD_URL");
+            std::env::remove_var("ADGUARD_HOST");
         }
 
         let mut file = tempfile::Builder::new().suffix(".toml").tempfile().unwrap();
         writeln!(
             file,
-            "adguard_url = \"http://file.com\"\nmcp_transport = \"http\"\nhttp_port = 7070"
+            "adguard_host = \"file.com\"\nadguard_port = 6060\nmcp_transport = \"http\"\nhttp_port = 7070"
         )
         .unwrap();
         let path = file.path().to_str().unwrap().to_string();
 
         let config = AppConfig::load(Some(path), vec![]).unwrap();
-        assert_eq!(config.adguard_url, "http://file.com");
+        assert_eq!(config.adguard_host, "file.com");
+        assert_eq!(config.adguard_port, 6060);
         assert_eq!(config.mcp_transport, "http");
         assert_eq!(config.http_port, 7070);
     }

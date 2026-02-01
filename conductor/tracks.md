@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: split the adguard_url into a adguard_host and adguard_port variable**
+- [~] **Track: split the adguard_url into a adguard_host and adguard_port variable**
 *Link: [./tracks/granular_connection_20260131/](./tracks/granular_connection_20260131/)*
 
 ---

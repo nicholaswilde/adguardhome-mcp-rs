@@ -3,14 +3,14 @@
 This plan follows the Test-Driven Development (TDD) approach and the Phase Completion Verification protocol defined in the project workflow.
 
 ## Phase 1: Configuration Refactoring
-- [ ] Task: Red Phase - Update Configuration Unit Tests
-    - [ ] Update tests in `src/config.rs` to expect `adguard_host` and `adguard_port` instead of `adguard_url`.
-    - [ ] Run `cargo test` and confirm compilation errors/failures.
-- [ ] Task: Green Phase - Update `AppConfig` and Mapping
-    - [ ] Remove `adguard_url` from `AppConfig` in `src/config.rs`.
-    - [ ] Add `adguard_host` and `adguard_port` (with default `3000`) to `AppConfig`.
-    - [ ] Update `parse_args` and `load` mapping logic.
-    - [ ] Run `task test:ci` and ensure unit tests pass.
+- [x] Task: Red Phase - Update Configuration Unit Tests
+    - [x] Update tests in `src/config.rs` to expect `adguard_host` and `adguard_port` instead of `adguard_url`.
+    - [x] Run `cargo test` and confirm compilation errors/failures.
+- [x] Task: Green Phase - Update `AppConfig` and Mapping
+    - [x] Remove `adguard_url` from `AppConfig` in `src/config.rs`.
+    - [x] Add `adguard_host` and `adguard_port` (with default `3000`) to `AppConfig`.
+    - [x] Update `parse_args` and `load` mapping logic.
+    - [x] Run `task test:ci` and ensure unit tests pass.
 - [ ] Task: Conductor - User Manual Verification 'Configuration Refactoring' (Protocol in workflow.md)
 
 ## Phase 2: Client and Core Logic Refactoring

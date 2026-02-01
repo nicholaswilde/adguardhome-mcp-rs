@@ -23,8 +23,8 @@ impl AdGuardClient {
 
     pub async fn get_status(&self) -> Result<Status> {
         let url = format!(
-            "{}/control/status",
-            self.config.adguard_url.trim_end_matches('/')
+            "http://{}:{}/control/status",
+            self.config.adguard_host, self.config.adguard_port
         );
         let mut request = self.client.get(&url);
 
