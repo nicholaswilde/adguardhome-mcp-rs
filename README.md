@@ -1,4 +1,4 @@
-# :crab: AdGuard Home MCP RS :robot:
+# :shield: AdGuard Home MCP Server (Rust) :robot:
 
 [![task](https://img.shields.io/badge/Task-Enabled-brightgreen?style=for-the-badge&logo=task&logoColor=white)](https://taskfile.dev/#/)
 [![ci](https://img.shields.io/github/actions/workflow/status/nicholaswilde/adguardhome-mcp-rs/ci.yml?label=ci&style=for-the-badge&branch=main)](https://github.com/nicholaswilde/adguardhome-mcp-rs/actions/workflows/ci.yml)

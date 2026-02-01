@@ -23,3 +23,4 @@
 
 ## Testing
 - **Testcontainers:** Used for integration testing with real AdGuard Home Docker containers.
+- **Wiremock:** Used for unit testing the API client by mocking HTTP responses.

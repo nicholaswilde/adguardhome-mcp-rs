@@ -1,8 +1,0 @@
-{
-  "track_id": "granular_connection_20260131",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-01-31T12:35:00Z",
-  "updated_at": "2026-01-31T12:35:00Z",
-  "description": "split the adguard_url into a adguard_host and adguard_port variable"
-}

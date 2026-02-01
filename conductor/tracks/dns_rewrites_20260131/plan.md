@@ -3,10 +3,10 @@
 This plan follows the Test-Driven Development (TDD) approach and the Phase Completion Verification protocol defined in the project workflow.
 
 ## Phase 1: API Client Expansion
-- [ ] Task: Implement DNS Rewrite methods in `AdGuardClient`
-    - [ ] Add `list_rewrites`, `add_rewrite`, and `delete_rewrite` methods to `src/adguard.rs`.
-    - [ ] Update `AdGuardClient` unit tests to cover success and failure cases for these new methods.
-- [ ] Task: Conductor - User Manual Verification 'API Client Expansion' (Protocol in workflow.md)
+- [x] Task: Implement DNS Rewrite methods in `AdGuardClient`
+    - [x] Add `list_rewrites`, `add_rewrite`, and `delete_rewrite` methods to `src/adguard.rs`.
+    - [x] Update `AdGuardClient` unit tests to cover success and failure cases for these new methods.
+- [~] Task: Conductor - User Manual Verification 'API Client Expansion' (Protocol in workflow.md)
 
 ## Phase 2: MCP Tool Implementation
 - [ ] Task: Register DNS Rewrite tools in `McpServer`
