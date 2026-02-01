@@ -9,11 +9,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: add mcp server tools to list, add, and remove dns rewrites from adguard home**
-*Link: [./tracks/dns_rewrites_20260131/](./tracks/dns_rewrites_20260131/)*
-
----
-
 - [ ] **Track: Monitoring & Statistics Tools (get_stats, get_query_log)**
 *Link: [./tracks/monitoring_stats_20260131/](./tracks/monitoring_stats_20260131/)*
 
