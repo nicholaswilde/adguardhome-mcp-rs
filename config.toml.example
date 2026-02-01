@@ -7,6 +7,10 @@ adguard_host = "192.168.1.10"
 # Port of your AdGuard Home instance (Optional, Default: 3000)
 adguard_port = 8080
 
+# Disable SSL certificate verification (Useful for self-signed certs)
+# Default: true
+no_verify_ssl = true
+
 # AdGuard Home Authentication (Optional if not enabled on instance)
 adguard_username = "admin"
 adguard_password = "yourpassword"

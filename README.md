@@ -25,6 +25,18 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
     - `list_dns_rewrites`: List all DNS rewrites.
     - `add_dns_rewrite`: Add a new DNS rewrite (domain, answer).
     - `remove_dns_rewrite`: Remove a DNS rewrite (domain, answer).
+  - **Protection:**
+    - `set_protection_state`: Enable or disable global AdGuard Home protection.
+    - `set_safe_search`: Enable or disable enforced safe search.
+    - `set_safe_browsing`: Enable or disable safe browsing protection.
+    - `set_parental_control`: Enable or disable parental control.
+  - **Filtering:**
+    - `list_filter_lists`: List all configured filter lists (blocklists and allowlists).
+    - `toggle_filter_list`: Enable or disable a specific filter list by Name, ID, or URL.
+    - `add_filter_list`: Add a new filter list to the configuration.
+  - **Clients:**
+    - `list_clients`: List all configured and discovered network clients.
+    - `get_client_info`: Get detailed configuration and usage stats for a specific client.
   - **Monitoring:**
     - `get_stats`: Get global statistics (total queries, blocked, etc.).
     - `get_query_log`: Search and filter the DNS query log.
