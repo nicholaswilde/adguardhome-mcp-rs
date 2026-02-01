@@ -10,12 +10,12 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
 - [x] Task: Conductor - User Manual Verification 'API Client Expansion (Monitoring)' (Protocol in workflow.md)
 
 ## Phase 2: MCP Tool Implementation (Monitoring)
-- [ ] Task: Register Monitoring tools in `McpServer`
-    - [ ] Add `get_stats` tool definition and handler.
-    - [ ] Add `get_query_log` tool definition and handler.
-    - [ ] Implement percentage calculation logic for `get_stats`.
-    - [ ] Verify tool registration via `list_tools`.
-- [ ] Task: Conductor - User Manual Verification 'MCP Tool Implementation (Monitoring)' (Protocol in workflow.md)
+- [x] Task: Register Monitoring tools in `McpServer`
+    - [x] Add `get_stats` tool definition and handler.
+    - [x] Add `get_query_log` tool definition and handler.
+    - [x] Implement percentage calculation logic for `get_stats`.
+    - [x] Verify tool registration via `list_tools`.
+- [x] Task: Conductor - User Manual Verification 'MCP Tool Implementation (Monitoring)' (Protocol in workflow.md)
 
 ## Phase 3: Integration Testing (Monitoring)
 - [ ] Task: Add Docker Integration Tests for Monitoring
