@@ -4,7 +4,7 @@
 [![ci](https://img.shields.io/github/actions/workflow/status/nicholaswilde/adguardhome-mcp-rs/ci.yml?label=ci&style=for-the-badge&branch=main)](https://github.com/nicholaswilde/adguardhome-mcp-rs/actions/workflows/ci.yml)
 
 > [!WARNING]
-> This project is currently in active development (v0.1.0) and is **not production-ready**. Features may change, and breaking changes may occur without notice.
+> This project is currently in active development (v0.1.2) and is **not production-ready**. Features may change, and breaking changes may occur without notice.
 
 A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](https://modelcontextprotocol.io/docs/getting-started/intro). This server connects to an AdGuard Home instance and exposes tools to monitor and manage filtering via the Model Context Protocol.
 
@@ -34,9 +34,33 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
     - `list_filter_lists`: List all configured filter lists (blocklists and allowlists).
     - `toggle_filter_list`: Enable or disable a specific filter list by Name, ID, or URL.
     - `add_filter_list`: Add a new filter list to the configuration.
+    - `list_custom_rules`: List all user-defined DNS filtering rules.
+    - `set_custom_rules`: Replace all custom filtering rules.
+    - `add_custom_rule`: Add a single custom filtering rule.
+    - `remove_custom_rule`: Remove a single custom filtering rule.
+  - **Blocked Services:**
+    - `list_blocked_services`: List all available services and their current blocked status.
+    - `toggle_blocked_service`: Enable or disable blocking for a specific service.
   - **Clients:**
     - `list_clients`: List all configured and discovered network clients.
     - `get_client_info`: Get detailed configuration and usage stats for a specific client.
+    - `add_client`: Add a new client configuration.
+    - `update_client`: Update an existing client configuration.
+    - `delete_client`: Remove a client configuration.
+  - **DHCP Management:**
+    - `list_dhcp_leases`: List all dynamic and static DHCP leases.
+    - `add_static_lease`: Add a new static DHCP lease.
+    - `remove_static_lease`: Remove an existing static DHCP lease.
+  - **DNS Configuration:**
+    - `get_dns_config`: Retrieve current DNS settings including upstream servers and cache configuration.
+    - `set_dns_config`: Update DNS settings including upstream servers and cache configuration.
+    - `clear_dns_cache`: Flush the DNS cache.
+  - **Analytics & Reporting:**
+    - `get_top_blocked_domains`: List the most frequently blocked domains.
+    - `get_client_activity_report`: Summarize recent activity and top domains for a specific client.
+  - **Access Control:**
+    - `get_access_list`: Get the global access control lists (allowed/disallowed clients and blocked hosts).
+    - `update_access_list`: Update the global access control lists.
   - **Monitoring:**
     - `get_stats`: Get global statistics (total queries, blocked, etc.).
     - `get_query_log`: Search and filter the DNS query log.
@@ -83,6 +107,7 @@ The server can be configured via CLI arguments or environment variables.
 | `--transport` | `ADGUARD_MCP_TRANSPORT` | Transport mode (`stdio` or `http`) | `stdio` |
 | `--http-port` | `ADGUARD_HTTP_PORT` | Port for HTTP transport | `3000` |
 | `--http-token` | `ADGUARD_HTTP_AUTH_TOKEN` | Bearer token for HTTP security | - |
+| `--no-verify-ssl` | `ADGUARD_NO_VERIFY_SSL` | Disable SSL certificate verification | `true` |
 | `--lazy` | `ADGUARD_LAZY_MODE` | Enable token-optimized lazy loading | `false` |
 | `--log-level` | `ADGUARD_LOG_LEVEL` | Log level (`info`, `debug`, etc.) | `info` |
 
