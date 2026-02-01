@@ -8,7 +8,7 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
     - [x] Add unit tests for client API calls.
 - [x] Task: Conductor - User Manual Verification 'API Client Expansion (Clients)' (Protocol in workflow.md)
 
-## Phase 2: MCP Tool Implementation (Clients)
+## Phase 2: MCP Tool Implementation (Clients) [checkpoint: e470267beb556befbd72a5993db4e0be61a40db6]
 - [x] Task: Register Client tools in `McpServer`
     - [x] Add `list_clients` tool definition and handler.
     - [x] Add `get_client_info` tool definition and handler.
