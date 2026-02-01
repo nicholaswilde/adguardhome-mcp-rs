@@ -27,8 +27,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [Access Control](./tracks/access_control/index.md) - Manage global allowed/blocked client lists.
 
-- [x] [Filtering Rule Debugger](./tracks/filtering_debugger/index.md) - Tool to check why a domain is blocked or allowed.
-
 
 
 
