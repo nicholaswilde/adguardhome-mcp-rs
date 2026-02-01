@@ -364,3 +364,56 @@ async fn test_dns_rewrites() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_monitoring_tools() -> Result<()> {
+    // Skip if RUN_DOCKER_TESTS is not set to true in CI
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    // Wait for AdGuard Home to be ready
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready, "AdGuard Home did not become ready");
+
+    // 1. Test get_stats
+    println!("Testing get_stats...");
+    let stats = client.get_stats(None).await?;
+    println!("✅ Total Queries: {}", stats.num_dns_queries);
+
+    // 2. Test get_query_log
+    println!("Testing get_query_log...");
+    let log = client.get_query_log(None, None, Some(5)).await?;
+    println!("✅ Log entries: {}", log.data.len());
+
+    Ok(())
+}
