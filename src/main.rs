@@ -1266,6 +1266,46 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register check_filtering
+    registry.register(
+        "check_filtering",
+        "Check how a domain is filtered by AdGuard Home, identifying specific rules or lists that affect it.",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "domain": { "type": "string", "description": "The domain name to check" },
+                "client": { "type": "string", "description": "Optional IP or Name of the client checking the domain" }
+            },
+            "required": ["domain"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let domain = params["domain"].as_str().unwrap_or_default().to_string();
+            let client_id = params["client"].as_str().map(|s| s.to_string());
+            async move {
+                let result = client.check_host(&domain, client_id.as_deref()).await?;
+                let mut text = format!("Filtering status for {}:\n", domain);
+                text.push_str(&format!("Result: {}\n", result.reason));
+                if let Some(rule) = result.rule {
+                    text.push_str(&format!("Matched Rule: {}\n", rule));
+                }
+                if let Some(filter_id) = result.filter_id {
+                    text.push_str(&format!("Filter ID: {}\n", filter_id));
+                }
+                if let Some(rules) = result.rules.filter(|r| !r.is_empty()) {
+                    text.push_str("\nAll Matched Rules:\n");
+                    for r in rules {
+                        text.push_str(&format!("- {} (Filter {})\n", r.text, r.filter_id));
+                    }
+                }
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": text }]
+                }))
+            }
+        },
+    );
+
     let server = McpServer::new(adguard_client, registry, config.clone());
 
     match config.mcp_transport.as_str() {

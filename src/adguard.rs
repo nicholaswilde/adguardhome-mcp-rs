@@ -196,6 +196,20 @@ pub struct AccessList {
     pub blocked_hosts: Vec<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FilterCheckResponse {
+    pub reason: String,
+    pub filter_id: Option<i64>,
+    pub rule: Option<String>,
+    pub rules: Option<Vec<FilterCheckMatchedRule>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FilterCheckMatchedRule {
+    pub filter_id: i64,
+    pub text: String,
+}
+
 impl AdGuardClient {
     pub fn new(config: AppConfig) -> Self {
         let client = reqwest::Client::builder()
@@ -762,6 +776,33 @@ impl AdGuardClient {
 
         request.send().await?.error_for_status()?;
         Ok(())
+    }
+
+    pub async fn check_host(
+        &self,
+        name: &str,
+        client: Option<&str>,
+    ) -> Result<FilterCheckResponse> {
+        let mut url = format!(
+            "http://{}:{}/control/filtering/check_host",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        url.push_str(&format!("?name={}", name));
+        if let Some(c) = client {
+            url.push_str(&format!("&client={}", c));
+        }
+
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let result = response.json::<FilterCheckResponse>().await?;
+        Ok(result)
     }
 }
 
@@ -1855,5 +1896,41 @@ mod tests {
             blocked_hosts: vec!["malicious.com".to_string()],
         };
         client.set_access_list(list).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_check_host() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/filtering/check_host"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "reason": "FilteredBlackList",
+                "filter_id": 1,
+                "rule": "||example.com^"
+            })))
+            .mount(&server)
+            .await;
+
+        let result = client.check_host("example.com", None).await.unwrap();
+        assert_eq!(result.reason, "FilteredBlackList");
+        assert_eq!(result.rule.unwrap(), "||example.com^");
     }
 }
