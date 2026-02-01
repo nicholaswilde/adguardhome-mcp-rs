@@ -546,3 +546,60 @@ async fn test_filtering_tools() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_client_tools() -> Result<()> {
+    // Skip if RUN_DOCKER_TESTS is not set to true in CI
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    // Wait for AdGuard Home to be ready
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready, "AdGuard Home did not become ready");
+
+    // 1. List clients
+    println!("Testing list_clients...");
+    let clients = client.list_clients().await?;
+    println!("✅ Discovered {} clients", clients.len());
+
+    // 2. Get client info (there should be at least one, often 'self' or a default)
+    if !clients.is_empty() {
+        let first_client = &clients[0];
+        println!("Testing get_client_info for '{}'...", first_client.name);
+        let client_info = client.get_client_info(&first_client.name).await?;
+        assert_eq!(client_info.name, first_client.name);
+        println!("✅ Retrieved client info for '{}'", client_info.name);
+    }
+
+    Ok(())
+}

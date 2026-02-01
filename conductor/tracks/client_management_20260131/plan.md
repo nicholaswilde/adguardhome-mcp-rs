@@ -17,7 +17,7 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
 - [x] Task: Conductor - User Manual Verification 'MCP Tool Implementation (Clients)' (Protocol in workflow.md)
 
 ## Phase 3: Integration Testing (Clients)
-- [ ] Task: Add Docker Integration Tests for Clients
-    - [ ] Update `tests/docker_integration_test.rs` to verify client listing and detailed info retrieval.
-    - [ ] Ensure `task test:ci` passes.
-- [ ] Task: Conductor - User Manual Verification 'Integration Testing (Clients)' (Protocol in workflow.md)
+- [x] Task: Add Docker Integration Tests for Clients
+    - [x] Update `tests/docker_integration_test.rs` to verify client listing and detailed info retrieval.
+    - [x] Ensure `task test:ci` passes.
+- [x] Task: Conductor - User Manual Verification 'Integration Testing (Clients)' (Protocol in workflow.md)
