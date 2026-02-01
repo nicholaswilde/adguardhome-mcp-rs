@@ -18,3 +18,4 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 - **Network Accessibility:** Support for HTTP/SSE transport, allowing connection over the network with Bearer Token authentication.
 - **Log Intelligence (RAG):** Capabilities for retrieval-augmented generation to allow AI models to analyze historical logs and identify trends or anomalies.
 - **Smart Client Management:** Automated discovery and configuration of network clients using AI-driven commands.
+- **Dynamic DNS Rewrites:** Tools to list, add, and remove DNS rewrite entries, enabling AI-driven network-wide domain redirections.
