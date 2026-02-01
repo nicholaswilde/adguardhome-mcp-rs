@@ -288,3 +288,74 @@ users:
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_dns_rewrites() -> Result<()> {
+    // Skip if RUN_DOCKER_TESTS is not set to true in CI
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+    };
+    let client = AdGuardClient::new(config);
+
+    // Wait for AdGuard Home to be ready
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready, "AdGuard Home did not become ready");
+
+    let rewrite = adguardhome_mcp_rs::adguard::DnsRewrite {
+        domain: "test.example.com".to_string(),
+        answer: "1.1.1.1".to_string(),
+    };
+
+    // 1. Add rewrite
+    println!("Adding DNS rewrite...");
+    client.add_rewrite(rewrite.clone()).await?;
+
+    // 2. List rewrites
+    println!("Listing DNS rewrites...");
+    let rewrites = client.list_rewrites().await?;
+    let found = rewrites
+        .iter()
+        .any(|r| r.domain == rewrite.domain && r.answer == rewrite.answer);
+    assert!(found, "Added DNS rewrite not found in list");
+
+    // 3. Delete rewrite
+    println!("Deleting DNS rewrite...");
+    client.delete_rewrite(rewrite.clone()).await?;
+
+    // 4. List rewrites again
+    println!("Verifying DNS rewrite deletion...");
+    let rewrites = client.list_rewrites().await?;
+    let found = rewrites
+        .iter()
+        .any(|r| r.domain == rewrite.domain && r.answer == rewrite.answer);
+    assert!(!found, "Deleted DNS rewrite still found in list");
+
+    Ok(())
+}
