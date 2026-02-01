@@ -300,11 +300,9 @@ jobs:
             export TARGET_HASH="$HASH"
             export TARGET_NAME="$target"
             
-            perl -i -0777 -pe 's/(url ".*?adguardhome-mcp-rs-.*?-'"$TARGET_NAME"'\.tar\.gz"\n\s+sha256\s+")[a-f0-9]+"/
-$1'"$TARGET_HASH"'"/g' $FORMULA
+            perl -i -0777 -pe 's/(url ".*?adguardhome-mcp-rs-.*?-'"$TARGET_NAME"'\.tar\.gz"\n\s+sha256\s+")[a-f0-9]+"/$1'"$TARGET_HASH"'"/g' $FORMULA
             perl -i -0777 -pe 's/(url\s+").*?adguardhome-mcp-rs-.*?-'"$TARGET_NAME"'\.tar\.gz"/\1'"$TARGET_URL"'"/g' $FORMULA
-            perl -i -0777 -pe 's/(bin\.install\s+"adguardhome-mcp-rs-).*?-'"$TARGET_NAME"'\/(adguardhome-mcp-rs")/
-$1'"$VERSION"'-'"$TARGET_NAME"'\/\2/g' $FORMULA
+            perl -i -0777 -pe 's/(bin\.install\s+"adguardhome-mcp-rs-).*?-'"$TARGET_NAME"'\/(adguardhome-mcp-rs")/$1'"$VERSION"'-'"$TARGET_NAME"'\/\2/g' $FORMULA
           done
 
       - name: Commit and push
