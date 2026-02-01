@@ -370,6 +370,133 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register list_filter_lists
+    registry.register(
+        "list_filter_lists",
+        "List all configured filter lists",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                let config = client.list_filters().await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": serde_json::to_string_pretty(&config)?
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
+    // Register toggle_filter_list
+    registry.register(
+        "toggle_filter_list",
+        "Enable or disable a filter list by Name, ID, or URL",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "description": "Name, ID, or URL of the filter list"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "description": "True to enable, false to disable"
+                }
+            },
+            "required": ["identifier", "enabled"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let identifier = params["identifier"].as_str().unwrap_or_default().to_string();
+            let enabled = params["enabled"].as_bool().unwrap_or(true);
+            async move {
+                let config = client.list_filters().await?;
+                let filter = config
+                    .filters
+                    .iter()
+                    .chain(config.whitelist_filters.iter())
+                    .find(|f| {
+                        f.name == identifier || f.url == identifier || f.id.to_string() == identifier
+                    });
+
+                if let Some(f) = filter {
+                    client
+                        .toggle_filter(f.url.clone(), f.name.clone(), enabled)
+                        .await?;
+                    Ok(serde_json::json!({
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": format!("Filter '{}' {}", f.name, if enabled { "enabled" } else { "disabled" })
+                            }
+                        ]
+                    }))
+                } else {
+                    Ok(serde_json::json!({
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": format!("Filter '{}' not found", identifier)
+                            }
+                        ],
+                        "isError": true
+                    }))
+                }
+            }
+        },
+    );
+
+    // Register add_filter_list
+    registry.register(
+        "add_filter_list",
+        "Add a new filter list",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Name of the filter list"
+                },
+                "url": {
+                    "type": "string",
+                    "description": "URL of the filter list"
+                },
+                "whitelist": {
+                    "type": "boolean",
+                    "description": "True if this is an allowlist (whitelist), false if blocklist",
+                    "default": false
+                }
+            },
+            "required": ["name", "url"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let name = params["name"].as_str().unwrap_or_default().to_string();
+            let url = params["url"].as_str().unwrap_or_default().to_string();
+            let whitelist = params["whitelist"].as_bool().unwrap_or(false);
+            async move {
+                client.add_filter(name.clone(), url, whitelist).await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": format!("Filter '{}' added successfully", name)
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
     let server = McpServer::new(adguard_client, registry, config.clone());
 
     match config.mcp_transport.as_str() {

@@ -9,11 +9,13 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
 - [x] Task: Conductor - User Manual Verification 'API Client Expansion (Filtering)' (Protocol in workflow.md)
 
 ## Phase 2: MCP Tool Implementation (Filtering)
-- [ ] Task: Register Filtering tools in `McpServer`
-    - [ ] Add `list_filter_lists`, `toggle_filter_list`, and `add_filter_list` tool definitions and handlers.
-    - [ ] Implement logic to find filters by either Name or ID.
-    - [ ] Verify tool registration via `list_tools`.
-- [ ] Task: Conductor - User Manual Verification 'MCP Tool Implementation (Filtering)' (Protocol in workflow.md)
+- [x] Task: Register Filtering tools in `McpServer`
+    - [x] Add `list_filter_lists` tool definition and handler.
+    - [x] Add `toggle_filter_list` tool definition and handler.
+    - [x] Add `add_filter_list` tool definition and handler.
+    - [x] Implement logic to find filters by either Name or ID.
+    - [x] Verify tool registration via `list_tools`.
+- [x] Task: Conductor - User Manual Verification 'MCP Tool Implementation (Filtering)' (Protocol in workflow.md)
 
 ## Phase 3: Integration Testing (Filtering)
 - [ ] Task: Add Docker Integration Tests for Filtering
