@@ -43,6 +43,14 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
   - **Management (Lazy Mode only):**
     - `manage_tools`: List and enable/disable available tools.
 
+## :package: Installation
+
+### Homebrew
+
+```bash
+brew install nicholaswilde/tap/adguardhome-mcp-rs
+```
+
 ## :hammer_and_wrench: Build
 
 To build the project, you need a Rust toolchain installed.
