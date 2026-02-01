@@ -1,6 +1,7 @@
 # :crab: AdGuard Home MCP RS :robot:
 
 [![task](https://img.shields.io/badge/Task-Enabled-brightgreen?style=for-the-badge&logo=task&logoColor=white)](https://taskfile.dev/#/)
+[![ci](https://img.shields.io/github/actions/workflow/status/nicholaswilde/adguardhome-mcp-rs/ci.yml?label=ci&style=for-the-badge&branch=main)](https://github.com/nicholaswilde/adguardhome-mcp-rs/actions/workflows/ci.yml)
 
 > [!WARNING]
 > This project is currently in active development (v0.1.0) and is **not production-ready**. Features may change, and breaking changes may occur without notice.
@@ -38,7 +39,7 @@ The binary will be available at `target/release/adguardhome-mcp-rs`.
 The server can be configured via CLI arguments or environment variables.
 
 ```bash
-./target/release/adguardhome-mcp-rs --adguard-url "http://192.168.1.10:8080" --adguard-username "admin" --adguard-password "yourpassword"
+./target/release/adguardhome-mcp-rs --adguard-host "192.168.1.10" --adguard-port 8080 --adguard-username "admin" --adguard-password "yourpassword"
 ```
 
 #### Available Arguments
@@ -46,7 +47,8 @@ The server can be configured via CLI arguments or environment variables.
 | Argument | Environment Variable | Description | Default |
 | :--- | :--- | :--- | :--- |
 | `-c, --config` | - | Path to configuration file | `config.toml` |
-| `--adguard-url` | `ADGUARD_URL` | AdGuard Home instance URL | (Required) |
+| `--adguard-host` | `ADGUARD_HOST` | AdGuard Home instance host | (Required) |
+| `--adguard-port` | `ADGUARD_PORT` | AdGuard Home instance port | `3000` |
 | `--adguard-username` | `ADGUARD_USERNAME` | AdGuard Home username | - |
 | `--adguard-password` | `ADGUARD_PASSWORD` | AdGuard Home password | - |
 | `--transport` | `ADGUARD_MCP_TRANSPORT` | Transport mode (`stdio` or `http`) | `stdio` |
@@ -62,7 +64,8 @@ The server automatically looks for `config.toml`, `config.yaml`, or `config.json
 Example `config.toml`:
 
 ```toml
-adguard_url = "http://192.168.1.10:8080"
+adguard_host = "192.168.1.10"
+adguard_port = 8080
 adguard_username = "admin"
 adguard_password = "yourpassword"
 mcp_transport = "http"
@@ -81,7 +84,8 @@ Add the following to your `claude_desktop_config.json`:
     "adguardhome": {
       "command": "/path/to/adguardhome-mcp-rs/target/release/adguardhome-mcp-rs",
       "args": [
-        "--adguard-url", "http://192.168.1.10:8080",
+        "--adguard-host", "192.168.1.10",
+        "--adguard-port", "8080",
         "--adguard-username", "admin",
         "--adguard-password", "yourpassword"
       ]

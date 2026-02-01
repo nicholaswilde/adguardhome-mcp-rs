@@ -1,8 +1,11 @@
 # AdGuard Home MCP Server Configuration Example
 
 # AdGuard Home Connection Settings
-# URL of your AdGuard Home instance (Required)
-adguard_url = "http://192.168.1.10:8080"
+# Host of your AdGuard Home instance (Required)
+adguard_host = "192.168.1.10"
+
+# Port of your AdGuard Home instance (Optional, Default: 3000)
+adguard_port = 8080
 
 # AdGuard Home Authentication (Optional if not enabled on instance)
 adguard_username = "admin"
