@@ -2,11 +2,11 @@
 
 This plan follows the Test-Driven Development (TDD) approach and the Phase Completion Verification protocol defined in the project workflow.
 
-## Phase 1: API Client Expansion (Filtering)
+## Phase 1: API Client Expansion (Filtering) [checkpoint: f4f56b851eb517c04d41cde6dea5a863c52c5235]
 - [x] Task: Implement Filtering methods in `AdGuardClient`
     - [x] Add `list_filters`, `toggle_filter`, and `add_filter` methods to `src/adguard.rs`.
     - [x] Add unit tests for filtering API interactions.
-- [~] Task: Conductor - User Manual Verification 'API Client Expansion (Filtering)' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'API Client Expansion (Filtering)' (Protocol in workflow.md)
 
 ## Phase 2: MCP Tool Implementation (Filtering)
 - [ ] Task: Register Filtering tools in `McpServer`
