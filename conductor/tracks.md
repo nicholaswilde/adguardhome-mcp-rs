@@ -4,11 +4,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Monitoring & Statistics Tools (get_stats, get_query_log)**
-*Link: [./tracks/monitoring_stats_20260131/](./tracks/monitoring_stats_20260131/)*
-
----
-
 - [ ] **Track: Protection Control Tools (global and safety features)**
 *Link: [./tracks/protection_controls_20260131/](./tracks/protection_controls_20260131/)*
 
