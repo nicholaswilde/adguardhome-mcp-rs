@@ -18,7 +18,7 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
 - [x] Task: Conductor - User Manual Verification 'MCP Tool Implementation (Filtering)' (Protocol in workflow.md)
 
 ## Phase 3: Integration Testing (Filtering)
-- [ ] Task: Add Docker Integration Tests for Filtering
-    - [ ] Update `tests/docker_integration_test.rs` to verify adding and toggling filters on a live instance.
-    - [ ] Ensure `task test:ci` passes.
-- [ ] Task: Conductor - User Manual Verification 'Integration Testing (Filtering)' (Protocol in workflow.md)
+- [x] Task: Add Docker Integration Tests for Filtering
+    - [x] Update `tests/docker_integration_test.rs` to verify adding and toggling filters on a live instance.
+    - [x] Ensure `task test:ci` passes.
+- [x] Task: Conductor - User Manual Verification 'Integration Testing (Filtering)' (Protocol in workflow.md)

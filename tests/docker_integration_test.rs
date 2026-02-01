@@ -476,3 +476,73 @@ async fn test_protection_tools() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_filtering_tools() -> Result<()> {
+    // Skip if RUN_DOCKER_TESTS is not set to true in CI
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        println!("Skipping Docker integration test (RUN_DOCKER_TESTS not set to true)");
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    // Wait for AdGuard Home to be ready
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready, "AdGuard Home did not become ready");
+
+    // 1. Add filter
+    println!("Adding filter list...");
+    let filter_name = "Integration Test Filter".to_string();
+    let filter_url = "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt".to_string();
+    client
+        .add_filter(filter_name.clone(), filter_url.clone(), false)
+        .await?;
+
+    // 2. List filters
+    println!("Listing filters...");
+    let filtering = client.list_filters().await?;
+    let found = filtering.filters.iter().any(|f| f.name == filter_name);
+    assert!(found, "Added filter list not found in list");
+
+    // 3. Toggle filter
+    println!("Toggling filter list...");
+    client
+        .toggle_filter(filter_url.clone(), filter_name.clone(), false)
+        .await?;
+    let filtering = client.list_filters().await?;
+    let filter = filtering
+        .filters
+        .iter()
+        .find(|f| f.name == filter_name)
+        .expect("Filter not found after toggle");
+    assert!(!filter.enabled, "Filter was not disabled");
+
+    Ok(())
+}
