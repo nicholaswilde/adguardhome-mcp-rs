@@ -150,6 +150,11 @@ jobs:
         curl -LO "https://github.com/cross-rs/cross/releases/download/$CROSS_VERSION/cross-x86_64-unknown-linux-musl.tar.gz"
         tar xf cross-x86_64-unknown-linux-musl.tar.gz
         echo "CARGO=cross" >> $GITHUB_ENV
+        
+        # Force using more recent images to avoid glibc issues with newer crates
+        cd "$GITHUB_WORKSPACE"
+        echo "[target.${{ matrix.target }}]" > Cross.toml
+        echo "image = \"ghcr.io/cross-rs/${{ matrix.target }}:main\"" >> Cross.toml
 
     - name: Set target variables
       shell: bash
