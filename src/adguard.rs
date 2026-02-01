@@ -23,7 +23,10 @@ pub struct DnsRewrite {
 
 impl AdGuardClient {
     pub fn new(config: AppConfig) -> Self {
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder()
+            .danger_accept_invalid_certs(config.no_verify_ssl)
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
         Self { client, config }
     }
 
