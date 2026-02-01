@@ -8,13 +8,13 @@ This plan follows the Test-Driven Development (TDD) approach and the Phase Compl
     - [x] Update `AdGuardClient` unit tests to cover success and failure cases for these new methods.
 - [x] Task: Conductor - User Manual Verification 'API Client Expansion' (Protocol in workflow.md)
 
-## Phase 2: MCP Tool Implementation
+## Phase 2: MCP Tool Implementation [checkpoint: aab6ce86e03481ced645ecd5926f0dcb5fa1e8d9]
 - [x] Task: Register DNS Rewrite tools in `McpServer`
     - [x] Add `list_dns_rewrites` tool definition and handler.
     - [x] Add `add_dns_rewrite` tool definition and handler.
     - [x] Add `remove_dns_rewrite` tool definition and handler.
     - [x] Verify tool registration via binary execution (`list_tools`).
-- [~] Task: Conductor - User Manual Verification 'MCP Tool Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'MCP Tool Implementation' (Protocol in workflow.md)
 
 ## Phase 3: Integration Testing
 - [ ] Task: Add Docker Integration Tests for DNS Rewrites
