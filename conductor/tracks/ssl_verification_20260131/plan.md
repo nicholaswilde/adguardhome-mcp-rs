@@ -3,14 +3,14 @@
 This plan follows the Test-Driven Development (TDD) approach and the Phase Completion Verification protocol defined in the project workflow.
 
 ## Phase 1: Configuration Update
-- [ ] Task: Red Phase - Update Configuration Unit Tests
-    - [ ] Update tests in `src/config.rs` to include `no_verify_ssl` cases.
-    - [ ] Verify that tests fail as expected.
-- [ ] Task: Green Phase - Implement `no_verify_ssl` in `AppConfig`
-    - [ ] Add `no_verify_ssl` field to `AppConfig` in `src/config.rs`.
-    - [ ] Update `parse_args` and `load` logic to map CLI, Env, and File sources.
-    - [ ] Run `task test:ci` and ensure configuration unit tests pass.
-- [ ] Task: Conductor - User Manual Verification 'Configuration Update' (Protocol in workflow.md)
+- [x] Task: Red Phase - Update Configuration Unit Tests
+    - [x] Update tests in `src/config.rs` to include `no_verify_ssl` cases.
+    - [x] Verify that tests fail as expected.
+- [x] Task: Green Phase - Implement `no_verify_ssl` in `AppConfig`
+    - [x] Add `no_verify_ssl` field to `AppConfig` in `src/config.rs`.
+    - [x] Update `parse_args` and `load` logic to map CLI, Env, and File sources.
+    - [x] Run `task test:ci` and ensure configuration unit tests pass.
+- [~] Task: Conductor - User Manual Verification 'Configuration Update' (Protocol in workflow.md)
 
 ## Phase 2: Client Integration
 - [ ] Task: Refactor `AdGuardClient` Initialization

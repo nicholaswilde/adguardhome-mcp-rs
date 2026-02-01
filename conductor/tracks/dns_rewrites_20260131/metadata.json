@@ -1,8 +1,0 @@
-{
-  "track_id": "dns_rewrites_20260131",
-  "type": "feature",
-  "status": "new",
-  "created_at": "2026-01-31T13:00:00Z",
-  "updated_at": "2026-01-31T13:00:00Z",
-  "description": "add mcp server tools to list, add, and remove dns rewrites from adguard home"
-}

@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: add a verify ssl option to optionally verify the ssl connection. Use qbittorrent-mcp-rs as an example**
+- [~] **Track: add a verify ssl option to optionally verify the ssl connection. Use qbittorrent-mcp-rs as an example**
 *Link: [./tracks/ssl_verification_20260131/](./tracks/ssl_verification_20260131/)*
 
 ---

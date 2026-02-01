@@ -87,6 +87,7 @@ async fn test_mcp_http_transport() -> Result<()> {
         http_port: 0, // OS assigned
         http_auth_token: Some("test-token".to_string()),
         log_level: "info".to_string(),
+        no_verify_ssl: true,
     };
 
     let adguard_client = AdGuardClient::new(config.clone());
@@ -162,6 +163,7 @@ async fn test_adguardhome_no_auth() -> Result<()> {
         http_port: 3000,
         http_auth_token: None,
         log_level: "info".to_string(),
+        no_verify_ssl: true,
     };
     let client = AdGuardClient::new(config);
 
@@ -226,6 +228,7 @@ users:
         http_port: 3000,
         http_auth_token: None,
         log_level: "info".to_string(),
+        no_verify_ssl: true,
     };
     let client_no_auth = AdGuardClient::new(config_no_auth);
 
@@ -265,6 +268,7 @@ users:
         http_port: 3000,
         http_auth_token: None,
         log_level: "info".to_string(),
+        no_verify_ssl: true,
     };
     let client_auth = AdGuardClient::new(config_auth);
 
@@ -314,6 +318,7 @@ async fn test_dns_rewrites() -> Result<()> {
         http_port: 3000,
         http_auth_token: None,
         log_level: "info".to_string(),
+        no_verify_ssl: true,
     };
     let client = AdGuardClient::new(config);
 

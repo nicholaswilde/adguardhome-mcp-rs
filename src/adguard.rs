@@ -115,6 +115,7 @@ mod tests {
             http_port: 3000,
             http_auth_token: None,
             log_level: "info".to_string(),
+            no_verify_ssl: true,
         }
     }
 
