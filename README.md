@@ -20,6 +20,9 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
 - **Token Optimization:** "Lazy Mode" initially exposes a minimal toolset to save AI context tokens, loading more tools only on demand.
 - **Tools:**
   - `get_status`: Get AdGuard Home status, version, and protection state.
+  - `list_dns_rewrites`: List all DNS rewrites.
+  - `add_dns_rewrite`: Add a new DNS rewrite (domain, answer).
+  - `remove_dns_rewrite`: Remove a DNS rewrite (domain, answer).
   - `manage_tools`: (Lazy Mode only) List and enable/disable available tools.
 
 ## :hammer_and_wrench: Build
