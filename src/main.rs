@@ -182,6 +182,30 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register clear_stats
+    registry.register(
+        "clear_stats",
+        "Reset all statistics",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                client.reset_stats().await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Statistics cleared successfully"
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
     // Register get_query_log
     registry.register(
         "get_query_log",
@@ -235,6 +259,30 @@ async fn main() -> anyhow::Result<()> {
                         {
                             "type": "text",
                             "text": text
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
+    // Register clear_query_log
+    registry.register(
+        "clear_query_log",
+        "Clear the DNS query log",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                client.clear_query_log().await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Query log cleared successfully"
                         }
                     ]
                 }))

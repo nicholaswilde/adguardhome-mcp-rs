@@ -797,3 +797,49 @@ async fn test_check_filtering() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_maintenance_tools_integration() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready);
+
+    // Call reset_stats
+    client.reset_stats().await?;
+
+    // Call clear_query_log
+    client.clear_query_log().await?;
+
+    Ok(())
+}

@@ -804,6 +804,40 @@ impl AdGuardClient {
         let result = response.json::<FilterCheckResponse>().await?;
         Ok(result)
     }
+
+    pub async fn reset_stats(&self) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/stats_reset",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn clear_query_log(&self) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/querylog_clear",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -825,6 +859,66 @@ mod tests {
             log_level: "info".to_string(),
             no_verify_ssl: true,
         }
+    }
+
+    #[tokio::test]
+    async fn test_reset_stats() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/stats_reset"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client.reset_stats().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_clear_query_log() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/querylog_clear"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client.clear_query_log().await.unwrap();
     }
 
     #[tokio::test]
