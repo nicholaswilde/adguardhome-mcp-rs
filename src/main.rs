@@ -573,12 +573,12 @@ async fn main() -> anyhow::Result<()> {
             async move {
                 // First, find the filter to get its URL and whitelist status if not provided
                 let config = client.list_filters().await?;
-                
+
                 // Try to find in blocklists first
                 let filter_block = config.filters.iter().find(|f| {
                     f.name == identifier || f.url == identifier || f.id.to_string() == identifier
                 });
-                
+
                 // Try to find in whitelists
                 let filter_white = config.whitelist_filters.iter().find(|f| {
                     f.name == identifier || f.url == identifier || f.id.to_string() == identifier
@@ -604,12 +604,12 @@ async fn main() -> anyhow::Result<()> {
                 // Or just use what we found. The API needs the correct whitelist status.
                 // If user provided wrong whitelist status, the API call might fail or delete wrong list if collision (unlikely).
                 // Let's trust our discovery.
-                
+
                 // If the user explicitly passed a whitelist param, we could check if it matches, but auto-discovery is better UX.
                 // But if they provided it, we should perhaps respect it if we didn't find it? No, we must find it to get the URL if identifier was name/ID.
 
                 client.remove_filter(target_url, is_whitelist).await?;
-                
+
                 Ok(serde_json::json!({
                     "content": [
                         {
@@ -651,18 +651,21 @@ async fn main() -> anyhow::Result<()> {
         |client, params| {
             let client = client.clone();
             let params = params.unwrap_or_default();
-            let identifier = params["identifier"].as_str().unwrap_or_default().to_string();
+            let identifier = params["identifier"]
+                .as_str()
+                .unwrap_or_default()
+                .to_string();
             let new_name = params["new_name"].as_str().map(|s| s.to_string());
             let new_url = params["new_url"].as_str().map(|s| s.to_string());
             let enabled_opt = params["enabled"].as_bool();
 
             async move {
                 let config = client.list_filters().await?;
-                
+
                 let filter_block = config.filters.iter().find(|f| {
                     f.name == identifier || f.url == identifier || f.id.to_string() == identifier
                 });
-                
+
                 let filter_white = config.whitelist_filters.iter().find(|f| {
                     f.name == identifier || f.url == identifier || f.id.to_string() == identifier
                 });
@@ -673,13 +676,15 @@ async fn main() -> anyhow::Result<()> {
                     let url_to_use = new_url.unwrap_or_else(|| f.url.clone());
                     let enabled_to_use = enabled_opt.unwrap_or(f.enabled);
 
-                    client.update_filter(
-                        f.url.clone(),
-                        url_to_use,
-                        name_to_use.clone(),
-                        is_whitelist,
-                        enabled_to_use
-                    ).await?;
+                    client
+                        .update_filter(
+                            f.url.clone(),
+                            url_to_use,
+                            name_to_use.clone(),
+                            is_whitelist,
+                            enabled_to_use,
+                        )
+                        .await?;
 
                     Ok(serde_json::json!({
                         "content": [
@@ -1581,7 +1586,7 @@ async fn main() -> anyhow::Result<()> {
                     if let Some(pixabay) = safe_search_val.get("pixabay").and_then(|v| v.as_bool()) { current.pixabay = pixabay; }
                     if let Some(yandex) = safe_search_val.get("yandex").and_then(|v| v.as_bool()) { current.yandex = yandex; }
                     if let Some(youtube) = safe_search_val.get("youtube").and_then(|v| v.as_bool()) { current.youtube = youtube; }
-                    
+
                     client.set_safe_search_settings(current).await?;
                 }
 
@@ -1589,7 +1594,7 @@ async fn main() -> anyhow::Result<()> {
                     let mut current = client.get_parental_settings().await?;
                     if let Some(enabled) = parental_val.get("enabled").and_then(|v| v.as_bool()) { current.enabled = enabled; }
                     if let Some(sensitivity) = parental_val.get("sensitivity").and_then(|v| v.as_u64()) { current.sensitivity = Some(sensitivity as u32); }
-                    
+
                     client.set_parental_settings(current).await?;
                 }
 

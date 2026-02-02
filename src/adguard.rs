@@ -383,7 +383,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_parental_settings(&self) -> Result<ParentalControlConfig> {
-        // Note: AdGuard Home API for parental settings might vary. 
+        // Note: AdGuard Home API for parental settings might vary.
         // Assuming /control/parental/status or /control/parental/settings
         // Common pattern implies /control/parental/status returns the enabled state and potentially others.
         // But the task description specifically mentioned /control/parental/settings.
@@ -411,13 +411,13 @@ impl AdGuardClient {
     // However, looking at standard API, parental control is often just a toggle.
     // But maybe the "advanced" part implies we can set it.
     // Let's assume there is a POST /control/parental/enable and POST /control/parental/disable (which we already have).
-    // Is there a generic "set settings"? 
+    // Is there a generic "set settings"?
     // The plan says `/control/parental/settings`. Let's assume it exists for now or that we map it to enable/disable if it's just that.
     // But if `ParentalControlConfig` has `sensitivity`, we need a way to set it.
     // I'll assume PUT /control/parental/status or POST /control/parental/settings.
     // I'll stick to the plan's path but use PUT usually for updating settings, or POST.
     // Actually, AdGuard Home often uses POST for actions and setting updates.
-    
+
     pub async fn set_parental_settings(&self, settings: ParentalControlConfig) -> Result<()> {
         if settings.enabled {
             self.set_parental_control(true).await?;
@@ -699,10 +699,10 @@ impl AdGuardClient {
             "http://{}:{}/control/filtering/remove_url",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&endpoint).json(&RemoveFilterRequest {
-            url,
-            whitelist,
-        });
+        let mut request = self
+            .client
+            .post(&endpoint)
+            .json(&RemoveFilterRequest { url, whitelist });
 
         if let (Some(user), Some(pass)) =
             (&self.config.adguard_username, &self.config.adguard_password)

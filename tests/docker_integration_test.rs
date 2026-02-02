@@ -883,7 +883,7 @@ async fn test_filter_list_crud_integration() -> Result<()> {
 
     let filter_name = "CRUD Test Filter".to_string();
     let filter_url = "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt".to_string();
-    
+
     // Add
     client
         .add_filter(filter_name.clone(), filter_url.clone(), false)
@@ -903,13 +903,13 @@ async fn test_filter_list_crud_integration() -> Result<()> {
             true,
         )
         .await?;
-        
+
     let filtering = client.list_filters().await?;
     assert!(filtering.filters.iter().any(|f| f.name == new_name));
 
     // Remove
     client.remove_filter(filter_url.clone(), false).await?;
-    
+
     let filtering = client.list_filters().await?;
     assert!(!filtering.filters.iter().any(|f| f.url == filter_url));
 
@@ -958,7 +958,7 @@ async fn test_advanced_protection_integration() -> Result<()> {
     // Toggle one of them
     safe_search.bing = !safe_search.bing;
     client.set_safe_search_settings(safe_search.clone()).await?;
-    
+
     let updated_safe_search = client.get_safe_search_settings().await?;
     assert_eq!(updated_safe_search.bing, safe_search.bing);
 
@@ -967,7 +967,7 @@ async fn test_advanced_protection_integration() -> Result<()> {
     // Toggle
     parental.enabled = !parental.enabled;
     client.set_parental_settings(parental.clone()).await?;
-    
+
     let updated_parental = client.get_parental_settings().await?;
     assert_eq!(updated_parental.enabled, parental.enabled);
 
@@ -1013,13 +1013,13 @@ async fn test_query_log_config_integration() -> Result<()> {
 
     // Get current config
     let mut ql_config = client.get_query_log_config().await?;
-    
+
     // Toggle anonymize_client_ip
     let original_val = ql_config.anonymize_client_ip;
     ql_config.anonymize_client_ip = !original_val;
-    
+
     client.set_query_log_config(ql_config.clone()).await?;
-    
+
     let updated_config = client.get_query_log_config().await?;
     assert_eq!(updated_config.anonymize_client_ip, !original_val);
 
