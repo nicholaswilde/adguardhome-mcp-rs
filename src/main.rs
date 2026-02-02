@@ -1755,6 +1755,30 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register restart_service
+    registry.register(
+        "restart_service",
+        "Restart the AdGuard Home service",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                client.restart_service().await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Restart command sent successfully. The server will be unavailable for a moment."
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
     // Register get_top_blocked_domains
     registry.register(
         "get_top_blocked_domains",

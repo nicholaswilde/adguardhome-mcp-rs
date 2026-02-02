@@ -850,6 +850,9 @@ async fn test_maintenance_tools_integration() -> Result<()> {
 
     let _ = tokio::fs::remove_file(backup_path).await;
 
+    // Call restart_service
+    client.restart_service().await?;
+
     Ok(())
 }
 
