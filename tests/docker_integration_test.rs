@@ -915,3 +915,61 @@ async fn test_filter_list_crud_integration() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_advanced_protection_integration() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready);
+
+    // Test Safe Search Settings
+    let mut safe_search = client.get_safe_search_settings().await?;
+    // Toggle one of them
+    safe_search.bing = !safe_search.bing;
+    client.set_safe_search_settings(safe_search.clone()).await?;
+    
+    let updated_safe_search = client.get_safe_search_settings().await?;
+    assert_eq!(updated_safe_search.bing, safe_search.bing);
+
+    // Test Parental Settings
+    let mut parental = client.get_parental_settings().await?;
+    // Toggle
+    parental.enabled = !parental.enabled;
+    client.set_parental_settings(parental.clone()).await?;
+    
+    let updated_parental = client.get_parental_settings().await?;
+    assert_eq!(updated_parental.enabled, parental.enabled);
+
+    Ok(())
+}

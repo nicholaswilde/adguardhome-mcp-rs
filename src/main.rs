@@ -1513,6 +1513,93 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register get_protection_config
+    registry.register(
+        "get_protection_config",
+        "Retrieve current configuration for Safe Search and Parental Control",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                let safe_search = client.get_safe_search_settings().await?;
+                let parental = client.get_parental_settings().await?;
+                let status = client.get_status().await?;
+
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": serde_json::json!({
+                        "global_protection_enabled": status.protection_enabled,
+                        "safe_search": safe_search,
+                        "parental_control": parental
+                    }).to_string() }]
+                }))
+            }
+        },
+    );
+
+    // Register set_protection_config
+    registry.register(
+        "set_protection_config",
+        "Update configuration for Safe Search and Parental Control",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "safe_search": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "bing": { "type": "boolean" },
+                        "duckduckgo": { "type": "boolean" },
+                        "google": { "type": "boolean" },
+                        "pixabay": { "type": "boolean" },
+                        "yandex": { "type": "boolean" },
+                        "youtube": { "type": "boolean" }
+                    }
+                },
+                "parental_control": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "sensitivity": { "type": "integer", "minimum": 0 }
+                    }
+                }
+            }
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            async move {
+                if let Some(safe_search_val) = params.get("safe_search") {
+                    let mut current = client.get_safe_search_settings().await?;
+                    // Merge fields
+                    if let Some(enabled) = safe_search_val.get("enabled").and_then(|v| v.as_bool()) { current.enabled = enabled; }
+                    if let Some(bing) = safe_search_val.get("bing").and_then(|v| v.as_bool()) { current.bing = bing; }
+                    if let Some(duckduckgo) = safe_search_val.get("duckduckgo").and_then(|v| v.as_bool()) { current.duckduckgo = duckduckgo; }
+                    if let Some(google) = safe_search_val.get("google").and_then(|v| v.as_bool()) { current.google = google; }
+                    if let Some(pixabay) = safe_search_val.get("pixabay").and_then(|v| v.as_bool()) { current.pixabay = pixabay; }
+                    if let Some(yandex) = safe_search_val.get("yandex").and_then(|v| v.as_bool()) { current.yandex = yandex; }
+                    if let Some(youtube) = safe_search_val.get("youtube").and_then(|v| v.as_bool()) { current.youtube = youtube; }
+                    
+                    client.set_safe_search_settings(current).await?;
+                }
+
+                if let Some(parental_val) = params.get("parental_control") {
+                    let mut current = client.get_parental_settings().await?;
+                    if let Some(enabled) = parental_val.get("enabled").and_then(|v| v.as_bool()) { current.enabled = enabled; }
+                    if let Some(sensitivity) = parental_val.get("sensitivity").and_then(|v| v.as_u64()) { current.sensitivity = Some(sensitivity as u32); }
+                    
+                    client.set_parental_settings(current).await?;
+                }
+
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": "Protection configuration updated successfully" }]
+                }))
+            }
+        },
+    );
+
     let server = McpServer::new(adguard_client, registry, config.clone());
 
     match config.mcp_transport.as_str() {
