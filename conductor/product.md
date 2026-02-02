@@ -23,3 +23,4 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 - Network Device Inventory: Tools to list and inspect network clients, providing AI models with a complete view of devices and their individual protection status.
 - Filtering Rule Debugger: Tools to check why a specific domain is blocked or allowed, identifying the exact rule responsible.
 - System Maintenance: Tools to clear historical statistics and query logs for privacy and data management.
+- Query Log Management: Tools to configure DNS query log retention, anonymization, and client-specific logging settings.
