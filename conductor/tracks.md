@@ -11,8 +11,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Completed Tracks
 
-- [x] [Filter List Management Completion](./tracks/filter_list_crud_complete/index.md) - Remove and update existing filter lists.
-
 - [Custom Rules Management](./tracks/custom_rules/index.md) - Manage user-defined filtering rules.
 
 - [Blocked Services](./tracks/blocked_services/index.md) - Toggle blocking for platform-level services.
