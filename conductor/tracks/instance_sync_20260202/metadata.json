@@ -1,0 +1,8 @@
+{
+  "track_id": "instance_sync_20260202",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-02T10:00:00Z",
+  "updated_at": "2026-02-02T10:00:00Z",
+  "description": "Add the ability to sync adguard home instances, similar to https://github.com/bakito/adguardhome-sync"
+}
