@@ -1,0 +1,8 @@
+{
+  "track_id": "version_flag_20260202",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-02T00:00:00Z",
+  "updated_at": "2026-02-02T00:00:00Z",
+  "description": "add --version command line switch that shows just the tag name. Don't need to show commit hash nor dirty"
+}
