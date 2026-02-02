@@ -24,7 +24,8 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 - Filtering Rule Debugger: Tools to check why a specific domain is blocked or allowed, identifying the exact rule responsible.
 - System Maintenance: Tools to clear historical statistics and query logs for privacy and data management.
 - Query Log Management: Tools to configure DNS query log retention, anonymization, and client-specific logging settings.
-- Update & System Info: Tools to retrieve version information, check for available updates, and trigger AdGuard Home updates.
-- Blocked Services: Tools to toggle blocking for platform-level services like YouTube, Facebook, and others.
+- **Update & System Info:** Tools to retrieve version information, check for available updates, and trigger AdGuard Home updates.
+- **System Backup & Recovery:** Tools to create and manage AdGuard Home configuration backups for safe maintenance and disaster recovery.
+- **Blocked Services:** Tools to toggle blocking for platform-level services like YouTube, Facebook, and others.
 - Enhanced Analytics: Tools to retrieve top blocked domains and summarized activity reports for specific clients.
 - Custom Rules Management: Tools to manage user-defined filtering rules for granular control over network traffic.
