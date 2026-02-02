@@ -10,8 +10,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Completed Tracks
 
-- [x] [Advanced Protection Configuration](./tracks/advanced_protection_config/index.md) - Fine-tune Safe Search and Parental Control settings.
-
 - [Filter List Management Completion](./tracks/filter_list_crud_complete/index.md) - Remove and update existing filter lists.
 
 
