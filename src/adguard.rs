@@ -271,6 +271,26 @@ pub struct VersionInfo {
     pub new_version: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct TlsConfig {
+    pub enabled: bool,
+    pub server_name: String,
+    pub force_https: bool,
+    pub port_https: u16,
+    pub port_dns_over_tls: u16,
+    pub port_dns_over_quic: u16,
+    pub certificate_chain: String,
+    pub private_key: String,
+    pub certificate_path: String,
+    pub private_key_path: String,
+    #[serde(default)]
+    pub valid_cert: bool,
+    #[serde(default)]
+    pub valid_key: bool,
+    #[serde(default)]
+    pub valid_pair: bool,
+}
+
 impl AdGuardClient {
     pub fn new(config: AppConfig) -> Self {
         let client = reqwest::Client::builder()
@@ -1186,6 +1206,59 @@ impl AdGuardClient {
 
         request.send().await?.error_for_status()?;
         Ok(())
+    }
+
+    pub async fn get_tls_status(&self) -> Result<TlsConfig> {
+        let url = format!(
+            "http://{}:{}/control/tls/status",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let config = response.json::<TlsConfig>().await?;
+        Ok(config)
+    }
+
+    pub async fn configure_tls(&self, config: TlsConfig) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/tls/configure",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&config);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn validate_tls(&self, config: TlsConfig) -> Result<TlsConfig> {
+        let url = format!(
+            "http://{}:{}/control/tls/validate",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&config);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let result = response.json::<TlsConfig>().await?;
+        Ok(result)
     }
 }
 
@@ -2839,5 +2912,51 @@ mod tests {
             .await;
 
         client.restart_service().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_get_tls_status() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/tls/status"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "enabled": true,
+                "server_name": "example.com",
+                "force_https": false,
+                "port_https": 443,
+                "port_dns_over_tls": 853,
+                "port_dns_over_quic": 853,
+                "certificate_chain": "",
+                "private_key": "",
+                "certificate_path": "",
+                "private_key_path": "",
+                "valid_cert": true,
+                "valid_key": true,
+                "valid_pair": true
+            })))
+            .mount(&server)
+            .await;
+
+        let status = client.get_tls_status().await.unwrap();
+        assert!(status.enabled);
+        assert_eq!(status.server_name, "example.com");
     }
 }

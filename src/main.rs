@@ -1779,6 +1779,73 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register get_tls_config
+    registry.register(
+        "get_tls_config",
+        "Retrieve current TLS/SSL configuration",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                let config = client.get_tls_status().await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": serde_json::to_string_pretty(&config)?
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
+    // Register set_tls_config
+    registry.register(
+        "set_tls_config",
+        "Update TLS/SSL configuration",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "enabled": { "type": "boolean" },
+                "server_name": { "type": "string" },
+                "force_https": { "type": "boolean" },
+                "port_https": { "type": "integer" },
+                "port_dns_over_tls": { "type": "integer" },
+                "port_dns_over_quic": { "type": "integer" },
+                "certificate_chain": { "type": "string" },
+                "private_key": { "type": "string" },
+                "certificate_path": { "type": "string" },
+                "private_key_path": { "type": "string" }
+            }
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            async move {
+                let mut config = client.get_tls_status().await?;
+                if let Some(enabled) = params["enabled"].as_bool() { config.enabled = enabled; }
+                if let Some(server_name) = params["server_name"].as_str() { config.server_name = server_name.to_string(); }
+                if let Some(force_https) = params["force_https"].as_bool() { config.force_https = force_https; }
+                if let Some(port_https) = params["port_https"].as_u64() { config.port_https = port_https as u16; }
+                if let Some(port_dns_over_tls) = params["port_dns_over_tls"].as_u64() { config.port_dns_over_tls = port_dns_over_tls as u16; }
+                if let Some(port_dns_over_quic) = params["port_dns_over_quic"].as_u64() { config.port_dns_over_quic = port_dns_over_quic as u16; }
+                if let Some(cert) = params["certificate_chain"].as_str() { config.certificate_chain = cert.to_string(); }
+                if let Some(key) = params["private_key"].as_str() { config.private_key = key.to_string(); }
+                if let Some(cert_path) = params["certificate_path"].as_str() { config.certificate_path = cert_path.to_string(); }
+                if let Some(key_path) = params["private_key_path"].as_str() { config.private_key_path = key_path.to_string(); }
+
+                client.configure_tls(config).await?;
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": "TLS configuration updated successfully" }]
+                }))
+            }
+        },
+    );
+
     // Register get_top_blocked_domains
     registry.register(
         "get_top_blocked_domains",
