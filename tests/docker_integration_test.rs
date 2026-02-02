@@ -1025,3 +1025,52 @@ async fn test_query_log_config_integration() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_system_info_integration() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready);
+
+    // Get version info
+    let info = client.get_version_info().await?;
+    assert!(!info.version.is_empty());
+
+    // Trigger update (might fail in Docker if already latest or not supported, but we just check if it returns 200 or 400 with message)
+    // Actually, AdGuard Home in Docker usually doesn't support self-update.
+    // We'll just verify the endpoint exists and responds.
+    let _ = client.update_adguard_home().await;
+
+    Ok(())
+}

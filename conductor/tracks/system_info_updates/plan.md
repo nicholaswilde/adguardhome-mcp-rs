@@ -1,8 +1,8 @@
 # Implementation Plan - System Info
 
-1. **AdGuard Client Update**:
+1. [x] **AdGuard Client Update**:
    - Add method for `/control/version_info` and `/control/update`.
-2. **Tool Implementation**:
+2. [x] **Tool Implementation**:
    - Implement handlers.
-3. **Verification**:
+3. [x] **Verification**:
    - Verify update check logic.

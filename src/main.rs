@@ -1656,6 +1656,44 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register get_version_info
+    registry.register(
+        "get_version_info",
+        "Get AdGuard Home version information and check for updates",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                let info = client.get_version_info().await?;
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": serde_json::to_string_pretty(&info)? }]
+                }))
+            }
+        },
+    );
+
+    // Register update_adguard_home
+    registry.register(
+        "update_adguard_home",
+        "Trigger an update of AdGuard Home",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                client.update_adguard_home().await?;
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": "Update triggered successfully" }]
+                }))
+            }
+        },
+    );
+
     let server = McpServer::new(adguard_client, registry, config.clone());
 
     match config.mcp_transport.as_str() {

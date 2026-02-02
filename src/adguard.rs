@@ -259,6 +259,15 @@ pub struct QueryLogConfig {
     pub disallowed_clients: Vec<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VersionInfo {
+    pub version: String,
+    pub announcement: String,
+    pub announcement_url: String,
+    pub can_update: bool,
+    pub new_version: String,
+}
+
 impl AdGuardClient {
     pub fn new(config: AppConfig) -> Self {
         let client = reqwest::Client::builder()
@@ -266,6 +275,41 @@ impl AdGuardClient {
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
         Self { client, config }
+    }
+
+    pub async fn get_version_info(&self) -> Result<VersionInfo> {
+        let url = format!(
+            "http://{}:{}/control/version_info",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let info = response.json::<VersionInfo>().await?;
+        Ok(info)
+    }
+
+    pub async fn update_adguard_home(&self) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/update",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
     }
 
     pub async fn get_query_log_config(&self) -> Result<QueryLogConfig> {
@@ -1879,6 +1923,74 @@ mod tests {
             disallowed_clients: vec![],
         };
         client.set_query_log_config(config).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_get_version_info() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/version_info"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "version": "v0.107.0",
+                "announcement": "New version released!",
+                "announcement_url": "https://example.com",
+                "can_update": true,
+                "new_version": "v0.108.0"
+            })))
+            .mount(&server)
+            .await;
+
+        let info = client.get_version_info().await.unwrap();
+        assert_eq!(info.version, "v0.107.0");
+        assert!(info.can_update);
+    }
+
+    #[tokio::test]
+    async fn test_update_adguard_home() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/update"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client.update_adguard_home().await.unwrap();
     }
 
     #[tokio::test]
