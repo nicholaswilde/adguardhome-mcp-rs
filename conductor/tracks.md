@@ -12,8 +12,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Completed Tracks
 
-- [x] [Maintenance Tools](./tracks/maintenance_tools/index.md) - Tools to clear stats and query logs.
-
 - [Custom Rules Management](./tracks/custom_rules/index.md) - Manage user-defined filtering rules.
 
 - [Blocked Services](./tracks/blocked_services/index.md) - Toggle blocking for platform-level services.
