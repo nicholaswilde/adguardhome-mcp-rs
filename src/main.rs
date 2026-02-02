@@ -1694,6 +1694,124 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register get_top_blocked_domains
+    registry.register(
+        "get_top_blocked_domains",
+        "List the most frequently blocked domains",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "time_period": {
+                    "type": "string",
+                    "description": "Time period (24h, 7d, 30d)",
+                    "enum": ["24h", "7d", "30d"]
+                }
+            }
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let time_period = params["time_period"].as_str().map(|s| s.to_string());
+            async move {
+                let stats = client.get_stats(time_period.as_deref()).await?;
+                let mut text = "Top Blocked Domains:\n".to_string();
+                if stats.top_blocked_domains.is_empty() {
+                    text.push_str("No blocked domains found in this period.\n");
+                } else {
+                    for entry in stats.top_blocked_domains {
+                        for (domain, count) in entry {
+                            text.push_str(&format!("- {}: {}\n", domain, count));
+                        }
+                    }
+                }
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": text }]
+                }))
+            }
+        },
+    );
+
+    // Register get_client_activity_report
+    registry.register(
+        "get_client_activity_report",
+        "Summarize recent activity for a specific client",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "description": "IP, MAC, or Name of the client"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Number of recent queries to analyze (default 50)",
+                    "minimum": 1,
+                    "maximum": 100
+                }
+            },
+            "required": ["identifier"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let identifier = params["identifier"]
+                .as_str()
+                .unwrap_or_default()
+                .to_string();
+            let limit = params["limit"].as_u64().map(|l| l as u32).unwrap_or(50);
+            async move {
+                let log = client
+                    .get_query_log(Some(&identifier), None, Some(limit))
+                    .await?;
+
+                let mut total = 0;
+                let mut blocked = 0;
+                let mut domains = std::collections::HashMap::new();
+
+                for entry in &log.data {
+                    total += 1;
+                    if entry.reason != "NotFilteredNotFound"
+                        && !entry.reason.is_empty()
+                        && entry.status != "NOERROR"
+                    {
+                        // This is a rough heuristic for "blocked" or "filtered"
+                        // AdGuard status/reason can be complex.
+                        if entry.status != "NOERROR"
+                            || entry.reason.contains("Filtered")
+                            || entry.reason.contains("Block")
+                        {
+                            blocked += 1;
+                        }
+                    } else if entry.status == "NXDOMAIN" {
+                        // NXDOMAIN might also be interesting
+                    }
+
+                    *domains.entry(entry.question.name.clone()).or_insert(0) += 1;
+                }
+
+                let mut top_domains: Vec<_> = domains.into_iter().collect();
+                top_domains.sort_by(|a, b| b.1.cmp(&a.1));
+                top_domains.truncate(5);
+
+                let mut text = format!("Activity Report for {}\n", identifier);
+                text.push_str(&format!("Recent Queries Analyzed: {}\n", total));
+                text.push_str(&format!("Blocked/Filtered: {}\n\n", blocked));
+                text.push_str("Top Recently Accessed Domains:\n");
+                for (domain, count) in top_domains {
+                    text.push_str(&format!("- {}: {}\n", domain, count));
+                }
+
+                if total == 0 {
+                    text = format!("No recent activity found for client: {}", identifier);
+                }
+
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": text }]
+                }))
+            }
+        },
+    );
+
     let server = McpServer::new(adguard_client, registry, config.clone());
 
     match config.mcp_transport.as_str() {
