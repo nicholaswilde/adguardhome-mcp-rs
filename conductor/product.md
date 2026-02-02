@@ -26,3 +26,4 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 - Query Log Management: Tools to configure DNS query log retention, anonymization, and client-specific logging settings.
 - Update & System Info: Tools to retrieve version information, check for available updates, and trigger AdGuard Home updates.
 - Blocked Services: Tools to toggle blocking for platform-level services like YouTube, Facebook, and others.
+- Enhanced Analytics: Tools to retrieve top blocked domains and summarized activity reports for specific clients.
