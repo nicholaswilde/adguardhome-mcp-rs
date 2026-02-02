@@ -4,9 +4,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [x] [Codebase Cleanup](./tracks/codebase_cleanup_20260202/index.md) - Remove duplicate code.
-
 ## Completed Tracks
+
+- [x] [Codebase Cleanup](./archive/codebase_cleanup_20260202/index.md) - Remove duplicate code.
 
 - [x] [TLS Configuration](./archive/tls_configuration_20260202/index.md) - Encryption settings.
 
