@@ -1,8 +1,8 @@
 # Implementation Plan - Filter List CRUD
 
-1. **AdGuard Client Update**:
+1. [x] **AdGuard Client Update**:
    - Add methods for `/control/filtering/remove_url` and `/control/filtering/edit_url`.
-2. **Tool Implementation**:
+2. [x] **Tool Implementation**:
    - Implement handlers.
-3. **Verification**:
+3. [x] **Verification**:
    - Test full lifecycle (Add -> Update -> Remove).

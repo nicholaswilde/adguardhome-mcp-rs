@@ -104,6 +104,27 @@ pub struct SetFilterUrlData {
     pub url: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct RemoveFilterRequest {
+    pub url: String,
+    pub whitelist: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateFilterRequest {
+    pub url: String,
+    pub name: String,
+    pub whitelist: bool,
+    pub data: UpdateFilterData,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateFilterData {
+    pub name: String,
+    pub url: String,
+    pub enabled: bool,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AdGuardClientDevice {
     pub name: String,
@@ -470,6 +491,70 @@ impl AdGuardClient {
         let mut request = self.client.post(&endpoint).json(&SetFilterUrlRequest {
             url: url.clone(),
             data: SetFilterUrlData { enabled, name, url },
+        });
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn remove_filter(&self, url: String, whitelist: bool) -> Result<()> {
+        let endpoint = format!(
+            "http://{}:{}/control/filtering/remove_url",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&endpoint).json(&RemoveFilterRequest {
+            url,
+            whitelist,
+        });
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn update_filter(
+        &self,
+        current_url: String,
+        new_url: String,
+        name: String,
+        whitelist: bool,
+        enabled: bool,
+    ) -> Result<()> {
+        let endpoint = format!(
+            "http://{}:{}/control/filtering/set_url",
+            self.config.adguard_host, self.config.adguard_port
+        );
+
+        // Note: The AdGuard Home API uses the same endpoint for toggling (enable/disable) and editing (changing URL/Name).
+        // However, the JSON structure might be slightly different or interpreted based on fields.
+        // For editing, we usually need to provide the 'url' query param (identifying the old one) and the body with new data.
+        // Let's verify if we need to implement a different logic or if the existing set_url is enough but with different payload.
+        // Actually, looking at AdGuard Home API, /control/filtering/set_url is indeed used for editing.
+        // The 'url' in the body is the NEW url, and the 'url' in the wrapper (if any) or query param identifies the filter.
+        // Wait, the `SetFilterUrlRequest` struct I defined earlier has `url` and `data`.
+        // The `url` field in `SetFilterUrlRequest` is what identifies the filter to change.
+        // The `data` field contains the new properties.
+
+        let mut request = self.client.post(&endpoint).json(&UpdateFilterRequest {
+            url: current_url,
+            name: name.clone(),
+            whitelist,
+            data: UpdateFilterData {
+                name,
+                url: new_url,
+                enabled,
+            },
         });
 
         if let (Some(user), Some(pass)) =
@@ -1349,6 +1434,78 @@ mod tests {
                 "https://example.com/filter.txt".to_string(),
                 "Example Filter".to_string(),
                 false,
+            )
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_remove_filter() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/filtering/remove_url"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client
+            .remove_filter("https://example.com/filter.txt".to_string(), false)
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_update_filter() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/filtering/set_url"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        client
+            .update_filter(
+                "https://example.com/old.txt".to_string(),
+                "https://example.com/new.txt".to_string(),
+                "New Name".to_string(),
+                false,
+                true,
             )
             .await
             .unwrap();

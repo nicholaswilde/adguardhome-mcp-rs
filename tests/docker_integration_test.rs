@@ -843,3 +843,75 @@ async fn test_maintenance_tools_integration() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_filter_list_crud_integration() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready);
+
+    let filter_name = "CRUD Test Filter".to_string();
+    let filter_url = "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt".to_string();
+    
+    // Add
+    client
+        .add_filter(filter_name.clone(), filter_url.clone(), false)
+        .await?;
+
+    let filtering = client.list_filters().await?;
+    assert!(filtering.filters.iter().any(|f| f.name == filter_name));
+
+    // Update
+    let new_name = "Updated CRUD Filter".to_string();
+    client
+        .update_filter(
+            filter_url.clone(),
+            filter_url.clone(),
+            new_name.clone(),
+            false,
+            true,
+        )
+        .await?;
+        
+    let filtering = client.list_filters().await?;
+    assert!(filtering.filters.iter().any(|f| f.name == new_name));
+
+    // Remove
+    client.remove_filter(filter_url.clone(), false).await?;
+    
+    let filtering = client.list_filters().await?;
+    assert!(!filtering.filters.iter().any(|f| f.url == filter_url));
+
+    Ok(())
+}

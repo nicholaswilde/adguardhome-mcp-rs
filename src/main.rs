@@ -545,6 +545,165 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register remove_filter_list
+    registry.register(
+        "remove_filter_list",
+        "Remove an existing filter list",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "description": "Name, ID, or URL of the filter list to remove"
+                },
+                "whitelist": {
+                    "type": "boolean",
+                    "description": "True if this is an allowlist (whitelist), false if blocklist (optional, tries to auto-detect if omitted but safer to specify)",
+                    "default": false
+                }
+            },
+            "required": ["identifier"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let identifier = params["identifier"].as_str().unwrap_or_default().to_string();
+            let _whitelist = params["whitelist"].as_bool(); // Optional
+
+            async move {
+                // First, find the filter to get its URL and whitelist status if not provided
+                let config = client.list_filters().await?;
+                
+                // Try to find in blocklists first
+                let filter_block = config.filters.iter().find(|f| {
+                    f.name == identifier || f.url == identifier || f.id.to_string() == identifier
+                });
+                
+                // Try to find in whitelists
+                let filter_white = config.whitelist_filters.iter().find(|f| {
+                    f.name == identifier || f.url == identifier || f.id.to_string() == identifier
+                });
+
+                let (target_url, is_whitelist) = if let Some(f) = filter_block {
+                    (f.url.clone(), false)
+                } else if let Some(f) = filter_white {
+                    (f.url.clone(), true)
+                } else {
+                    return Ok(serde_json::json!({
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": format!("Filter '{}' not found", identifier)
+                            }
+                        ],
+                        "isError": true
+                    }));
+                };
+
+                // Override whitelist check if user explicitly provided it and it matches what we found?
+                // Or just use what we found. The API needs the correct whitelist status.
+                // If user provided wrong whitelist status, the API call might fail or delete wrong list if collision (unlikely).
+                // Let's trust our discovery.
+                
+                // If the user explicitly passed a whitelist param, we could check if it matches, but auto-discovery is better UX.
+                // But if they provided it, we should perhaps respect it if we didn't find it? No, we must find it to get the URL if identifier was name/ID.
+
+                client.remove_filter(target_url, is_whitelist).await?;
+                
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": format!("Filter '{}' removed successfully", identifier)
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
+    // Register update_filter_list
+    registry.register(
+        "update_filter_list",
+        "Update the name, URL, or enabled state of a filter list",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "description": "Name, ID, or URL of the filter list to update"
+                },
+                "new_name": {
+                    "type": "string",
+                    "description": "New name for the filter list"
+                },
+                "new_url": {
+                    "type": "string",
+                    "description": "New URL for the filter list"
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Enable or disable the filter list"
+                }
+            },
+            "required": ["identifier"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let identifier = params["identifier"].as_str().unwrap_or_default().to_string();
+            let new_name = params["new_name"].as_str().map(|s| s.to_string());
+            let new_url = params["new_url"].as_str().map(|s| s.to_string());
+            let enabled_opt = params["enabled"].as_bool();
+
+            async move {
+                let config = client.list_filters().await?;
+                
+                let filter_block = config.filters.iter().find(|f| {
+                    f.name == identifier || f.url == identifier || f.id.to_string() == identifier
+                });
+                
+                let filter_white = config.whitelist_filters.iter().find(|f| {
+                    f.name == identifier || f.url == identifier || f.id.to_string() == identifier
+                });
+
+                if let Some(f) = filter_block.or(filter_white) {
+                    let is_whitelist = filter_white.is_some();
+                    let name_to_use = new_name.unwrap_or_else(|| f.name.clone());
+                    let url_to_use = new_url.unwrap_or_else(|| f.url.clone());
+                    let enabled_to_use = enabled_opt.unwrap_or(f.enabled);
+
+                    client.update_filter(
+                        f.url.clone(),
+                        url_to_use,
+                        name_to_use.clone(),
+                        is_whitelist,
+                        enabled_to_use
+                    ).await?;
+
+                    Ok(serde_json::json!({
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": format!("Filter '{}' updated successfully", f.name)
+                            }
+                        ]
+                    }))
+                } else {
+                    Ok(serde_json::json!({
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": format!("Filter '{}' not found", identifier)
+                            }
+                        ],
+                        "isError": true
+                    }))
+                }
+            }
+        },
+    );
+
     // Register list_clients
     registry.register(
         "list_clients",
