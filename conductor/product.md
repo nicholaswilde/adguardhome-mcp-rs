@@ -27,3 +27,4 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 - Update & System Info: Tools to retrieve version information, check for available updates, and trigger AdGuard Home updates.
 - Blocked Services: Tools to toggle blocking for platform-level services like YouTube, Facebook, and others.
 - Enhanced Analytics: Tools to retrieve top blocked domains and summarized activity reports for specific clients.
+- Custom Rules Management: Tools to manage user-defined filtering rules for granular control over network traffic.
