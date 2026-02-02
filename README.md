@@ -18,22 +18,30 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
   - Connects to AdGuard Home using username/password.
   - Secures HTTP transport with Bearer Token authentication.
 - **Token Optimization:** "Lazy Mode" initially exposes a minimal toolset to save AI context tokens, loading more tools only on demand.
-- **Tools:**
+  - **Tools:**
   - **System:**
     - `get_status`: Get AdGuard Home status, version, and protection state.
+    - `get_version_info`: Get version information and check for updates.
+    - `update_adguard_home`: Trigger an update of AdGuard Home.
   - **DNS Rewrites:**
+
     - `list_dns_rewrites`: List all DNS rewrites.
     - `add_dns_rewrite`: Add a new DNS rewrite (domain, answer).
     - `remove_dns_rewrite`: Remove a DNS rewrite (domain, answer).
   - **Protection:**
+    - `get_protection_config`: Retrieve current settings for all protection features.
+    - `set_protection_config`: Update configuration for Safe Search and Parental Control.
     - `set_protection_state`: Enable or disable global AdGuard Home protection.
     - `set_safe_search`: Enable or disable enforced safe search.
     - `set_safe_browsing`: Enable or disable safe browsing protection.
     - `set_parental_control`: Enable or disable parental control.
   - **Filtering:**
+    - `check_filtering`: Check how a domain is filtered.
     - `list_filter_lists`: List all configured filter lists (blocklists and allowlists).
     - `toggle_filter_list`: Enable or disable a specific filter list by Name, ID, or URL.
     - `add_filter_list`: Add a new filter list to the configuration.
+    - `remove_filter_list`: Remove an existing filter list.
+    - `update_filter_list`: Update the name, URL, or enabled state of a filter list.
     - `list_custom_rules`: List all user-defined DNS filtering rules.
     - `set_custom_rules`: Replace all custom filtering rules.
     - `add_custom_rule`: Add a single custom filtering rule.
@@ -64,6 +72,10 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
   - **Monitoring:**
     - `get_stats`: Get global statistics (total queries, blocked, etc.).
     - `get_query_log`: Search and filter the DNS query log.
+    - `get_query_log_config`: Retrieve current DNS query logging settings.
+    - `set_query_log_config`: Update DNS query logging settings.
+    - `clear_stats`: Reset all statistics.
+    - `clear_query_log`: Clear the DNS query log.
   - **Management (Lazy Mode only):**
     - `manage_tools`: List and enable/disable available tools.
 
@@ -161,6 +173,9 @@ task test
 
 # Run Docker integration tests (requires Docker)
 RUN_DOCKER_TESTS=true task test:integration
+
+# Update cargo dependencies
+task update
 ```
 
 ## :handshake: Contributing
