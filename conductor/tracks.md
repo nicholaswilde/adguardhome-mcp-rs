@@ -3,7 +3,6 @@
 This file tracks all major tracks for the project. Each track has its own detailed plan in its respective folder.
 
 ## Active Tracks
-- [ ] [Upstream DNS & Cache](./tracks/dns_config/index.md) - Manage upstream servers and cache settings.
 
 ## Completed Tracks
 
