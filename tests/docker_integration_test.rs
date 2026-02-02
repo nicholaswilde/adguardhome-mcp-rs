@@ -973,3 +973,55 @@ async fn test_advanced_protection_integration() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_query_log_config_integration() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    let (_container, adguard_host, adguard_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let config = AppConfig {
+        adguard_host,
+        adguard_port,
+        adguard_username: None,
+        adguard_password: None,
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let client = AdGuardClient::new(config);
+
+    let mut ready = false;
+    for _ in 0..15 {
+        if client.get_status().await.is_ok() {
+            ready = true;
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    }
+    assert!(ready);
+
+    // Get current config
+    let mut ql_config = client.get_query_log_config().await?;
+    
+    // Toggle anonymize_client_ip
+    let original_val = ql_config.anonymize_client_ip;
+    ql_config.anonymize_client_ip = !original_val;
+    
+    client.set_query_log_config(ql_config.clone()).await?;
+    
+    let updated_config = client.get_query_log_config().await?;
+    assert_eq!(updated_config.anonymize_client_ip, !original_val);
+
+    Ok(())
+}

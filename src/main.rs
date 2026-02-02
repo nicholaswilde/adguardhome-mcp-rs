@@ -1600,6 +1600,62 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register get_query_log_config
+    registry.register(
+        "get_query_log_config",
+        "Retrieve current DNS query logging settings",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                let config = client.get_query_log_config().await?;
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": serde_json::to_string_pretty(&config)? }]
+                }))
+            }
+        },
+    );
+
+    // Register set_query_log_config
+    registry.register(
+        "set_query_log_config",
+        "Update DNS query logging settings",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "enabled": { "type": "boolean", "description": "Enable or disable query logging" },
+                "interval": { "type": "integer", "description": "Retention interval in hours", "minimum": 1 },
+                "anonymize_client_ip": { "type": "boolean", "description": "Anonymize client IP addresses" },
+                "allowed_clients": { "type": "array", "items": { "type": "string" }, "description": "List of clients allowed to be logged" },
+                "disallowed_clients": { "type": "array", "items": { "type": "string" }, "description": "List of clients forbidden from being logged" }
+            }
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            async move {
+                let mut config = client.get_query_log_config().await?;
+                if let Some(enabled) = params["enabled"].as_bool() { config.enabled = enabled; }
+                if let Some(interval) = params["interval"].as_u64() { config.interval = interval as u32; }
+                if let Some(anonymize) = params["anonymize_client_ip"].as_bool() { config.anonymize_client_ip = anonymize; }
+                if let Some(allowed) = params["allowed_clients"].as_array() {
+                    config.allowed_clients = allowed.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect();
+                }
+                if let Some(disallowed) = params["disallowed_clients"].as_array() {
+                    config.disallowed_clients = disallowed.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect();
+                }
+
+                client.set_query_log_config(config).await?;
+                Ok(serde_json::json!({
+                    "content": [{ "type": "text", "text": "Query log configuration updated successfully" }]
+                }))
+            }
+        },
+    );
+
     let server = McpServer::new(adguard_client, registry, config.clone());
 
     match config.mcp_transport.as_str() {

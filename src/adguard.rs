@@ -248,6 +248,17 @@ pub struct ParentalControlConfig {
     pub sensitivity: Option<u32>, // Optional, as it might not be present in all versions or configs
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct QueryLogConfig {
+    pub enabled: bool,
+    pub interval: u32, // retention interval in hours
+    pub anonymize_client_ip: bool,
+    #[serde(default)]
+    pub allowed_clients: Vec<String>,
+    #[serde(default)]
+    pub disallowed_clients: Vec<String>,
+}
+
 impl AdGuardClient {
     pub fn new(config: AppConfig) -> Self {
         let client = reqwest::Client::builder()
@@ -255,6 +266,41 @@ impl AdGuardClient {
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
         Self { client, config }
+    }
+
+    pub async fn get_query_log_config(&self) -> Result<QueryLogConfig> {
+        let url = format!(
+            "http://{}:{}/control/querylog/info",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.get(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let config = response.json::<QueryLogConfig>().await?;
+        Ok(config)
+    }
+
+    pub async fn set_query_log_config(&self, config: QueryLogConfig) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/querylog/config",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url).json(&config);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
     }
 
     pub async fn get_safe_search_settings(&self) -> Result<SafeSearchConfig> {
@@ -1758,6 +1804,81 @@ mod tests {
             sensitivity: None,
         };
         client.set_parental_settings(settings).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_get_query_log_config() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("GET"))
+            .and(path("/control/querylog/info"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+                "enabled": true,
+                "interval": 2160,
+                "anonymize_client_ip": false,
+                "allowed_clients": [],
+                "disallowed_clients": []
+            })))
+            .mount(&server)
+            .await;
+
+        let config = client.get_query_log_config().await.unwrap();
+        assert!(config.enabled);
+        assert_eq!(config.interval, 2160);
+    }
+
+    #[tokio::test]
+    async fn test_set_query_log_config() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/querylog/config"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        let config = QueryLogConfig {
+            enabled: true,
+            interval: 2160,
+            anonymize_client_ip: false,
+            allowed_clients: vec![],
+            disallowed_clients: vec![],
+        };
+        client.set_query_log_config(config).await.unwrap();
     }
 
     #[tokio::test]
