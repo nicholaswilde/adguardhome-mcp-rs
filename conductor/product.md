@@ -22,7 +22,7 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 - Blocklist Management: Comprehensive management of filtering lists, allowing AI models to audit, toggle, and add community-driven blocklists and allowlists.
 - Network Device Inventory: Tools to list and inspect network clients, providing AI models with a complete view of devices and their individual protection status.
 - Filtering Rule Debugger: Tools to check why a specific domain is blocked or allowed, identifying the exact rule responsible.
-- System Maintenance: Tools to clear historical statistics and query logs for privacy and data management.
+- System Maintenance & Control: Tools to clear historical statistics, reset query logs, and restart the AdGuard Home service for privacy and management.
 - Query Log Management: Tools to configure DNS query log retention, anonymization, and client-specific logging settings.
 - **Update & System Info:** Tools to retrieve version information, check for available updates, and trigger AdGuard Home updates.
 - **System Backup & Recovery:** Tools to create and manage AdGuard Home configuration backups for safe maintenance and disaster recovery.
