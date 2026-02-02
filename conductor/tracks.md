@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [ ] [Restore Management](./tracks/restore_management_20260202/index.md) - Backup restoration tools.
+- [x] [Restore Management](./tracks/restore_management_20260202/index.md) - Backup restoration tools.
 - [ ] [Server Operations](./tracks/server_operations_20260202/index.md) - Server restart tools.
 - [ ] [TLS Configuration](./tracks/tls_configuration_20260202/index.md) - Encryption settings.
 - [ ] [Codebase Cleanup](./tracks/codebase_cleanup_20260202/index.md) - Remove duplicate code.

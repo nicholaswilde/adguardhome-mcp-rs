@@ -844,6 +844,10 @@ async fn test_maintenance_tools_integration() -> Result<()> {
     // Call create_backup
     let backup_path = client.create_backup().await?;
     assert!(backup_path.exists());
+
+    // Call restore_backup
+    client.restore_backup(backup_path.to_str().unwrap()).await?;
+
     let _ = tokio::fs::remove_file(backup_path).await;
 
     Ok(())

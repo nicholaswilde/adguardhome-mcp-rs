@@ -1148,6 +1148,28 @@ impl AdGuardClient {
 
         Ok(file_path)
     }
+
+    pub async fn restore_backup(&self, file_path: &str) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/restore",
+            self.config.adguard_host, self.config.adguard_port
+        );
+
+        let bytes = fs::read(file_path).await?;
+        let part = reqwest::multipart::Part::bytes(bytes).file_name("backup.tar.gz");
+        let form = reqwest::multipart::Form::new().part("file", part);
+
+        let mut request = self.client.post(&url).multipart(form);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -2733,5 +2755,42 @@ mod tests {
 
         // Cleanup
         tokio::fs::remove_file(path).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_restore_backup() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/restore"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        // Create a dummy file
+        let file_path = "test_backup.tar.gz";
+        tokio::fs::write(file_path, vec![1, 2, 3, 4]).await.unwrap();
+
+        client.restore_backup(file_path).await.unwrap();
+
+        // Cleanup
+        tokio::fs::remove_file(file_path).await.unwrap();
     }
 }

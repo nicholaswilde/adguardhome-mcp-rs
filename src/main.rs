@@ -1723,6 +1723,38 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register restore_backup
+    registry.register(
+        "restore_backup",
+        "Restore AdGuard Home configuration from a backup file",
+        serde_json::json!({
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to the backup file (.tar.gz)"
+                }
+            },
+            "required": ["file_path"]
+        }),
+        |client, params| {
+            let client = client.clone();
+            let params = params.unwrap_or_default();
+            let file_path = params["file_path"].as_str().unwrap_or_default().to_string();
+            async move {
+                client.restore_backup(&file_path).await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "Backup restored successfully. The server may restart."
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
     // Register get_top_blocked_domains
     registry.register(
         "get_top_blocked_domains",

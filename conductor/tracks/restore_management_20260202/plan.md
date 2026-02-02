@@ -3,12 +3,12 @@
 ## Phases
 
 ### Phase 1: Implementation
-- [ ] Define `restore_backup` tool in `src/main.rs`.
-- [ ] Implement `restore_backup` method in `AdGuardClient` (`src/adguard.rs`).
-    - [ ] Read file from disk.
-    - [ ] Post to `/control/restore`.
-- [ ] Add tests in `src/adguard.rs`.
+- [x] Define `restore_backup` tool in `src/main.rs`.
+- [x] Implement `restore_backup` method in `AdGuardClient` (`src/adguard.rs`).
+    - [x] Read file from disk.
+    - [x] Post to `/control/restore`.
+- [x] Add tests in `src/adguard.rs`.
 
 ### Phase 2: Verification
-- [ ] Verify restoration process.
-- [ ] Test with `cargo test`.
+- [x] Verify restoration process.
+- [x] Test with `cargo test`.
