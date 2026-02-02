@@ -3,7 +3,6 @@
 This file tracks all major tracks for the project. Each track has its own detailed plan in its respective folder.
 
 ## Active Tracks
-- [ ] [Advanced Client Management](./tracks/client_crud/index.md) - CRUD operations for client configurations.
 - [ ] [Custom Rules Management](./tracks/custom_rules/index.md) - Manage user-defined filtering rules.
 - [ ] [DHCP Management](./tracks/dhcp_management/index.md) - Tools for DHCP leases and static assignments.
 - [ ] [Upstream DNS & Cache](./tracks/dns_config/index.md) - Manage upstream servers and cache settings.
