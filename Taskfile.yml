@@ -18,6 +18,11 @@ tasks:
     cmds:
       - cargo install cross --git https://github.com/cross-rs/cross
 
+  update:
+    desc: Update all cargo dependencies
+    cmds:
+      - cargo update
+
   build:
     desc: Build the project for all supported architectures (requires cross)
     cmds:
