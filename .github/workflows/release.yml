@@ -256,4 +256,18 @@ jobs:
           ${{ env.ASSET_SUM }}
         draft: true
 
-  
+  update-tap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bump Homebrew formula
+        if: startsWith(matrix.build, 'linux') || startsWith(matrix.build, 'macos')
+        uses: mislav/bump-homebrew-formula-action@v3
+        with:
+          # The name of the formula in your tap (e.g., Formula/proxmox-mcp.rb)
+          formula-name: adguardhome-mcp-rs
+          homebrew-tap: nicholaswilde/homebrew-tap
+          base-branch: main
+          download-url: https://github.com/${{ github.repository }}/archive/refs/tags/${{ github.ref_name }}.tar.gz
+        env:
+          # You'll need a PAT with 'repo' scope stored in your project's secrets
+          COMMITTER_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

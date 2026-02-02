@@ -4,6 +4,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
+- [ ] **Track: Refactor src/**
+*Link: [./tracks/refactor_src_20260202/](./tracks/refactor_src_20260202/)*
+
+- [ ] **Track: Refactor tests/**
+*Link: [./tracks/refactor_tests_20260202/](./tracks/refactor_tests_20260202/)*
+
 ## Completed Tracks
 
 - [x] [Codebase Cleanup](./archive/codebase_cleanup_20260202/index.md) - Remove duplicate code.
