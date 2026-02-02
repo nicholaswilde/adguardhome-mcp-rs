@@ -1699,6 +1699,30 @@ async fn main() -> anyhow::Result<()> {
         },
     );
 
+    // Register create_backup
+    registry.register(
+        "create_backup",
+        "Create a full backup of the AdGuard Home configuration",
+        serde_json::json!({
+            "type": "object",
+            "properties": {}
+        }),
+        |client, _params| {
+            let client = client.clone();
+            async move {
+                let path = client.create_backup().await?;
+                Ok(serde_json::json!({
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": format!("Backup created successfully at: {}", path.display())
+                        }
+                    ]
+                }))
+            }
+        },
+    );
+
     // Register get_top_blocked_domains
     registry.register(
         "get_top_blocked_domains",

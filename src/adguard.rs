@@ -2,6 +2,9 @@ use crate::config::AppConfig;
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::path::PathBuf;
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 
 #[derive(Debug, Clone)]
 pub struct AdGuardClient {
@@ -1113,6 +1116,37 @@ impl AdGuardClient {
 
         request.send().await?.error_for_status()?;
         Ok(())
+    }
+
+    pub async fn create_backup(&self) -> Result<PathBuf> {
+        let url = format!(
+            "http://{}:{}/control/backup",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let mut request = self.client.post(&url);
+
+        if let (Some(user), Some(pass)) =
+            (&self.config.adguard_username, &self.config.adguard_password)
+        {
+            request = request.basic_auth(user, Some(pass));
+        }
+
+        let response = request.send().await?.error_for_status()?;
+        let bytes = response.bytes().await?;
+
+        // Ensure backups directory exists
+        let backup_dir = PathBuf::from("backups");
+        if !backup_dir.exists() {
+            fs::create_dir_all(&backup_dir).await?;
+        }
+
+        let file_name = format!("adguard_backup_{}.tar.gz", uuid::Uuid::new_v4());
+        let file_path = backup_dir.join(file_name);
+
+        let mut file = fs::File::create(&file_path).await?;
+        file.write_all(&bytes).await?;
+
+        Ok(file_path)
     }
 }
 
@@ -2665,5 +2699,39 @@ mod tests {
         let result = client.check_host("example.com", None).await.unwrap();
         assert_eq!(result.reason, "FilteredBlackList");
         assert_eq!(result.rule.unwrap(), "||example.com^");
+    }
+
+    #[tokio::test]
+    async fn test_create_backup() {
+        let server = MockServer::start().await;
+        let config = test_config(
+            server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
+        );
+        let client = AdGuardClient::new(config);
+
+        Mock::given(method("POST"))
+            .and(path("/control/backup"))
+            .respond_with(ResponseTemplate::new(200).set_body_bytes(vec![1, 2, 3, 4]))
+            .mount(&server)
+            .await;
+
+        let path = client.create_backup().await.unwrap();
+        assert!(path.exists());
+
+        // Cleanup
+        tokio::fs::remove_file(path).await.unwrap();
     }
 }
