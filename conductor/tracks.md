@@ -4,10 +4,11 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [x] [TLS Configuration](./tracks/tls_configuration_20260202/index.md) - Encryption settings.
 - [ ] [Codebase Cleanup](./tracks/codebase_cleanup_20260202/index.md) - Remove duplicate code.
 
 ## Completed Tracks
+
+- [x] [TLS Configuration](./archive/tls_configuration_20260202/index.md) - Encryption settings.
 
 - [x] [Server Operations](./archive/server_operations_20260202/index.md) - Server restart tools.
 
