@@ -4,9 +4,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [x] **Track: Refactor src/**
-*Link: [./tracks/refactor_src_20260202/](./tracks/refactor_src_20260202/)*
-
 - [ ] **Track: Refactor tests/**
 *Link: [./tracks/refactor_tests_20260202/](./tracks/refactor_tests_20260202/)*
 
@@ -20,6 +17,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 *Link: [./tracks/multi_instance_support_20260202/](./tracks/multi_instance_support_20260202/)*
 
 ## Completed Tracks
+
+- [x] [Refactor src/](./archive/refactor_src_20260202/index.md) - Reorganize src directory into modular sub-modules.
 
 - [x] [Codebase Cleanup](./archive/codebase_cleanup_20260202/index.md) - Remove duplicate code.
 
