@@ -10,7 +10,7 @@ Focuses on converting the monolithic `adguard.rs` into a structured module.
 - [x] Task: Verify Phase 1 with existing unit tests (Update imports in tests if necessary)
 - [x] Task: Conductor - User Manual Verification 'AdGuard API Client Refactor' (Protocol in workflow.md)
 
-## Phase 2: Tools & MCP Logic Refactor
+## Phase 2: Tools & MCP Logic Refactor [checkpoint: f5b4cd0303b68598e573e6e6a3c5b03e82f7e3e0]
 Breaks down the large `tools.rs` into domain-specific files.
 
 - [x] Task: Create `src/tools/` directory and initialize `mod.rs`
@@ -23,7 +23,7 @@ Breaks down the large `tools.rs` into domain-specific files.
 - [x] Task: Audit `src/mcp.rs` and `src/server/mcp.rs` to ensure a clear distinction between core MCP logic and the transport-specific implementations
 - [x] Task: Update all internal tool registrations to use the new module paths
 - [x] Task: Verify Phase 2 with unit tests and ensure "Lazy Mode" functionality is preserved
-- [~] Task: Conductor - User Manual Verification 'Tools & MCP Logic Refactor' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Tools & MCP Logic Refactor' (Protocol in workflow.md)
 
 ## Phase 3: Final Consolidation & Quality Gate
 Final cleanup and project-wide verification.
