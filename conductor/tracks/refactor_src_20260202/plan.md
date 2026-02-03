@@ -28,11 +28,11 @@ Breaks down the large `tools.rs` into domain-specific files.
 ## Phase 3: Final Consolidation & Quality Gate
 Final cleanup and project-wide verification.
 
-- [ ] Task: Run project-wide quality checks:
-    - [ ] `cargo check`
-    - [ ] `task lint` (Clippy)
-    - [ ] `task format`
-- [ ] Task: Execute full test suite including Docker integration tests:
-    - [ ] `RUN_DOCKER_TESTS=true task test:integration`
-- [ ] Task: Manually verify both `stdio` and `http` transports respond correctly
-- [ ] Task: Conductor - User Manual Verification 'Final Consolidation & Quality Gate' (Protocol in workflow.md)
+- [x] Task: Run project-wide quality checks:
+    - [x] `cargo check`
+    - [x] `task lint` (Clippy)
+    - [x] `task format`
+- [x] Task: Execute full test suite including Docker integration tests:
+    - [x] `RUN_DOCKER_TESTS=true task test:integration`
+- [x] Task: Manually verify both `stdio` and `http` transports respond correctly
+- [~] Task: Conductor - User Manual Verification 'Final Consolidation & Quality Gate' (Protocol in workflow.md)
