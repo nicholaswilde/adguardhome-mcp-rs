@@ -88,16 +88,12 @@ jobs:
           rust: stable
           target: x86_64-unknown-linux-musl
           strip: x86_64-linux-musl-strip
-          hb_os: linux
-          hb_arch: amd64
         - build: linux-arm
           os: ubuntu-latest
           rust: stable
           target: aarch64-unknown-linux-musl
           strip: aarch64-linux-musl-strip
           qemu: qemu-aarch64
-          hb_os: linux
-          hb_arch: arm64
         - build: linux-armv7
           os: ubuntu-latest
           rust: stable
@@ -114,14 +110,10 @@ jobs:
           os: macos-latest
           rust: stable
           target: x86_64-apple-darwin
-          hb_os: darwin
-          hb_arch: amd64
         - build: macos-arm
           os: macos-latest
           rust: stable
           target: aarch64-apple-darwin
-          hb_os: darwin
-          hb_arch: arm64
         - build: win-msvc
           os: windows-latest
           rust: stable
@@ -246,43 +238,22 @@ jobs:
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
           7z a "$staging.zip" "$staging"
           certutil -hashfile "$staging.zip" SHA256 > "$staging.zip.sha256"
-          echo "ASSETS=$staging.zip $staging.zip.sha256" >> $GITHUB_ENV
+          echo "ASSET=$staging.zip" >> $GITHUB_ENV
+          echo "ASSET_SUM=$staging.zip.sha256" >> $GITHUB_ENV
         else
           tar czf "$staging.tar.gz" "$staging"
           shasum -a 256 "$staging.tar.gz" > "$staging.tar.gz.sha256"
-          assets="$staging.tar.gz $staging.tar.gz.sha256"
-          
-          # If this platform is supported by Homebrew Releaser, create a second archive with the expected name
-          if [ -n "${{ matrix.hb_os }}" ]; then
-            hb_staging="adguardhome-mcp-rs-${{ needs.create-release.outputs.version }}-${{ matrix.hb_os }}-${{ matrix.hb_arch }}.tar.gz"
-            cp "$staging.tar.gz" "$hb_staging"
-            assets="$assets $hb_staging"
-          fi
-          echo "ASSETS=$assets" >> $GITHUB_ENV
+          echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
+          echo "ASSET_SUM=$staging.tar.gz.sha256" >> $GITHUB_ENV
         fi
 
     - name: Upload release archive
       uses: softprops/action-gh-release@v2
       if: github.ref_type == 'tag'
       with:
-        files: ${{ env.ASSETS }}
+        files: |
+          ${{ env.ASSET }}
+          ${{ env.ASSET_SUM }}
         draft: true
 
-  update-tap:
-    runs-on: ubuntu-latest
-    needs: [create-release, build-release]
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - name: Release project to Homebrew tap
-        uses: Justintime50/homebrew-releaser@v3
-        with:
-          homebrew_owner: nicholaswilde
-          homebrew_tap: homebrew-tap
-          github_token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          target_darwin_amd64: true
-          target_darwin_arm64: true
-          target_linux_amd64: true
-          target_linux_arm64: true
-          install: |
-            bin.install "adguardhome-mcp-rs"
-          update_readme_table: true
+  
