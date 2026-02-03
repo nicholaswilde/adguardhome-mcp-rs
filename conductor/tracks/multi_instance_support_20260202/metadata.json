@@ -1,0 +1,8 @@
+{
+  "track_id": "multi_instance_support_20260202",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-02T11:00:00Z",
+  "updated_at": "2026-02-02T11:00:00Z",
+  "description": "Add the ability to communicate with multiple instance of adguardhome. The environmental variables should start with ADGUARD__INSTANCES__<instance number>__<variable name> . Reference ../proxmox-mcp-rs/ as an example"
+}
