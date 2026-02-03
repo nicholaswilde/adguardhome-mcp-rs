@@ -1,3 +1,9 @@
+pub mod clients;
+pub mod dns;
+pub mod filtering;
+pub mod protection;
+pub mod system;
+
 use crate::adguard::AdGuardClient;
 use crate::config::AppConfig;
 use crate::error::Result;
@@ -63,9 +69,6 @@ impl ToolRegistry {
     pub fn list_tools(&self) -> Vec<Value> {
         let mut result = Vec::new();
 
-        // Always include "manage_tools" if in lazy mode (it will be registered separately or handled here)
-        // Ideally manage_tools is just another tool that is always enabled.
-
         for tool_name in &self.enabled_tools {
             if let Some(tool) = self.tools.get(tool_name) {
                 result.push(serde_json::json!({
@@ -118,8 +121,6 @@ impl ToolRegistry {
     }
 
     pub fn disable_tool(&mut self, name: &str) -> bool {
-        // Prevent disabling manage_tools if we implement it as a regular tool?
-        // Or maybe manage_tools is special.
         self.enabled_tools.remove(name)
     }
 

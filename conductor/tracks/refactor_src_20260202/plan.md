@@ -13,17 +13,17 @@ Focuses on converting the monolithic `adguard.rs` into a structured module.
 ## Phase 2: Tools & MCP Logic Refactor
 Breaks down the large `tools.rs` into domain-specific files.
 
-- [ ] Task: Create `src/tools/` directory and initialize `mod.rs`
-- [ ] Task: Split `tools.rs` into sub-modules:
-    - [ ] `src/tools/filtering.rs` (Filtering, Custom Rules, Blocked Services)
-    - [ ] `src/tools/dns.rs` (DNS Configuration, Rewrites)
-    - [ ] `src/tools/protection.rs` (Protection State, Safe Search)
-    - [ ] `src/tools/clients.rs` (Client Management)
-    - [ ] `src/tools/system.rs` (Stats, Logs, Updates)
-- [ ] Task: Audit `src/mcp.rs` and `src/server/mcp.rs` to ensure a clear distinction between core MCP logic and the transport-specific implementations
-- [ ] Task: Update all internal tool registrations to use the new module paths
-- [ ] Task: Verify Phase 2 with unit tests and ensure "Lazy Mode" functionality is preserved
-- [ ] Task: Conductor - User Manual Verification 'Tools & MCP Logic Refactor' (Protocol in workflow.md)
+- [x] Task: Create `src/tools/` directory and initialize `mod.rs`
+- [x] Task: Split `tools.rs` into sub-modules:
+    - [x] `src/tools/filtering.rs` (Filtering, Custom Rules, Blocked Services)
+    - [x] `src/tools/dns.rs` (DNS Configuration, Rewrites)
+    - [x] `src/tools/protection.rs` (Protection State, Safe Search)
+    - [x] `src/tools/clients.rs` (Client Management)
+    - [x] `src/tools/system.rs` (Stats, Logs, Updates)
+- [x] Task: Audit `src/mcp.rs` and `src/server/mcp.rs` to ensure a clear distinction between core MCP logic and the transport-specific implementations
+- [x] Task: Update all internal tool registrations to use the new module paths
+- [x] Task: Verify Phase 2 with unit tests and ensure "Lazy Mode" functionality is preserved
+- [~] Task: Conductor - User Manual Verification 'Tools & MCP Logic Refactor' (Protocol in workflow.md)
 
 ## Phase 3: Final Consolidation & Quality Gate
 Final cleanup and project-wide verification.
