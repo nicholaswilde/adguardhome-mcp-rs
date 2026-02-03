@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [~] **Track: Refactor src/**
+- [x] **Track: Refactor src/**
 *Link: [./tracks/refactor_src_20260202/](./tracks/refactor_src_20260202/)*
 
 - [ ] **Track: Refactor tests/**
