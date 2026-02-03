@@ -3,12 +3,13 @@
 ## Phase 1: AdGuard API Client Refactor
 Focuses on converting the monolithic `adguard.rs` into a structured module.
 
-- [ ] Task: Create `src/adguard/` directory and initialize `mod.rs`
-- [ ] Task: Extract data structures and DTOs from `adguard.rs` to `src/adguard/models.rs`
-- [ ] Task: Move the core `AdGuard` client implementation to `src/adguard/client.rs`
-- [ ] Task: Update `lib.rs` and internal imports to point to the new `adguard` module structure
-- [ ] Task: Verify Phase 1 with existing unit tests (Update imports in tests if necessary)
-- [ ] Task: Conductor - User Manual Verification 'AdGuard API Client Refactor' (Protocol in workflow.md)
+- [x] Task: Create `src/adguard/` directory and initialize `mod.rs`
+- [x] Task: Extract data structures and DTOs from `adguard.rs` to `src/adguard/models.rs`
+- [x] Task: Move the core `AdGuard` client implementation to `src/adguard/client.rs`
+- [x] Task: Update `lib.rs` and internal imports to point to the new `adguard` module structure
+- [x] Task: Update `lib.rs` and internal imports to point to the new `adguard` module structure
+- [x] Task: Verify Phase 1 with existing unit tests (Update imports in tests if necessary)
+- [~] Task: Conductor - User Manual Verification 'AdGuard API Client Refactor' (Protocol in workflow.md)
 
 ## Phase 2: Tools & MCP Logic Refactor
 Breaks down the large `tools.rs` into domain-specific files.

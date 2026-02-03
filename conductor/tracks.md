@@ -4,11 +4,20 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [ ] **Track: Refactor src/**
+- [~] **Track: Refactor src/**
 *Link: [./tracks/refactor_src_20260202/](./tracks/refactor_src_20260202/)*
 
 - [ ] **Track: Refactor tests/**
 *Link: [./tracks/refactor_tests_20260202/](./tracks/refactor_tests_20260202/)*
+
+- [ ] **Track: Version Command Line Switch**
+*Link: [./tracks/version_flag_20260202/](./tracks/version_flag_20260202/)*
+
+- [ ] **Track: AdGuard Home Instance Sync**
+*Link: [./tracks/instance_sync_20260202/](./tracks/instance_sync_20260202/)*
+
+- [ ] **Track: Multi-Instance Support**
+*Link: [./tracks/multi_instance_support_20260202/](./tracks/multi_instance_support_20260202/)*
 
 ## Completed Tracks
 
