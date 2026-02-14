@@ -1,7 +1,8 @@
 # :shield: AdGuard Home MCP Server (Rust) :robot:
 
+[![Coveralls](https://img.shields.io/coveralls/github/nicholaswilde/adguardhome-mcp-rs/main?style=for-the-badge&logo=coveralls)](https://coveralls.io/github/nicholaswilde/adguardhome-mcp-rs?branch=main)
 [![task](https://img.shields.io/badge/Task-Enabled-brightgreen?style=for-the-badge&logo=task&logoColor=white)](https://taskfile.dev/#/)
-[![ci](https://img.shields.io/github/actions/workflow/status/nicholaswilde/adguardhome-mcp-rs/ci.yml?label=ci&style=for-the-badge&branch=main)](https://github.com/nicholaswilde/adguardhome-mcp-rs/actions/workflows/ci.yml)
+[![ci](https://img.shields.io/github/actions/workflow/status/nicholaswilde/adguardhome-mcp-rs/ci.yml?label=ci&style=for-the-badge&branch=main&logo=github-actions)](https://github.com/nicholaswilde/adguardhome-mcp-rs/actions/workflows/ci.yml)
 
 > [!WARNING]
 > This project is currently in active development (v0.1.7) and is **not production-ready**. Features may change, and breaking changes may occur without notice. **Use this MCP server at your own risk.**
@@ -190,7 +191,6 @@ task coverage:report
 
 # Upload coverage to Coveralls.io (requires COVERALLS_REPO_TOKEN)
 COVERALLS_REPO_TOKEN=your_token task coverage:upload
-```
 ```
 
 ## :handshake: Contributing
