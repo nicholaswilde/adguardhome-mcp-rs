@@ -16,6 +16,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Multi-Instance Support**
 *Link: [./tracks/multi_instance_support_20260202/](./tracks/multi_instance_support_20260202/)*
 
+- [ ] **Track: Increase code coverage to >90% with Coveralls**
+*Link: [./tracks/coverage_90_coveralls_20260213/](./tracks/coverage_90_coveralls_20260213/)*
+
 ## Completed Tracks
 
 - [x] [Refactor src/](./archive/refactor_src_20260202/index.md) - Reorganize src directory into modular sub-modules.
