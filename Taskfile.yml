@@ -36,9 +36,12 @@ tasks:
 
   coverage:upload:
     desc: Upload coverage report to Coveralls
+    precondition:
+      - sh: test -f lcov.info
+        msg: "lcov.info doesn't exist"
     cmds:
-      - task: coverage:report
-      - coveralls --lcov lcov.info
+      - coveralls report lcov.info  -n -r {{ .COVERALLS_REPO_TOKEN }}
+    silent: true
 
   clippy:
     desc: Run cargo clippy
