@@ -43,3 +43,4 @@ test_bg.log
 /target
 
 **/settings.json
+.env

@@ -5,13 +5,18 @@ This plan outlines the steps to reach >90% code coverage and integrate manual re
 ## Phase 1: Coverage Tooling and Baseline
 Set up the necessary tools and establish the current coverage baseline.
 
-- [ ] Task: Configure coverage tooling in `Taskfile.yml`.
-    - [ ] Add `coverage` task to run tests with `cargo-llvm-cov` and show summary.
-    - [ ] Add `coverage:report` task to generate `lcov.info` and HTML reports.
-    - [ ] Add `coverage:upload` task to send reports to Coveralls using the `coveralls` CLI.
-- [ ] Task: Identify and document current coverage gaps.
-    - [ ] Run the initial coverage report and record the baseline.
-    - [ ] Map out specific functions or modules in `client.rs` and `server/` with low coverage.
+- [x] Task: Configure coverage tooling in `Taskfile.yml`.
+    - [x] Add `coverage` task to run tests with `cargo-llvm-cov` and show summary.
+    - [x] Add `coverage:report` task to generate `lcov.info` and HTML reports.
+    - [x] Add `coverage:upload` task to send reports to Coveralls using the `coveralls` CLI.
+- [x] Task: Identify and document current coverage gaps.
+    - [x] Run the initial coverage report and record the baseline (24.83%).
+    - [x] Map out specific functions or modules in `client.rs` and `server/` with low coverage.
+        - `server/http.rs`: 0%
+        - `server/mcp.rs`: 0%
+        - `tools/*.rs`: 0%
+        - `main.rs`: 0%
+        - `adguard/client.rs`: 72.11%
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Coverage Tooling and Baseline' (Protocol in workflow.md)
 
 ## Phase 2: Core Client and API Logic Coverage
