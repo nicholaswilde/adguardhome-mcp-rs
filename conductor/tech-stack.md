@@ -22,5 +22,11 @@
 - **Thiserror / Anyhow:** Libraries for defining and managing custom error types, providing robust and idiomatic error handling across the codebase.
 
 ## Testing
+
 - **Testcontainers:** Used for integration testing with real AdGuard Home Docker containers.
+
 - **Wiremock:** Used for unit testing the API client by mocking HTTP responses.
+
+- **cargo-llvm-cov:** Used for source-based code coverage analysis.
+
+- **Coveralls.io:** Used for tracking and visualizing code coverage history.
