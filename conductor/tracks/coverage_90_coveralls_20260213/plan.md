@@ -2,7 +2,7 @@
 
 This plan outlines the steps to reach >90% code coverage and integrate manual reporting to Coveralls.io using `cargo-llvm-cov`.
 
-## Phase 1: Coverage Tooling and Baseline
+## Phase 1: Coverage Tooling and Baseline [checkpoint: 278cfa8]
 Set up the necessary tools and establish the current coverage baseline.
 
 - [x] Task: Configure coverage tooling in `Taskfile.yml`.
