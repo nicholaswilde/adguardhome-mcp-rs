@@ -19,6 +19,358 @@ fn test_config(host: String, port: u16) -> AppConfig {
 }
 
 #[tokio::test]
+async fn test_error_handling_404() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/status"))
+        .respond_with(ResponseTemplate::new(404))
+        .mount(&server)
+        .await;
+
+    let result = client.get_status().await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_error_handling_500() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/protection"))
+        .respond_with(ResponseTemplate::new(500))
+        .mount(&server)
+        .await;
+
+    let result = client.set_protection(true).await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_status() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "version": "v0.107.0",
+            "language": "en",
+            "dns_addresses": ["127.0.0.1"],
+            "dns_port": 53,
+            "http_port": 80,
+            "protection_enabled": true,
+            "dhcp_available": true,
+            "running": true
+        })))
+        .mount(&server)
+        .await;
+
+    let status = client.get_status().await.unwrap();
+    assert_eq!(status.version, "v0.107.0");
+    assert!(status.protection_enabled);
+}
+
+#[tokio::test]
+async fn test_configure_tls() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/tls/configure"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    let tls_config = TlsConfig {
+        enabled: true,
+        server_name: "example.com".to_string(),
+        force_https: false,
+        port_https: 443,
+        port_dns_over_tls: 853,
+        port_dns_over_quic: 853,
+        certificate_chain: "".to_string(),
+        private_key: "".to_string(),
+        certificate_path: "".to_string(),
+        private_key_path: "".to_string(),
+        valid_cert: true,
+        valid_key: true,
+        valid_pair: true,
+    };
+    client.configure_tls(tls_config).await.unwrap();
+}
+
+#[tokio::test]
+async fn test_validate_tls() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/tls/validate"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "enabled": true,
+            "server_name": "example.com",
+            "force_https": false,
+            "port_https": 443,
+            "port_dns_over_tls": 853,
+            "port_dns_over_quic": 853,
+            "certificate_chain": "",
+            "private_key": "",
+            "certificate_path": "",
+            "private_key_path": "",
+            "valid_cert": true,
+            "valid_key": true,
+            "valid_pair": true
+        })))
+        .mount(&server)
+        .await;
+
+    let tls_config = TlsConfig {
+        enabled: true,
+        server_name: "example.com".to_string(),
+        force_https: false,
+        port_https: 443,
+        port_dns_over_tls: 853,
+        port_dns_over_quic: 853,
+        certificate_chain: "".to_string(),
+        private_key: "".to_string(),
+        certificate_path: "".to_string(),
+        private_key_path: "".to_string(),
+        valid_cert: true,
+        valid_key: true,
+        valid_pair: true,
+    };
+    let result = client.validate_tls(tls_config).await.unwrap();
+    assert!(result.valid_cert);
+}
+
+#[tokio::test]
+async fn test_get_client_info() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/clients"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "clients": [
+                {
+                    "name": "Test Client",
+                    "ids": ["192.168.1.100"],
+                    "use_global_settings": true,
+                    "filtering_enabled": true,
+                    "parental_enabled": false,
+                    "safebrowsing_enabled": true,
+                    "safesearch_enabled": false
+                }
+            ]
+        })))
+        .mount(&server)
+        .await;
+
+    let info = client.get_client_info("Test Client").await.unwrap();
+    assert_eq!(info.name, "Test Client");
+
+    let info_by_id = client.get_client_info("192.168.1.100").await.unwrap();
+    assert_eq!(info_by_id.name, "Test Client");
+
+    let result = client.get_client_info("NonExistent").await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_get_version_info_error() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/version_info"))
+        .respond_with(ResponseTemplate::new(500))
+        .mount(&server)
+        .await;
+
+    let result = client.get_version_info().await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_update_adguard_home_error() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/update"))
+        .respond_with(ResponseTemplate::new(500))
+        .mount(&server)
+        .await;
+
+    let result = client.update_adguard_home().await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
+async fn test_add_filter_error() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/filtering/add_url"))
+        .respond_with(ResponseTemplate::new(400))
+        .mount(&server)
+        .await;
+
+    let result = client
+        .add_filter("Name".to_string(), "url".to_string(), false)
+        .await;
+    assert!(result.is_err());
+}
+
+#[tokio::test]
 async fn test_reset_stats() {
     let server = MockServer::start().await;
     let config = test_config(
@@ -224,6 +576,47 @@ async fn test_get_stats() {
 }
 
 #[tokio::test]
+async fn test_client_with_auth_execution() {
+    let server = MockServer::start().await;
+    let mut config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    config.adguard_username = Some("user".to_string());
+    config.adguard_password = Some("pass".to_string());
+
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/status"))
+        .and(wiremock::matchers::header(
+            "Authorization",
+            "Basic dXNlcjpwYXNz",
+        )) // user:pass in base64
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "version": "v0.107.0",
+            "language": "en",
+            "protection_enabled": true
+        })))
+        .mount(&server)
+        .await;
+
+    client.get_status().await.unwrap();
+}
+
+#[tokio::test]
 async fn test_get_query_log() {
     let server = MockServer::start().await;
     let config = test_config(
@@ -267,6 +660,295 @@ async fn test_get_query_log() {
     let log = client.get_query_log(None, None, None).await.unwrap();
     assert_eq!(log.data.len(), 1);
     assert_eq!(log.data[0].question.name, "google.com");
+}
+
+#[tokio::test]
+async fn test_get_query_log_with_params() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/querylog"))
+        .and(wiremock::matchers::query_param("search", "google"))
+        .and(wiremock::matchers::query_param("filter", "all"))
+        .and(wiremock::matchers::query_param("limit", "10"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "data": []
+        })))
+        .mount(&server)
+        .await;
+
+    let log = client
+        .get_query_log(Some("google"), Some("all"), Some(10))
+        .await
+        .unwrap();
+    assert_eq!(log.data.len(), 0);
+}
+
+#[tokio::test]
+async fn test_get_stats_with_period() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/stats"))
+        .and(wiremock::matchers::query_param("time_period", "1d"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "num_dns_queries": 100,
+            "num_blocked_filtering": 10,
+            "num_replaced_safebrowsing": 5,
+            "num_replaced_safesearch": 2,
+            "num_replaced_parental": 1,
+            "avg_processing_time": 0.05,
+            "top_queried_domains": [],
+            "top_blocked_domains": [],
+            "top_clients": []
+        })))
+        .mount(&server)
+        .await;
+
+    client.get_stats(Some("1d")).await.unwrap();
+}
+
+#[tokio::test]
+async fn test_set_parental_settings_disabled() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/parental/disable"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    let settings = ParentalControlConfig {
+        enabled: false,
+        sensitivity: None,
+    };
+    client.set_parental_settings(settings).await.unwrap();
+}
+
+#[tokio::test]
+async fn test_set_safe_search_disabled() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/safesearch/disable"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    client.set_safe_search(false).await.unwrap();
+}
+
+#[tokio::test]
+async fn test_set_safe_browsing_disabled() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/safebrowsing/disable"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    client.set_safe_browsing(false).await.unwrap();
+}
+
+#[tokio::test]
+async fn test_set_parental_control_disabled() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/parental/disable"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    client.set_parental_control(false).await.unwrap();
+}
+
+#[tokio::test]
+async fn test_set_protection_disabled() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/protection"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    client.set_protection(false).await.unwrap();
+}
+
+#[tokio::test]
+async fn test_check_host_with_client() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/filtering/check_host"))
+        .and(wiremock::matchers::query_param("name", "example.com"))
+        .and(wiremock::matchers::query_param("client", "1.2.3.4"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "reason": "NotFilteredNotFound"
+        })))
+        .mount(&server)
+        .await;
+
+    client
+        .check_host("example.com", Some("1.2.3.4"))
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn test_client_with_auth() {
+    let config = AppConfig {
+        adguard_host: "localhost".to_string(),
+        adguard_port: 80,
+        adguard_username: Some("user".to_string()),
+        adguard_password: Some("pass".to_string()),
+        mcp_transport: "stdio".to_string(),
+        lazy_mode: false,
+        http_port: 3000,
+        http_auth_token: None,
+        log_level: "info".to_string(),
+        no_verify_ssl: true,
+    };
+    let _client = AdGuardClient::new(config);
+    // This just tests the constructor logic for auth
 }
 
 #[tokio::test]

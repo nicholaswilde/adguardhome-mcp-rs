@@ -24,16 +24,21 @@ tasks:
       - sops -d --input-type dotenv --output-type dotenv .env.enc > .env
 
   coverage:
-    desc: Run code coverage and generate lcov.info
+    desc: Run tests and show coverage summary
     cmds:
-      - cargo llvm-cov
-      - cargo llvm-cov --lcov --output-path ./lcov.info
+      - cargo llvm-cov --workspace --all-features --summary-only -- --skip docker_integration_test
+
+  coverage:report:
+    desc: Generate coverage reports (lcov and html)
+    cmds:
+      - cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info -- --skip docker_integration_test
+      - cargo llvm-cov --workspace --all-features --html -- --skip docker_integration_test
 
   coverage:upload:
-    desc: Upload all coverage reports to Coveralls
+    desc: Upload coverage report to Coveralls
     cmds:
-      - coveralls report lcov.info -n -r {{ .COVERALLS_REPO_TOKEN }}
-    silent: true
+      - task: coverage:report
+      - coveralls --lcov lcov.info
 
   clippy:
     desc: Run cargo clippy
@@ -125,7 +130,7 @@ tasks:
     cmds:
       - task: fmt:check
       - task: lint
-      - cargo test
+      - cargo test --lib --tests -- --skip docker_integration_test
       - task: clippy
 
   test:ci:
@@ -133,7 +138,7 @@ tasks:
     cmds:
       - task: fmt:check
       - task: lint
-      - cargo test --profile ci
+      - cargo test --lib --tests --profile ci -- --skip docker_integration_test
       - task: clippy
 
   test:integration:
@@ -170,23 +175,6 @@ tasks:
     desc: Build and load the Docker image into the local daemon (single arch)
     cmds:
       - docker buildx build --load -t adguardhome-mcp-rs .
-
-  coverage:
-    desc: Run tests and show coverage summary
-    cmds:
-      - cargo llvm-cov --workspace --all-features --summary-only
-
-  coverage:report:
-    desc: Generate coverage reports (lcov and html)
-    cmds:
-      - cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
-      - cargo llvm-cov --workspace --all-features --html
-
-  coverage:upload:
-    desc: Upload coverage report to Coveralls
-    cmds:
-      - task: coverage:report
-      - coveralls --lcov lcov.info
 
   clean:
     desc: Clean build artifacts

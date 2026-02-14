@@ -36,17 +36,55 @@ struct MessageParams {
 
 pub async fn run_http_server(
     mcp_server: McpServer,
+    mut rx: mpsc::Receiver<crate::mcp::Notification>,
     host: &str,
     port: u16,
     auth_token: Option<String>,
 ) -> anyhow::Result<()> {
+    let sessions = Arc::new(DashMap::new());
+    let state = AppState {
+        mcp_server,
+        sessions: sessions.clone(),
+        auth_token,
+    };
+
+    let app = create_router_with_state(state);
+
+    let addr = format!("{}:{}", host, port);
+    info!("Starting HTTP MCP Server on {}", addr);
+
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+
+    // Spawn notification handler
+    tokio::spawn(async move {
+        while let Some(n) = rx.recv().await {
+            if let Ok(data) = serde_json::to_string(&crate::mcp::Message::Notification(n)) {
+                for entry in sessions.iter() {
+                    let tx = entry.value();
+                    let _ = tx
+                        .send(Ok(Event::default().event("message").data(data.clone())))
+                        .await;
+                }
+            }
+        }
+    });
+
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+pub fn create_router(mcp_server: McpServer, auth_token: Option<String>) -> Router {
     let state = AppState {
         mcp_server,
         sessions: Arc::new(DashMap::new()),
         auth_token,
     };
+    create_router_with_state(state)
+}
 
-    let app = Router::new()
+fn create_router_with_state(state: AppState) -> Router {
+    Router::new()
         .route("/sse", get(sse_handler))
         .route("/message", post(message_handler))
         .layer(middleware::from_fn_with_state(
@@ -55,15 +93,7 @@ pub async fn run_http_server(
         ))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
-        .with_state(state);
-
-    let addr = format!("{}:{}", host, port);
-    info!("Starting HTTP MCP Server on {}", addr);
-
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
-
-    Ok(())
+        .with_state(state)
 }
 
 async fn sse_handler(

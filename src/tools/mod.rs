@@ -145,3 +145,6 @@ impl ToolRegistry {
         self.tools.get(name).cloned()
     }
 }
+
+#[cfg(test)]
+mod tests;

@@ -44,3 +44,4 @@ test_bg.log
 
 **/settings.json
 .env
+lcov.info

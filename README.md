@@ -176,6 +176,21 @@ RUN_DOCKER_TESTS=true task test:integration
 
 # Update cargo dependencies
 task update
+
+### :bar_chart: Coverage
+
+The project uses `cargo-llvm-cov` for code coverage analysis.
+
+```bash
+# Show coverage summary in console
+task coverage
+
+# Generate detailed HTML and LCOV reports
+task coverage:report
+
+# Upload coverage to Coveralls.io (requires COVERALLS_REPO_TOKEN)
+COVERALLS_REPO_TOKEN=your_token task coverage:upload
+```
 ```
 
 ## :handshake: Contributing

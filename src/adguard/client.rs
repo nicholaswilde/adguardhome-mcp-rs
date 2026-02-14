@@ -20,18 +20,21 @@ impl AdGuardClient {
         Self { client, config }
     }
 
-    pub async fn get_version_info(&self) -> Result<VersionInfo> {
-        let url = format!(
-            "http://{}:{}/control/version_info",
-            self.config.adguard_host, self.config.adguard_port
-        );
-        let mut request = self.client.get(&url);
-
+    fn add_auth(&self, mut request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
         if let (Some(user), Some(pass)) =
             (&self.config.adguard_username, &self.config.adguard_password)
         {
             request = request.basic_auth(user, Some(pass));
         }
+        request
+    }
+
+    pub async fn get_version_info(&self) -> Result<VersionInfo> {
+        let url = format!(
+            "http://{}:{}/control/version_info",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let info = response.json::<VersionInfo>().await?;
@@ -43,13 +46,7 @@ impl AdGuardClient {
             "http://{}:{}/control/update",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -60,13 +57,7 @@ impl AdGuardClient {
             "http://{}:{}/control/querylog/info",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let config = response.json::<QueryLogConfig>().await?;
@@ -78,13 +69,7 @@ impl AdGuardClient {
             "http://{}:{}/control/querylog/config",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&config);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&config));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -95,13 +80,7 @@ impl AdGuardClient {
             "http://{}:{}/control/safesearch/settings",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let settings = response.json::<SafeSearchConfig>().await?;
@@ -113,13 +92,7 @@ impl AdGuardClient {
             "http://{}:{}/control/safesearch/settings",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.put(&url).json(&settings);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.put(&url).json(&settings));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -130,13 +103,7 @@ impl AdGuardClient {
             "http://{}:{}/control/parental/status",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let settings = response.json::<ParentalControlConfig>().await?;
@@ -157,13 +124,7 @@ impl AdGuardClient {
             "http://{}:{}/control/status",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let status = response.json::<Status>().await?;
@@ -178,13 +139,7 @@ impl AdGuardClient {
         if let Some(period) = time_period {
             url.push_str(&format!("?time_period={}", period));
         }
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let stats = response.json::<Stats>().await?;
@@ -217,13 +172,7 @@ impl AdGuardClient {
             url.push_str(&params.join("&"));
         }
 
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let log = response.json::<QueryLogResponse>().await?;
@@ -235,13 +184,7 @@ impl AdGuardClient {
             "http://{}:{}/control/rewrite/list",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let rewrites = response.json::<Vec<DnsRewrite>>().await?;
@@ -253,13 +196,7 @@ impl AdGuardClient {
             "http://{}:{}/control/rewrite/add",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&rewrite);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&rewrite));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -270,13 +207,7 @@ impl AdGuardClient {
             "http://{}:{}/control/rewrite/delete",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&rewrite);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&rewrite));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -287,16 +218,11 @@ impl AdGuardClient {
             "http://{}:{}/control/protection",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self
-            .client
-            .post(&url)
-            .json(&serde_json::json!({ "enabled": enabled }));
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(
+            self.client
+                .post(&url)
+                .json(&serde_json::json!({ "enabled": enabled })),
+        );
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -308,13 +234,7 @@ impl AdGuardClient {
             "http://{}:{}/control/safesearch/{}",
             self.config.adguard_host, self.config.adguard_port, path
         );
-        let mut request = self.client.post(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -326,13 +246,7 @@ impl AdGuardClient {
             "http://{}:{}/control/safebrowsing/{}",
             self.config.adguard_host, self.config.adguard_port, path
         );
-        let mut request = self.client.post(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -344,13 +258,7 @@ impl AdGuardClient {
             "http://{}:{}/control/parental/{}",
             self.config.adguard_host, self.config.adguard_port, path
         );
-        let mut request = self.client.post(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -361,13 +269,7 @@ impl AdGuardClient {
             "http://{}:{}/control/filtering/config",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let config = response.json::<FilteringConfig>().await?;
@@ -379,17 +281,11 @@ impl AdGuardClient {
             "http://{}:{}/control/filtering/add_url",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&endpoint).json(&AddFilterRequest {
+        let request = self.add_auth(self.client.post(&endpoint).json(&AddFilterRequest {
             name,
             url,
             whitelist,
-        });
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        }));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -400,16 +296,10 @@ impl AdGuardClient {
             "http://{}:{}/control/filtering/set_url",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&endpoint).json(&SetFilterUrlRequest {
+        let request = self.add_auth(self.client.post(&endpoint).json(&SetFilterUrlRequest {
             url: url.clone(),
             data: SetFilterUrlData { enabled, name, url },
-        });
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        }));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -420,16 +310,11 @@ impl AdGuardClient {
             "http://{}:{}/control/filtering/remove_url",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self
-            .client
-            .post(&endpoint)
-            .json(&RemoveFilterRequest { url, whitelist });
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(
+            self.client
+                .post(&endpoint)
+                .json(&RemoveFilterRequest { url, whitelist }),
+        );
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -448,7 +333,7 @@ impl AdGuardClient {
             self.config.adguard_host, self.config.adguard_port
         );
 
-        let mut request = self.client.post(&endpoint).json(&UpdateFilterRequest {
+        let request = self.add_auth(self.client.post(&endpoint).json(&UpdateFilterRequest {
             url: current_url,
             name: name.clone(),
             whitelist,
@@ -457,13 +342,7 @@ impl AdGuardClient {
                 url: new_url,
                 enabled,
             },
-        });
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        }));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -474,13 +353,7 @@ impl AdGuardClient {
             "http://{}:{}/control/clients",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let clients_response = response.json::<ClientsResponse>().await?;
@@ -507,13 +380,7 @@ impl AdGuardClient {
             "http://{}:{}/control/filtering/set_rules",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&SetRulesRequest { rules });
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&SetRulesRequest { rules }));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -524,13 +391,7 @@ impl AdGuardClient {
             "http://{}:{}/control/blocked_services/all",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let all_response = response.json::<BlockedServicesAllResponse>().await?;
@@ -542,13 +403,7 @@ impl AdGuardClient {
             "http://{}:{}/control/blocked_services/list",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let blocked_ids = response.json::<Vec<String>>().await?;
@@ -560,13 +415,7 @@ impl AdGuardClient {
             "http://{}:{}/control/blocked_services/set",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&ids);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&ids));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -577,13 +426,7 @@ impl AdGuardClient {
             "http://{}:{}/control/clients/add",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&client);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&client));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -594,16 +437,10 @@ impl AdGuardClient {
             "http://{}:{}/control/clients/update",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&UpdateClientRequest {
+        let request = self.add_auth(self.client.post(&url).json(&UpdateClientRequest {
             name: old_name,
             data: client,
-        });
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        }));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -614,13 +451,7 @@ impl AdGuardClient {
             "http://{}:{}/control/clients/delete",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&DeleteClientRequest { name });
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&DeleteClientRequest { name }));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -631,13 +462,7 @@ impl AdGuardClient {
             "http://{}:{}/control/dhcp/status",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let status = response.json::<DhcpStatus>().await?;
@@ -649,13 +474,7 @@ impl AdGuardClient {
             "http://{}:{}/control/dhcp/add_static_lease",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&lease);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&lease));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -666,13 +485,7 @@ impl AdGuardClient {
             "http://{}:{}/control/dhcp/remove_static_lease",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&lease);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&lease));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -683,13 +496,7 @@ impl AdGuardClient {
             "http://{}:{}/control/dns_info",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let config = response.json::<DnsConfig>().await?;
@@ -701,13 +508,7 @@ impl AdGuardClient {
             "http://{}:{}/control/dns_config",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&config);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&config));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -718,13 +519,7 @@ impl AdGuardClient {
             "http://{}:{}/control/cache_clear",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -735,13 +530,7 @@ impl AdGuardClient {
             "http://{}:{}/control/access/list",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let list = response.json::<AccessList>().await?;
@@ -753,13 +542,7 @@ impl AdGuardClient {
             "http://{}:{}/control/access/set",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&list);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&list));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -779,13 +562,7 @@ impl AdGuardClient {
             url.push_str(&format!("&client={}", c));
         }
 
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let result = response.json::<FilterCheckResponse>().await?;
@@ -797,13 +574,7 @@ impl AdGuardClient {
             "http://{}:{}/control/stats_reset",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -814,13 +585,7 @@ impl AdGuardClient {
             "http://{}:{}/control/querylog_clear",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -831,13 +596,7 @@ impl AdGuardClient {
             "http://{}:{}/control/backup",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url));
 
         let response = request.send().await?.error_for_status()?;
         let bytes = response.bytes().await?;
@@ -867,13 +626,7 @@ impl AdGuardClient {
         let part = reqwest::multipart::Part::bytes(bytes).file_name("backup.tar.gz");
         let form = reqwest::multipart::Form::new().part("file", part);
 
-        let mut request = self.client.post(&url).multipart(form);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).multipart(form));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -884,13 +637,7 @@ impl AdGuardClient {
             "http://{}:{}/control/restart",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -901,13 +648,7 @@ impl AdGuardClient {
             "http://{}:{}/control/tls/status",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.get(&url);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
         let config = response.json::<TlsConfig>().await?;
@@ -919,13 +660,7 @@ impl AdGuardClient {
             "http://{}:{}/control/tls/configure",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&config);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&config));
 
         request.send().await?.error_for_status()?;
         Ok(())
@@ -936,13 +671,7 @@ impl AdGuardClient {
             "http://{}:{}/control/tls/validate",
             self.config.adguard_host, self.config.adguard_port
         );
-        let mut request = self.client.post(&url).json(&config);
-
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
-        {
-            request = request.basic_auth(user, Some(pass));
-        }
+        let request = self.add_auth(self.client.post(&url).json(&config));
 
         let response = request.send().await?.error_for_status()?;
         let result = response.json::<TlsConfig>().await?;

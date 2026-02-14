@@ -7,58 +7,98 @@ use serde_json::Value;
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, stdin, stdout};
 
+use tokio::sync::mpsc;
+
 #[derive(Clone)]
 pub struct McpServer {
-    client: AdGuardClient,
-    registry: Arc<Mutex<ToolRegistry>>,
-    config: AppConfig,
+    pub client: AdGuardClient,
+    pub registry: Arc<Mutex<ToolRegistry>>,
+    pub config: AppConfig,
+    pub notification_tx: mpsc::Sender<Notification>,
 }
 
 impl McpServer {
-    pub fn new(client: AdGuardClient, registry: ToolRegistry, config: AppConfig) -> Self {
-        Self {
-            client,
-            registry: Arc::new(Mutex::new(registry)),
-            config,
-        }
+    pub fn new(
+        client: AdGuardClient,
+        registry: ToolRegistry,
+        config: AppConfig,
+    ) -> (Self, mpsc::Receiver<Notification>) {
+        let (tx, rx) = mpsc::channel(100);
+        (
+            Self {
+                client,
+                registry: Arc::new(Mutex::new(registry)),
+                config,
+                notification_tx: tx,
+            },
+            rx,
+        )
     }
 
-    pub async fn run_stdio(&self) -> Result<()> {
-        let mut reader = BufReader::new(stdin()).lines();
-        let mut stdout = stdout();
+    pub async fn run_stdio(&self, rx: mpsc::Receiver<Notification>) -> Result<()> {
+        self.run(stdin(), stdout(), rx).await
+    }
 
-        while let Some(line) = reader.next_line().await? {
-            let input = line.trim();
-            if input.is_empty() {
-                continue;
-            }
+    pub async fn run<R, W>(
+        &self,
+        reader: R,
+        mut writer: W,
+        mut rx: mpsc::Receiver<Notification>,
+    ) -> Result<()>
+    where
+        R: tokio::io::AsyncRead + Unpin,
+        W: tokio::io::AsyncWrite + Unpin,
+    {
+        let mut reader = BufReader::new(reader).lines();
 
-            if let Ok(Message::Request(req)) = serde_json::from_str::<Message>(input) {
-                let id = req.id.clone();
-                let response = self.handle_request(req).await;
+        loop {
+            tokio::select! {
+                line = reader.next_line() => {
+                    let line = line?;
+                    if let Some(line) = line {
+                        let input = line.trim();
+                        if input.is_empty() {
+                            continue;
+                        }
 
-                let json_resp = match response {
-                    Ok(result) => Response {
-                        jsonrpc: "2.0".to_string(),
-                        id,
-                        result: Some(result),
-                        error: None,
-                    },
-                    Err(e) => Response {
-                        jsonrpc: "2.0".to_string(),
-                        id,
-                        result: None,
-                        error: Some(ResponseError {
-                            code: -32000,
-                            message: e.to_string(),
-                            data: None,
-                        }),
-                    },
-                };
+                        if let Ok(Message::Request(req)) = serde_json::from_str::<Message>(input) {
+                            let id = req.id.clone();
+                            let response = self.handle_request(req).await;
 
-                let out = serde_json::to_string(&json_resp)? + "\n";
-                stdout.write_all(out.as_bytes()).await?;
-                stdout.flush().await?;
+                            let json_resp = match response {
+                                Ok(result) => Response {
+                                    jsonrpc: "2.0".to_string(),
+                                    id,
+                                    result: Some(result),
+                                    error: None,
+                                },
+                                Err(e) => Response {
+                                    jsonrpc: "2.0".to_string(),
+                                    id,
+                                    result: None,
+                                    error: Some(ResponseError {
+                                        code: -32000,
+                                        message: e.to_string(),
+                                        data: None,
+                                    }),
+                                },
+                            };
+
+                            let out = serde_json::to_string(&json_resp)? + "\n";
+                            writer.write_all(out.as_bytes()).await?;
+                            writer.flush().await?;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                notification = rx.recv() => {
+                    if let Some(n) = notification {
+                        let out = serde_json::to_string(&Message::Notification(n))? + "\n";
+                        writer.write_all(out.as_bytes()).await?;
+                        writer.flush().await?;
+                    }
+                }
             }
         }
         Ok(())
@@ -246,16 +286,7 @@ impl McpServer {
             method: method.to_string(),
             params,
         };
-        // For stdio, we write to stdout.
-        // NOTE: This assumes we are running in stdio mode.
-        // If we are in HTTP mode, we should push to a queue or similar.
-        // For now, I'll write to stdout, but this needs abstraction for HTTP support later.
-        // In qbittorrent-mcp-rs, McpServer had a notification queue.
-
-        let out = serde_json::to_string(&Message::Notification(notification))? + "\n";
-        let mut stdout = stdout();
-        stdout.write_all(out.as_bytes()).await?;
-        stdout.flush().await?;
+        let _ = self.notification_tx.send(notification).await;
         Ok(())
     }
 }

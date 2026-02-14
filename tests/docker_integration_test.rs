@@ -90,7 +90,7 @@ async fn test_mcp_http_transport() -> Result<()> {
 
     let adguard_client = AdGuardClient::new(config.clone());
     let registry = ToolRegistry::new(&config);
-    let server = McpServer::new(adguard_client, registry, config.clone());
+    let (server, rx) = McpServer::new(adguard_client, registry, config.clone());
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
     let port = listener.local_addr()?.port();
@@ -100,6 +100,7 @@ async fn test_mcp_http_transport() -> Result<()> {
     tokio::spawn(async move {
         run_http_server(
             server_handle,
+            rx,
             "127.0.0.1",
             port,
             Some("test-token".to_string()),
