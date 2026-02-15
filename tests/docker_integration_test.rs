@@ -540,7 +540,9 @@ async fn test_filtering_tools() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::filtering::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -554,28 +556,73 @@ async fn test_filtering_tools() -> Result<()> {
 
     let filter_name = "Integration Test Filter".to_string();
     let filter_url = "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt".to_string();
-    client
-        .add_filter(filter_name.clone(), filter_url.clone(), false)
-        .await?;
 
-    let filtering = client.list_filters().await?;
-    assert!(filtering.filters.iter().any(|f| f.name == filter_name));
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "add_filter", "name": filter_name, "url": filter_url}),
+    )
+    .await?;
 
-    client
-        .toggle_filter(filter_url.clone(), filter_name.clone(), false)
-        .await?;
-    let filtering = client.list_filters().await?;
-    let filter = filtering
-        .filters
-        .iter()
-        .find(|f| f.name == filter_name)
-        .unwrap();
-    assert!(!filter.enabled);
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "list_filters"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains(&filter_name)
+    );
+
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "toggle_filter", "identifier": filter_name, "enabled": false}),
+    )
+    .await?;
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "list_filters"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("\"enabled\": false")
+    );
 
     let test_rule = "||integration-test.example.com^".to_string();
-    client.set_user_rules(vec![test_rule.clone()]).await?;
-    let rules = client.get_user_rules().await?;
-    assert!(rules.contains(&test_rule));
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "set_custom_rules", "rules": [test_rule]}),
+    )
+    .await?;
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "list_custom_rules"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains(&test_rule)
+    );
 
     Ok(())
 }
@@ -605,7 +652,9 @@ async fn test_client_tools() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::clients::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -617,32 +666,63 @@ async fn test_client_tools() -> Result<()> {
     }
     assert!(ready);
 
-    let clients = client.list_clients().await?;
-    if !clients.is_empty() {
-        let name = &clients[0].name;
-        let info = client.get_client_info(name).await?;
-        assert_eq!(&info.name, name);
-    }
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_clients",
+        serde_json::json!({"action": "list_clients"}),
+    )
+    .await?;
+    assert!(res["content"][0]["text"].as_str().unwrap().contains("["));
 
     let test_client_name = "Integration Test Client".to_string();
-    let new_client = adguardhome_mcp_rs::adguard::AdGuardClientDevice {
-        name: test_client_name.clone(),
-        ids: vec!["1.2.3.4".to_string()],
-        use_global_settings: true,
-        filtering_enabled: true,
-        parental_enabled: false,
-        safebrowsing_enabled: true,
-        safesearch_enabled: false,
-    };
-    client.add_client(new_client).await?;
-    assert_eq!(
-        client.get_client_info(&test_client_name).await?.name,
-        test_client_name
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_clients",
+        serde_json::json!({
+            "action": "add_client",
+            "name": test_client_name,
+            "ids": ["1.2.3.4"]
+        }),
+    )
+    .await?;
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_clients",
+        serde_json::json!({"action": "get_client_info", "identifier": test_client_name}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains(&test_client_name)
     );
 
-    client.delete_client(test_client_name.clone()).await?;
-    let clients = client.list_clients().await?;
-    assert!(!clients.iter().any(|c| c.name == test_client_name));
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_clients",
+        serde_json::json!({"action": "delete_client", "name": test_client_name}),
+    )
+    .await?;
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_clients",
+        serde_json::json!({"action": "list_clients"}),
+    )
+    .await?;
+    assert!(
+        !res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains(&test_client_name)
+    );
 
     Ok(())
 }
@@ -672,7 +752,9 @@ async fn test_blocked_services() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::filtering::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -684,21 +766,49 @@ async fn test_blocked_services() -> Result<()> {
     }
     assert!(ready);
 
-    let services = client.list_all_services().await?;
-    assert!(!services.is_empty());
-
-    client
-        .set_blocked_services(vec!["youtube".to_string()])
-        .await?;
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "list_blocked_services"}),
+    )
+    .await?;
     assert!(
-        client
-            .list_blocked_services()
-            .await?
-            .contains(&"youtube".to_string())
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("youtube")
     );
 
-    client.set_blocked_services(vec![]).await?;
-    assert!(client.list_blocked_services().await?.is_empty());
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "toggle_blocked_service", "service_id": "youtube", "blocked": true}),
+    )
+    .await?;
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "list_blocked_services"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("\"blocked\": true")
+    );
+
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "toggle_blocked_service", "service_id": "youtube", "blocked": false}),
+    )
+    .await?;
 
     Ok(())
 }
@@ -807,7 +917,9 @@ async fn test_access_control_tools() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::clients::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -819,15 +931,39 @@ async fn test_access_control_tools() -> Result<()> {
     }
     assert!(ready);
 
-    let mut list = client.get_access_list().await?;
-    list.blocked_hosts.push("test-blocked.com".to_string());
-    client.set_access_list(list.clone()).await?;
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_clients",
+        serde_json::json!({"action": "get_access_list"}),
+    )
+    .await?;
+    let mut list: serde_json::Value =
+        serde_json::from_str(res["content"][0]["text"].as_str().unwrap())?;
+
+    let blocked_hosts = list["blocked_hosts"].as_array_mut().unwrap();
+    blocked_hosts.push(serde_json::json!("test-blocked.com"));
+
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_clients",
+        serde_json::json!({"action": "update_access_list", "blocked_hosts": blocked_hosts}),
+    )
+    .await?;
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_clients",
+        serde_json::json!({"action": "get_access_list"}),
+    )
+    .await?;
     assert!(
-        client
-            .get_access_list()
-            .await?
-            .blocked_hosts
-            .contains(&"test-blocked.com".to_string())
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("test-blocked.com")
     );
 
     Ok(())
@@ -858,7 +994,9 @@ async fn test_dhcp_tools() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::clients::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -871,7 +1009,13 @@ async fn test_dhcp_tools() -> Result<()> {
     assert!(ready);
 
     // DHCP might not be enabled in the default container, but we can check if the endpoint responds
-    let _status = client.get_dhcp_status().await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_clients",
+        serde_json::json!({"action": "list_dhcp_leases"}),
+    )
+    .await?;
 
     Ok(())
 }
@@ -901,7 +1045,9 @@ async fn test_check_filtering() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::filtering::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -914,18 +1060,43 @@ async fn test_check_filtering() -> Result<()> {
     assert!(ready);
 
     // Check an allowed domain
-    let result = client.check_host("google.com", None).await?;
-    assert_eq!(result.reason, "NotFilteredNotFound");
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "check_host", "domain": "google.com"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("NotFilteredNotFound")
+    );
 
     // Add a block rule
-    client
-        .set_user_rules(vec!["||blocked-domain.com^".to_string()])
-        .await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "set_custom_rules", "rules": ["||blocked-domain.com^"]}),
+    )
+    .await?;
 
     // Check the blocked domain
-    let result = client.check_host("blocked-domain.com", None).await?;
-    assert!(result.reason.contains("Filtered"));
-    assert_eq!(result.rule.unwrap(), "||blocked-domain.com^");
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "check_host", "domain": "blocked-domain.com"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("Filtered")
+    );
 
     Ok(())
 }
@@ -1052,7 +1223,9 @@ async fn test_filter_list_crud_integration() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::filtering::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -1068,33 +1241,74 @@ async fn test_filter_list_crud_integration() -> Result<()> {
     let filter_url = "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt".to_string();
 
     // Add
-    client
-        .add_filter(filter_name.clone(), filter_url.clone(), false)
-        .await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "add_filter", "name": filter_name, "url": filter_url}),
+    )
+    .await?;
 
-    let filtering = client.list_filters().await?;
-    assert!(filtering.filters.iter().any(|f| f.name == filter_name));
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "list_filters"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains(&filter_name)
+    );
 
     // Update
     let new_name = "Updated CRUD Filter".to_string();
-    client
-        .update_filter(
-            filter_url.clone(),
-            filter_url.clone(),
-            new_name.clone(),
-            false,
-            true,
-        )
-        .await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "update_filter", "identifier": filter_url, "new_name": new_name}),
+    )
+    .await?;
 
-    let filtering = client.list_filters().await?;
-    assert!(filtering.filters.iter().any(|f| f.name == new_name));
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "list_filters"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains(&new_name)
+    );
 
     // Remove
-    client.remove_filter(filter_url.clone(), false).await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "remove_filter", "identifier": filter_url}),
+    )
+    .await?;
 
-    let filtering = client.list_filters().await?;
-    assert!(!filtering.filters.iter().any(|f| f.url == filter_url));
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_filtering",
+        serde_json::json!({"action": "list_filters"}),
+    )
+    .await?;
+    assert!(
+        !res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains(&filter_url)
+    );
 
     Ok(())
 }

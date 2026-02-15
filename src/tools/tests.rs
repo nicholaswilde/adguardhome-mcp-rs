@@ -484,7 +484,11 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("list_filter_lists", &client, None)
+        .call_tool(
+            "manage_filtering",
+            &client,
+            Some(json!({"action": "list_filters"})),
+        )
         .await
         .unwrap();
 
@@ -495,9 +499,9 @@ async fn test_filtering_tools() {
         .await;
     registry
         .call_tool(
-            "add_filter_list",
+            "manage_filtering",
             &client,
-            Some(json!({"name": "a", "url": "b"})),
+            Some(json!({"action": "add_filter", "name": "a", "url": "b"})),
         )
         .await
         .unwrap();
@@ -509,36 +513,36 @@ async fn test_filtering_tools() {
         .await;
     registry
         .call_tool(
-            "toggle_filter_list",
+            "manage_filtering",
             &client,
-            Some(json!({"identifier": "a", "enabled": true})),
+            Some(json!({"action": "toggle_filter", "identifier": "a", "enabled": true})),
         )
         .await
         .unwrap();
     // Test filter not found
     registry
         .call_tool(
-            "toggle_filter_list",
+            "manage_filtering",
             &client,
-            Some(json!({"identifier": "not-found", "enabled": true})),
+            Some(json!({"action": "toggle_filter", "identifier": "not-found", "enabled": true})),
         )
         .await
         .unwrap();
 
     registry
         .call_tool(
-            "update_filter_list",
+            "manage_filtering",
             &client,
-            Some(json!({"identifier": "a", "new_name": "c"})),
+            Some(json!({"action": "update_filter", "identifier": "a", "new_name": "c"})),
         )
         .await
         .unwrap();
     // Test filter not found
     registry
         .call_tool(
-            "update_filter_list",
+            "manage_filtering",
             &client,
-            Some(json!({"identifier": "not-found", "new_name": "c"})),
+            Some(json!({"action": "update_filter", "identifier": "not-found", "new_name": "c"})),
         )
         .await
         .unwrap();
@@ -550,24 +554,28 @@ async fn test_filtering_tools() {
         .await;
     registry
         .call_tool(
-            "remove_filter_list",
+            "manage_filtering",
             &client,
-            Some(json!({"identifier": "a"})),
+            Some(json!({"action": "remove_filter", "identifier": "a"})),
         )
         .await
         .unwrap();
     // Test filter not found
     registry
         .call_tool(
-            "remove_filter_list",
+            "manage_filtering",
             &client,
-            Some(json!({"identifier": "not-found"})),
+            Some(json!({"action": "remove_filter", "identifier": "not-found"})),
         )
         .await
         .unwrap();
 
     registry
-        .call_tool("list_custom_rules", &client, None)
+        .call_tool(
+            "manage_filtering",
+            &client,
+            Some(json!({"action": "list_custom_rules"})),
+        )
         .await
         .unwrap();
 
@@ -577,33 +585,45 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("set_custom_rules", &client, Some(json!({"rules": ["a"]})))
+        .call_tool(
+            "manage_filtering",
+            &client,
+            Some(json!({"action": "set_custom_rules", "rules": ["a"]})),
+        )
         .await
         .unwrap();
     registry
-        .call_tool("add_custom_rule", &client, Some(json!({"rule": "new"})))
+        .call_tool(
+            "manage_filtering",
+            &client,
+            Some(json!({"action": "add_custom_rule", "rule": "new"})),
+        )
         .await
         .unwrap();
     // Test rule already exists
     registry
-        .call_tool("add_custom_rule", &client, Some(json!({"rule": "rule1"})))
+        .call_tool(
+            "manage_filtering",
+            &client,
+            Some(json!({"action": "add_custom_rule", "rule": "rule1"})),
+        )
         .await
         .unwrap();
 
     registry
         .call_tool(
-            "remove_custom_rule",
+            "manage_filtering",
             &client,
-            Some(json!({"rule": "rule1"})),
+            Some(json!({"action": "remove_custom_rule", "rule": "rule1"})),
         )
         .await
         .unwrap();
     // Test rule not found
     registry
         .call_tool(
-            "remove_custom_rule",
+            "manage_filtering",
             &client,
-            Some(json!({"rule": "not-found"})),
+            Some(json!({"action": "remove_custom_rule", "rule": "not-found"})),
         )
         .await
         .unwrap();
@@ -619,7 +639,11 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("list_blocked_services", &client, None)
+        .call_tool(
+            "manage_filtering",
+            &client,
+            Some(json!({"action": "list_blocked_services"})),
+        )
         .await
         .unwrap();
 
@@ -630,9 +654,9 @@ async fn test_filtering_tools() {
         .await;
     registry
         .call_tool(
-            "toggle_blocked_service",
+            "manage_filtering",
             &client,
-            Some(json!({"service_id": "youtube", "blocked": true})),
+            Some(json!({"action": "toggle_blocked_service", "service_id": "youtube", "blocked": true})),
         )
         .await
         .unwrap();
@@ -643,7 +667,11 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("check_filtering", &client, Some(json!({"domain": "a"})))
+        .call_tool(
+            "manage_filtering",
+            &client,
+            Some(json!({"action": "check_host", "domain": "a"})),
+        )
         .await
         .unwrap();
 }
@@ -664,14 +692,18 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("list_clients", &client, None)
+        .call_tool(
+            "manage_clients",
+            &client,
+            Some(json!({"action": "list_clients"})),
+        )
         .await
         .unwrap();
     registry
         .call_tool(
-            "get_client_info",
+            "manage_clients",
             &client,
-            Some(json!({"identifier": "Test Client"})),
+            Some(json!({"action": "get_client_info", "identifier": "Test Client"})),
         )
         .await
         .unwrap();
@@ -683,9 +715,9 @@ async fn test_clients_tools() {
         .await;
     registry
         .call_tool(
-            "add_client",
+            "manage_clients",
             &client,
-            Some(json!({"name": "a", "ids": ["b"]})),
+            Some(json!({"action": "add_client", "name": "a", "ids": ["b"]})),
         )
         .await
         .unwrap();
@@ -697,9 +729,9 @@ async fn test_clients_tools() {
         .await;
     registry
         .call_tool(
-            "update_client",
+            "manage_clients",
             &client,
-            Some(json!({"old_name": "Test Client", "name": "New"})),
+            Some(json!({"action": "update_client", "old_name": "Test Client", "name": "New"})),
         )
         .await
         .unwrap();
@@ -710,7 +742,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("delete_client", &client, Some(json!({"name": "a"})))
+        .call_tool(
+            "manage_clients",
+            &client,
+            Some(json!({"action": "delete_client", "name": "a"})),
+        )
         .await
         .unwrap();
 
@@ -721,9 +757,9 @@ async fn test_clients_tools() {
         .await;
     registry
         .call_tool(
-            "get_client_activity_report",
+            "manage_clients",
             &client,
-            Some(json!({"identifier": "a"})),
+            Some(json!({"action": "get_activity_report", "identifier": "a"})),
         )
         .await
         .unwrap();
@@ -736,7 +772,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("get_access_list", &client, None)
+        .call_tool(
+            "manage_clients",
+            &client,
+            Some(json!({"action": "get_access_list"})),
+        )
         .await
         .unwrap();
 
@@ -747,9 +787,9 @@ async fn test_clients_tools() {
         .await;
     registry
         .call_tool(
-            "update_access_list",
+            "manage_clients",
             &client,
-            Some(json!({"allowed_clients": ["a"]})),
+            Some(json!({"action": "update_access_list", "allowed_clients": ["a"]})),
         )
         .await
         .unwrap();
@@ -762,7 +802,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("list_dhcp_leases", &client, None)
+        .call_tool(
+            "manage_clients",
+            &client,
+            Some(json!({"action": "list_dhcp_leases"})),
+        )
         .await
         .unwrap();
 
@@ -773,9 +817,9 @@ async fn test_clients_tools() {
         .await;
     registry
         .call_tool(
-            "add_static_lease",
+            "manage_clients",
             &client,
-            Some(json!({"mac": "a", "ip": "b", "hostname": "c"})),
+            Some(json!({"action": "add_static_lease", "mac": "a", "ip": "b", "hostname": "c"})),
         )
         .await
         .unwrap();
@@ -787,9 +831,9 @@ async fn test_clients_tools() {
         .await;
     registry
         .call_tool(
-            "remove_static_lease",
+            "manage_clients",
             &client,
-            Some(json!({"mac": "a", "ip": "b", "hostname": "c"})),
+            Some(json!({"action": "remove_static_lease", "mac": "a", "ip": "b", "hostname": "c"})),
         )
         .await
         .unwrap();

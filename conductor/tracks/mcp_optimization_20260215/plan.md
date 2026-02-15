@@ -27,14 +27,14 @@ Consolidate DNS and Protection related tools into unified structures.
 ## Phase 3: Filtering & Client Tool Consolidation
 Consolidate Filtering and Client management tools.
 
-- [ ] Task: Refactor `src/tools/filtering.rs` into the `manage_filtering` unified tool.
+- [x] Task: Refactor `src/tools/filtering.rs` into the `manage_filtering` unified tool.
     - [ ] Combine filters, custom rules, blocked services, and host checking.
     - [ ] Optimize descriptions and schemas.
-- [ ] Task: Refactor `src/tools/clients.rs` into the `manage_clients` unified tool.
+- [x] Task: Refactor `src/tools/clients.rs` into the `manage_clients` unified tool.
     - [ ] Combine clients, DHCP, and access control.
     - [ ] Optimize descriptions and schemas.
-- [ ] Task: Update unit tests in `src/tools/tests.rs` for Filtering and Clients.
-- [ ] Task: Update `tests/docker_integration_test.rs` for Filtering and Clients.
+- [x] Task: Update unit tests in `src/tools/tests.rs` for Filtering and Clients.
+- [x] Task: Update `tests/docker_integration_test.rs` for Filtering and Clients.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Filtering & Client Tool Consolidation' (Protocol in workflow.md)
 
 ## Phase 4: Final Cleanup & Optimization
