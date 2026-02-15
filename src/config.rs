@@ -129,6 +129,7 @@ fn parse_args(args: Vec<String>) -> ArgMatches {
     use clap::{Arg, ArgAction, Command};
 
     let cmd = Command::new("adguardhome-mcp-rs")
+        .version(env!("CARGO_PKG_VERSION"))
         .arg(
             Arg::new("config")
                 .short('c')

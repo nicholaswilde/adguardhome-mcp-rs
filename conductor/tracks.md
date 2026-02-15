@@ -7,7 +7,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Refactor tests/**
 *Link: [./tracks/refactor_tests_20260202/](./tracks/refactor_tests_20260202/)*
 
-- [ ] **Track: Version Command Line Switch**
+- [~] **Track: Version Command Line Switch**
 *Link: [./tracks/version_flag_20260202/](./tracks/version_flag_20260202/)*
 
 - [ ] **Track: AdGuard Home Instance Sync**
