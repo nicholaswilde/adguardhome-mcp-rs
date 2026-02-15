@@ -5,7 +5,7 @@
 [![ci](https://img.shields.io/github/actions/workflow/status/nicholaswilde/adguardhome-mcp-rs/ci.yml?label=ci&style=for-the-badge&branch=main&logo=github-actions)](https://github.com/nicholaswilde/adguardhome-mcp-rs/actions/workflows/ci.yml)
 
 > [!WARNING]
-> This project is currently in active development (v0.1.7) and is **not production-ready**. Features may change, and breaking changes may occur without notice. **Use this MCP server at your own risk.**
+> This project is currently in active development (v0.1.10) and is **not production-ready**. Features may change, and breaking changes may occur without notice. **Use this MCP server at your own risk.**
 
 A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](https://modelcontextprotocol.io/docs/getting-started/intro). This server connects to an AdGuard Home instance and exposes tools to monitor and manage filtering via the Model Context Protocol.
 
@@ -18,67 +18,14 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
 - **Authentication:**
   - Connects to AdGuard Home using username/password.
   - Secures HTTP transport with Bearer Token authentication.
-- **Token Optimization:** "Lazy Mode" initially exposes a minimal toolset to save AI context tokens, loading more tools only on demand.
+- **Token Optimization:** Consolidated granular tools into functional groups to optimize AI context window usage.
   - **Tools:**
-  - **System:**
-    - `get_status`: Get AdGuard Home status, version, and protection state.
-    - `get_version_info`: Get version information and check for updates.
-    - `update_adguard_home`: Trigger an update of AdGuard Home.
-  - **DNS Rewrites:**
-
-    - `list_dns_rewrites`: List all DNS rewrites.
-    - `add_dns_rewrite`: Add a new DNS rewrite (domain, answer).
-    - `remove_dns_rewrite`: Remove a DNS rewrite (domain, answer).
-  - **Protection:**
-    - `get_protection_config`: Retrieve current settings for all protection features.
-    - `set_protection_config`: Update configuration for Safe Search and Parental Control.
-    - `set_protection_state`: Enable or disable global AdGuard Home protection.
-    - `set_safe_search`: Enable or disable enforced safe search.
-    - `set_safe_browsing`: Enable or disable safe browsing protection.
-    - `set_parental_control`: Enable or disable parental control.
-  - **Filtering:**
-    - `check_filtering`: Check how a domain is filtered.
-    - `list_filter_lists`: List all configured filter lists (blocklists and allowlists).
-    - `toggle_filter_list`: Enable or disable a specific filter list by Name, ID, or URL.
-    - `add_filter_list`: Add a new filter list to the configuration.
-    - `remove_filter_list`: Remove an existing filter list.
-    - `update_filter_list`: Update the name, URL, or enabled state of a filter list.
-    - `list_custom_rules`: List all user-defined DNS filtering rules.
-    - `set_custom_rules`: Replace all custom filtering rules.
-    - `add_custom_rule`: Add a single custom filtering rule.
-    - `remove_custom_rule`: Remove a single custom filtering rule.
-  - **Blocked Services:**
-    - `list_blocked_services`: List all available services and their current blocked status.
-    - `toggle_blocked_service`: Enable or disable blocking for a specific service.
-  - **Clients:**
-    - `list_clients`: List all configured and discovered network clients.
-    - `get_client_info`: Get detailed configuration and usage stats for a specific client.
-    - `add_client`: Add a new client configuration.
-    - `update_client`: Update an existing client configuration.
-    - `delete_client`: Remove a client configuration.
-  - **DHCP Management:**
-    - `list_dhcp_leases`: List all dynamic and static DHCP leases.
-    - `add_static_lease`: Add a new static DHCP lease.
-    - `remove_static_lease`: Remove an existing static DHCP lease.
-  - **DNS Configuration:**
-    - `get_dns_config`: Retrieve current DNS settings including upstream servers and cache configuration.
-    - `set_dns_config`: Update DNS settings including upstream servers and cache configuration.
-    - `clear_dns_cache`: Flush the DNS cache.
-  - **Analytics & Reporting:**
-    - `get_top_blocked_domains`: List the most frequently blocked domains.
-    - `get_client_activity_report`: Summarize recent activity and top domains for a specific client.
-  - **Access Control:**
-    - `get_access_list`: Get the global access control lists (allowed/disallowed clients and blocked hosts).
-    - `update_access_list`: Update the global access control lists.
-  - **Monitoring:**
-    - `get_stats`: Get global statistics (total queries, blocked, etc.).
-    - `get_query_log`: Search and filter the DNS query log.
-    - `get_query_log_config`: Retrieve current DNS query logging settings.
-    - `set_query_log_config`: Update DNS query logging settings.
-    - `clear_stats`: Reset all statistics.
-    - `clear_query_log`: Clear the DNS query log.
-  - **Management (Lazy Mode only):**
-    - `manage_tools`: List and enable/disable available tools.
+    - `manage_system`: System status, monitoring stats, query logs, backups, and maintenance.
+    - `manage_dns`: DNS rewrites management, server configuration, and cache control.
+    - `manage_protection`: Global protection state, safe search, safe browsing, and parental control.
+    - `manage_filtering`: Adblock filter lists, custom user rules, and service blocking.
+    - `manage_clients`: Network client management, DHCP leases, and access control.
+    - `manage_tools`: (Lazy Mode only) Dynamic on-demand loading of the above tools.
 
 ## :package: Installation
 
