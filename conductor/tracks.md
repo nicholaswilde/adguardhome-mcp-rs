@@ -54,3 +54,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] [Upstream DNS & Cache](./archive/dns_config_20260201/index.md) - Manage upstream servers and cache settings.
 
+
+---
+
+- [ ] **Track: Reduce MCP server token usage by optimizing and consolidating tools**
+*Link: [./tracks/mcp_optimization_20260215/](./tracks/mcp_optimization_20260215/)*
