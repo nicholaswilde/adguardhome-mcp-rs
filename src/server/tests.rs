@@ -88,7 +88,7 @@ async fn test_handle_manage_tools_enable_disable() {
             "name": "manage_tools",
             "arguments": {
                 "action": "disable",
-                "tools": ["get_status"]
+                "tools": ["manage_system"]
             }
         })),
     };
@@ -96,7 +96,7 @@ async fn test_handle_manage_tools_enable_disable() {
 
     {
         let registry = server.registry.lock().unwrap();
-        assert!(!registry.is_tool_enabled("get_status"));
+        assert!(!registry.is_tool_enabled("manage_system"));
     }
 
     // Then, enable it back
@@ -108,7 +108,7 @@ async fn test_handle_manage_tools_enable_disable() {
             "name": "manage_tools",
             "arguments": {
                 "action": "enable",
-                "tools": ["get_status"]
+                "tools": ["manage_system"]
             }
         })),
     };
@@ -116,7 +116,7 @@ async fn test_handle_manage_tools_enable_disable() {
 
     {
         let registry = server.registry.lock().unwrap();
-        assert!(registry.is_tool_enabled("get_status"));
+        assert!(registry.is_tool_enabled("manage_system"));
     }
 }
 
@@ -306,7 +306,7 @@ async fn test_mcp_run_notification() {
     // Enable a tool first
     {
         let mut registry = server.registry.lock().unwrap();
-        registry.enable_tool("get_status");
+        registry.enable_tool("manage_system");
     }
 
     let (client_io, server_io) = tokio::io::duplex(1024);
@@ -325,7 +325,7 @@ async fn test_mcp_run_notification() {
             "name": "manage_tools",
             "arguments": {
                 "action": "disable",
-                "tools": ["get_status"]
+                "tools": ["manage_system"]
             }
         })),
     }))

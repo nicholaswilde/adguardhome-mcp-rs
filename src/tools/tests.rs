@@ -130,7 +130,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("get_status", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "get_status"})),
+        )
         .await
         .unwrap();
 
@@ -144,11 +148,19 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("get_stats", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "get_stats"})),
+        )
         .await
         .unwrap();
     registry
-        .call_tool("get_top_blocked_domains", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "get_top_blocked_domains"})),
+        )
         .await
         .unwrap();
 
@@ -158,7 +170,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("get_query_log", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "get_query_log"})),
+        )
         .await
         .unwrap();
 
@@ -168,7 +184,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("clear_stats", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "clear_stats"})),
+        )
         .await
         .unwrap();
 
@@ -178,7 +198,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("clear_query_log", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "clear_query_log"})),
+        )
         .await
         .unwrap();
 
@@ -190,7 +214,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("get_query_log_config", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "get_query_log_config"})),
+        )
         .await
         .unwrap();
 
@@ -201,9 +229,9 @@ async fn test_system_tools() {
         .await;
     registry
         .call_tool(
-            "set_query_log_config",
+            "manage_system",
             &client,
-            Some(json!({"enabled": false})),
+            Some(json!({"action": "set_query_log_config", "enabled": false})),
         )
         .await
         .unwrap();
@@ -214,7 +242,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("get_version_info", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "get_version_info"})),
+        )
         .await
         .unwrap();
 
@@ -224,7 +256,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("update_adguard_home", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "update_adguard_home"})),
+        )
         .await
         .unwrap();
 
@@ -234,11 +270,15 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     let resp = registry
-        .call_tool("create_backup", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "create_backup"})),
+        )
         .await
         .unwrap();
     let text = resp["content"][0]["text"].as_str().unwrap();
-    if let Some(p) = text.split("at: ").nth(1) {
+    if let Some(p) = text.split("Backup: ").nth(1) {
         let _ = std::fs::remove_file(p.trim());
     }
 
@@ -248,7 +288,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("restart_service", &client, None)
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "restart_service"})),
+        )
         .await
         .unwrap();
 
@@ -260,9 +304,9 @@ async fn test_system_tools() {
     let _ = std::fs::write("test.tar.gz", vec![1]);
     registry
         .call_tool(
-            "restore_backup",
+            "manage_system",
             &client,
-            Some(json!({"file_path": "test.tar.gz"})),
+            Some(json!({"action": "restore_backup", "file_path": "test.tar.gz"})),
         )
         .await
         .unwrap();

@@ -62,6 +62,18 @@ async fn start_adguard_container(
     Ok((container, host, port))
 }
 
+async fn call_mcp_tool(
+    registry: &ToolRegistry,
+    client: &AdGuardClient,
+    name: &str,
+    args: serde_json::Value,
+) -> Result<serde_json::Value> {
+    registry
+        .call_tool(name, client, Some(args))
+        .await
+        .map_err(|e| anyhow::anyhow!(e))
+}
+
 #[tokio::test]
 async fn test_mcp_http_transport() -> Result<()> {
     if std::env::var("CI").is_ok()
@@ -345,7 +357,9 @@ async fn test_monitoring_tools() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::system::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -357,8 +371,28 @@ async fn test_monitoring_tools() -> Result<()> {
     }
     assert!(ready);
 
-    let _stats = client.get_stats(None).await?;
-    let _log = client.get_query_log(None, None, Some(5)).await?;
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "get_stats"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("Queries:")
+    );
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "get_query_log", "limit": 5}),
+    )
+    .await?;
+    assert!(!res["content"][0]["text"].as_str().unwrap().is_empty());
 
     Ok(())
 }
@@ -824,7 +858,9 @@ async fn test_maintenance_tools_integration() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::system::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -836,23 +872,60 @@ async fn test_maintenance_tools_integration() -> Result<()> {
     }
     assert!(ready);
 
-    // Call reset_stats
-    client.reset_stats().await?;
+    // Call clear_stats
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "clear_stats"}),
+    )
+    .await?;
 
     // Call clear_query_log
-    client.clear_query_log().await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "clear_query_log"}),
+    )
+    .await?;
 
     // Call create_backup
-    let backup_path = client.create_backup().await?;
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "create_backup"}),
+    )
+    .await?;
+    let backup_path_str = res["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .split("Backup: ")
+        .nth(1)
+        .unwrap();
+    let backup_path = std::path::Path::new(backup_path_str);
     assert!(backup_path.exists());
 
     // Call restore_backup
-    client.restore_backup(backup_path.to_str().unwrap()).await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "restore_backup", "file_path": backup_path_str}),
+    )
+    .await?;
 
     let _ = tokio::fs::remove_file(backup_path).await;
 
     // Call restart_service
-    client.restart_service().await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "restart_service"}),
+    )
+    .await?;
 
     Ok(())
 }
@@ -1012,7 +1085,9 @@ async fn test_query_log_config_integration() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::system::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -1025,16 +1100,39 @@ async fn test_query_log_config_integration() -> Result<()> {
     assert!(ready);
 
     // Get current config
-    let mut ql_config = client.get_query_log_config().await?;
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "get_query_log_config"}),
+    )
+    .await?;
+    let ql_config: serde_json::Value =
+        serde_json::from_str(res["content"][0]["text"].as_str().unwrap())?;
 
     // Toggle anonymize_client_ip
-    let original_val = ql_config.anonymize_client_ip;
-    ql_config.anonymize_client_ip = !original_val;
+    let original_val = ql_config["anonymize_client_ip"].as_bool().unwrap();
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "set_query_log_config", "anonymize_client_ip": !original_val}),
+    )
+    .await?;
 
-    client.set_query_log_config(ql_config.clone()).await?;
-
-    let updated_config = client.get_query_log_config().await?;
-    assert_eq!(updated_config.anonymize_client_ip, !original_val);
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "get_query_log_config"}),
+    )
+    .await?;
+    let updated_config: serde_json::Value =
+        serde_json::from_str(res["content"][0]["text"].as_str().unwrap())?;
+    assert_eq!(
+        updated_config["anonymize_client_ip"].as_bool().unwrap(),
+        !original_val
+    );
 
     Ok(())
 }
@@ -1064,7 +1162,9 @@ async fn test_system_info_integration() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::system::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -1077,13 +1177,28 @@ async fn test_system_info_integration() -> Result<()> {
     assert!(ready);
 
     // Get version info
-    let info = client.get_version_info().await?;
-    assert!(!info.version.is_empty());
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "get_version_info"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("version")
+    );
 
-    // Trigger update (might fail in Docker if already latest or not supported, but we just check if it returns 200 or 400 with message)
-    // Actually, AdGuard Home in Docker usually doesn't support self-update.
-    // We'll just verify the endpoint exists and responds.
-    let _ = client.update_adguard_home().await;
+    // Trigger update
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_system",
+        serde_json::json!({"action": "update_adguard_home"}),
+    )
+    .await?;
 
     Ok(())
 }

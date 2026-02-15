@@ -3,12 +3,12 @@
 ## Phase 1: Foundation & System Tool Consolidation
 Focus on refactoring the `ToolRegistry` to support unified tools and consolidating the `system` tools.
 
-- [ ] Task: Refactor `src/tools/system.rs` to implement the `manage_system` unified tool.
+- [x] Task: Refactor `src/tools/system.rs` to implement the `manage_system` unified tool.
     - [ ] Create a consolidated handler for all system-related actions.
     - [ ] Implement the `action` based dispatch logic.
     - [ ] Optimize descriptions and JSON schemas for `manage_system`.
-- [ ] Task: Update unit tests in `src/tools/tests.rs` for `manage_system`.
-- [ ] Task: Update `tests/docker_integration_test.rs` to use `manage_system`.
+- [x] Task: Update unit tests in `src/tools/tests.rs` for `manage_system`.
+- [x] Task: Update `tests/docker_integration_test.rs` to use `manage_system`.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Foundation & System Tool Consolidation' (Protocol in workflow.md)
 
 ## Phase 2: DNS & Protection Tool Consolidation
