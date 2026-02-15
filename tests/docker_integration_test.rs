@@ -304,7 +304,9 @@ async fn test_dns_rewrites() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::dns::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -316,18 +318,52 @@ async fn test_dns_rewrites() -> Result<()> {
     }
     assert!(ready);
 
-    let rewrite = adguardhome_mcp_rs::adguard::DnsRewrite {
-        domain: "test.example.com".to_string(),
-        answer: "1.1.1.1".to_string(),
-    };
+    let domain = "test.example.com".to_string();
+    let answer = "1.1.1.1".to_string();
 
-    client.add_rewrite(rewrite.clone()).await?;
-    let rewrites = client.list_rewrites().await?;
-    assert!(rewrites.iter().any(|r| r.domain == rewrite.domain));
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_dns",
+        serde_json::json!({"action": "add_rewrite", "domain": domain, "answer": answer}),
+    )
+    .await?;
 
-    client.delete_rewrite(rewrite.clone()).await?;
-    let rewrites = client.list_rewrites().await?;
-    assert!(!rewrites.iter().any(|r| r.domain == rewrite.domain));
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_dns",
+        serde_json::json!({"action": "list_rewrites"}),
+    )
+    .await?;
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains(&domain)
+    );
+
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_dns",
+        serde_json::json!({"action": "remove_rewrite", "domain": domain, "answer": answer}),
+    )
+    .await?;
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_dns",
+        serde_json::json!({"action": "list_rewrites"}),
+    )
+    .await?;
+    assert!(
+        !res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains(&domain)
+    );
 
     Ok(())
 }
@@ -422,7 +458,9 @@ async fn test_protection_tools() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::protection::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -434,14 +472,45 @@ async fn test_protection_tools() -> Result<()> {
     }
     assert!(ready);
 
-    client.set_protection(false).await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "toggle_feature", "feature": "global", "enabled": false}),
+    )
+    .await?;
     assert!(!client.get_status().await?.protection_enabled);
-    client.set_protection(true).await?;
+
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "toggle_feature", "feature": "global", "enabled": true}),
+    )
+    .await?;
     assert!(client.get_status().await?.protection_enabled);
 
-    client.set_safe_search(true).await?;
-    client.set_safe_browsing(true).await?;
-    client.set_parental_control(true).await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "toggle_feature", "feature": "safe_search", "enabled": true}),
+    )
+    .await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "toggle_feature", "feature": "safe_browsing", "enabled": true}),
+    )
+    .await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "toggle_feature", "feature": "parental_control", "enabled": true}),
+    )
+    .await?;
 
     Ok(())
 }
@@ -659,7 +728,9 @@ async fn test_dns_config_tools() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::dns::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -671,16 +742,42 @@ async fn test_dns_config_tools() -> Result<()> {
     }
     assert!(ready);
 
-    let dns_info = client.get_dns_info().await?;
-    let mut new_config = dns_info.clone();
-    new_config.upstream_dns = vec!["1.1.1.1".to_string()];
-    client.set_dns_config(new_config).await?;
-    assert_eq!(
-        client.get_dns_info().await?.upstream_dns,
-        vec!["1.1.1.1".to_string()]
-    );
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_dns",
+        serde_json::json!({"action": "get_config"}),
+    )
+    .await?;
+    let _dns_info: serde_json::Value =
+        serde_json::from_str(res["content"][0]["text"].as_str().unwrap())?;
 
-    client.clear_dns_cache().await?;
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_dns",
+        serde_json::json!({"action": "set_config", "upstream_dns": ["1.1.1.1"]}),
+    )
+    .await?;
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_dns",
+        serde_json::json!({"action": "get_config"}),
+    )
+    .await?;
+    let updated_info: serde_json::Value =
+        serde_json::from_str(res["content"][0]["text"].as_str().unwrap())?;
+    assert_eq!(updated_info["upstream_dns"][0].as_str().unwrap(), "1.1.1.1");
+
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_dns",
+        serde_json::json!({"action": "clear_cache"}),
+    )
+    .await?;
 
     Ok(())
 }
@@ -1027,7 +1124,9 @@ async fn test_advanced_protection_integration() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::protection::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -1040,22 +1139,69 @@ async fn test_advanced_protection_integration() -> Result<()> {
     assert!(ready);
 
     // Test Safe Search Settings
-    let mut safe_search = client.get_safe_search_settings().await?;
-    // Toggle one of them
-    safe_search.bing = !safe_search.bing;
-    client.set_safe_search_settings(safe_search.clone()).await?;
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "get_config"}),
+    )
+    .await?;
+    let config_val: serde_json::Value =
+        serde_json::from_str(res["content"][0]["text"].as_str().unwrap())?;
+    let mut safe_search = config_val["safe_search"].clone();
 
-    let updated_safe_search = client.get_safe_search_settings().await?;
-    assert_eq!(updated_safe_search.bing, safe_search.bing);
+    // Toggle one of them
+    let original_bing = safe_search["bing"].as_bool().unwrap();
+    safe_search["bing"] = serde_json::json!(!original_bing);
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "set_config", "safe_search": safe_search}),
+    )
+    .await?;
+
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "get_config"}),
+    )
+    .await?;
+    let updated_config: serde_json::Value =
+        serde_json::from_str(res["content"][0]["text"].as_str().unwrap())?;
+    assert_eq!(
+        updated_config["safe_search"]["bing"].as_bool().unwrap(),
+        !original_bing
+    );
 
     // Test Parental Settings
-    let mut parental = client.get_parental_settings().await?;
-    // Toggle
-    parental.enabled = !parental.enabled;
-    client.set_parental_settings(parental.clone()).await?;
+    let mut parental = config_val["parental_control"].clone();
+    let original_parental = parental["enabled"].as_bool().unwrap();
+    parental["enabled"] = serde_json::json!(!original_parental);
+    call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "set_config", "parental_control": parental}),
+    )
+    .await?;
 
-    let updated_parental = client.get_parental_settings().await?;
-    assert_eq!(updated_parental.enabled, parental.enabled);
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "get_config"}),
+    )
+    .await?;
+    let updated_config: serde_json::Value =
+        serde_json::from_str(res["content"][0]["text"].as_str().unwrap())?;
+    assert_eq!(
+        updated_config["parental_control"]["enabled"]
+            .as_bool()
+            .unwrap(),
+        !original_parental
+    );
 
     Ok(())
 }
@@ -1228,7 +1374,9 @@ async fn test_tls_config_integration() -> Result<()> {
         log_level: "info".to_string(),
         no_verify_ssl: true,
     };
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.clone());
+    let mut registry = ToolRegistry::new(&config);
+    adguardhome_mcp_rs::tools::protection::register(&mut registry);
 
     let mut ready = false;
     for _ in 0..15 {
@@ -1240,9 +1388,17 @@ async fn test_tls_config_integration() -> Result<()> {
     }
     assert!(ready);
 
-    // Call get_tls_status
-    let status = client.get_tls_status().await?;
-    assert!(!status.enabled); // Default is usually disabled
+    // Call get_tls_config
+    let res = call_mcp_tool(
+        &registry,
+        &client,
+        "manage_protection",
+        serde_json::json!({"action": "get_tls_config"}),
+    )
+    .await?;
+    let status: serde_json::Value =
+        serde_json::from_str(res["content"][0]["text"].as_str().unwrap())?;
+    assert!(!status["enabled"].as_bool().unwrap()); // Default is usually disabled
 
     Ok(())
 }

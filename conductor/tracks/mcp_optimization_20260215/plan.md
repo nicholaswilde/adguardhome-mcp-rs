@@ -14,14 +14,14 @@ Focus on refactoring the `ToolRegistry` to support unified tools and consolidati
 ## Phase 2: DNS & Protection Tool Consolidation
 Consolidate DNS and Protection related tools into unified structures.
 
-- [ ] Task: Refactor `src/tools/dns.rs` into the `manage_dns` unified tool.
+- [x] Task: Refactor `src/tools/dns.rs` into the `manage_dns` unified tool.
     - [ ] Combine rewrites, config, and cache management into one tool.
     - [ ] Optimize descriptions and schemas.
-- [ ] Task: Refactor `src/tools/protection.rs` into the `manage_protection` unified tool.
+- [x] Task: Refactor `src/tools/protection.rs` into the `manage_protection` unified tool.
     - [ ] Combine global/feature toggles and TLS configuration.
     - [ ] Optimize descriptions and schemas.
-- [ ] Task: Update unit tests in `src/tools/tests.rs` for DNS and Protection.
-- [ ] Task: Update `tests/docker_integration_test.rs` for DNS and Protection.
+- [x] Task: Update unit tests in `src/tools/tests.rs` for DNS and Protection.
+- [x] Task: Update `tests/docker_integration_test.rs` for DNS and Protection.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: DNS & Protection Tool Consolidation' (Protocol in workflow.md)
 
 ## Phase 3: Filtering & Client Tool Consolidation

@@ -47,7 +47,11 @@ async fn test_dns_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("list_dns_rewrites", &client, None)
+        .call_tool(
+            "manage_dns",
+            &client,
+            Some(json!({"action": "list_rewrites"})),
+        )
         .await
         .unwrap();
 
@@ -58,9 +62,9 @@ async fn test_dns_tools() {
         .await;
     registry
         .call_tool(
-            "add_dns_rewrite",
+            "manage_dns",
             &client,
-            Some(json!({"domain": "a", "answer": "b"})),
+            Some(json!({"action": "add_rewrite", "domain": "a", "answer": "b"})),
         )
         .await
         .unwrap();
@@ -72,9 +76,9 @@ async fn test_dns_tools() {
         .await;
     registry
         .call_tool(
-            "remove_dns_rewrite",
+            "manage_dns",
             &client,
-            Some(json!({"domain": "a", "answer": "b"})),
+            Some(json!({"action": "remove_rewrite", "domain": "a", "answer": "b"})),
         )
         .await
         .unwrap();
@@ -90,7 +94,7 @@ async fn test_dns_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("get_dns_config", &client, None)
+        .call_tool("manage_dns", &client, Some(json!({"action": "get_config"})))
         .await
         .unwrap();
 
@@ -100,7 +104,11 @@ async fn test_dns_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("set_dns_config", &client, Some(json!({"cache_size": 1024})))
+        .call_tool(
+            "manage_dns",
+            &client,
+            Some(json!({"action": "set_config", "cache_size": 1024})),
+        )
         .await
         .unwrap();
 
@@ -110,7 +118,11 @@ async fn test_dns_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("clear_dns_cache", &client, None)
+        .call_tool(
+            "manage_dns",
+            &client,
+            Some(json!({"action": "clear_cache"})),
+        )
         .await
         .unwrap();
 }
@@ -325,9 +337,9 @@ async fn test_protection_tools() {
         .await;
     registry
         .call_tool(
-            "set_protection_state",
+            "manage_protection",
             &client,
-            Some(json!({"enabled": true})),
+            Some(json!({"action": "toggle_feature", "feature": "global", "enabled": true})),
         )
         .await
         .unwrap();
@@ -338,7 +350,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("set_safe_search", &client, Some(json!({"enabled": true})))
+        .call_tool(
+            "manage_protection",
+            &client,
+            Some(json!({"action": "toggle_feature", "feature": "safe_search", "enabled": true})),
+        )
         .await
         .unwrap();
 
@@ -348,7 +364,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("set_safe_browsing", &client, Some(json!({"enabled": true})))
+        .call_tool(
+            "manage_protection",
+            &client,
+            Some(json!({"action": "toggle_feature", "feature": "safe_browsing", "enabled": true})),
+        )
         .await
         .unwrap();
 
@@ -359,9 +379,11 @@ async fn test_protection_tools() {
         .await;
     registry
         .call_tool(
-            "set_parental_control",
+            "manage_protection",
             &client,
-            Some(json!({"enabled": true})),
+            Some(
+                json!({"action": "toggle_feature", "feature": "parental_control", "enabled": true}),
+            ),
         )
         .await
         .unwrap();
@@ -388,7 +410,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("get_protection_config", &client, None)
+        .call_tool(
+            "manage_protection",
+            &client,
+            Some(json!({"action": "get_config"})),
+        )
         .await
         .unwrap();
 
@@ -404,9 +430,13 @@ async fn test_protection_tools() {
         .await;
     registry
         .call_tool(
-            "set_protection_config",
+            "manage_protection",
             &client,
-            Some(json!({"safe_search": {"enabled": true}, "parental_control": {"enabled": true}})),
+            Some(json!({
+                "action": "set_config",
+                "safe_search": {"enabled": true},
+                "parental_control": {"enabled": true}
+            })),
         )
         .await
         .unwrap();
@@ -420,7 +450,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("get_tls_config", &client, None)
+        .call_tool(
+            "manage_protection",
+            &client,
+            Some(json!({"action": "get_tls_config"})),
+        )
         .await
         .unwrap();
 
@@ -430,7 +464,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("set_tls_config", &client, Some(json!({"enabled": true})))
+        .call_tool(
+            "manage_protection",
+            &client,
+            Some(json!({"action": "set_tls_config", "enabled": true})),
+        )
         .await
         .unwrap();
 }
