@@ -40,7 +40,7 @@ Consolidate Filtering and Client management tools.
 ## Phase 4: Final Cleanup & Optimization
 Remove deprecated tools and perform a final token usage audit.
 
-- [ ] Task: Remove old granular tool registrations from `src/lib.rs`.
-- [ ] Task: Verify final tool count and audit token usage in `list_tools`.
-- [ ] Task: Run final `task test:ci` to ensure project-wide stability.
+- [x] Task: Remove old granular tool registrations from `src/lib.rs`.
+- [x] Task: Verify final tool count and audit token usage in `list_tools`.
+- [x] Task: Run final `task test:ci` to ensure project-wide stability.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Final Cleanup & Optimization' (Protocol in workflow.md)
