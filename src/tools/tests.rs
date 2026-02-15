@@ -479,7 +479,7 @@ async fn test_filtering_tools() {
     super::filtering::register(&mut registry);
 
     Mock::given(method("GET"))
-        .and(path("/control/filtering/config"))
+        .and(path("/control/filtering/status"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"enabled": true, "interval": 1, "filters": [{"url": "a", "name": "a", "id": 1, "enabled": true, "rules_count": 1}], "whitelist_filters": [], "user_rules": ["rule1"]})))
         .mount(&server)
         .await;

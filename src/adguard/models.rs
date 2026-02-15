@@ -62,12 +62,24 @@ pub struct Filter {
     pub rules_count: u32,
 }
 
+fn deserialize_null_as_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Default + serde::Deserialize<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FilteringConfig {
     pub enabled: bool,
     pub interval: u32,
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub filters: Vec<Filter>,
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub whitelist_filters: Vec<Filter>,
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub user_rules: Vec<String>,
 }
 
@@ -130,6 +142,7 @@ pub struct AdGuardClientDevice {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientsResponse {
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub clients: Vec<AdGuardClientDevice>,
 }
 

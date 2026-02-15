@@ -266,7 +266,7 @@ impl AdGuardClient {
 
     pub async fn list_filters(&self) -> Result<FilteringConfig> {
         let url = format!(
-            "http://{}:{}/control/filtering/config",
+            "http://{}:{}/control/filtering/status",
             self.config.adguard_host, self.config.adguard_port
         );
         let request = self.add_auth(self.client.get(&url));

@@ -1093,7 +1093,7 @@ async fn test_list_filters() {
     let client = AdGuardClient::new(config);
 
     Mock::given(method("GET"))
-        .and(path("/control/filtering/config"))
+        .and(path("/control/filtering/status"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "enabled": true,
             "interval": 1,
@@ -1622,7 +1622,7 @@ async fn test_get_user_rules() {
     let client = AdGuardClient::new(config);
 
     Mock::given(method("GET"))
-        .and(path("/control/filtering/config"))
+        .and(path("/control/filtering/status"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "enabled": true,
             "interval": 1,
