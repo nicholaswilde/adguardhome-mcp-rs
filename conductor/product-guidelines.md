@@ -12,4 +12,4 @@
 - **Structured Logging:** Implement structured logging (e.g., using the `tracing` crate) to ensure that logs are both human-readable and easily parsed by automated tools for diagnostics and monitoring.
 
 ## MCP Tool Design
-- **Granular and Atomic Tools:** Each MCP tool must have a single, well-defined purpose. For example, separate tools should be used for retrieving status and updating configuration. This atomicity ensures that AI models can reliably predict and compose tool calls to achieve complex goals.
+- **Unified and Action-Oriented Tools:** Related operations should be consolidated into unified tools using an `action` pattern (e.g., `manage_system`). This reduces token consumption and simplifies the toolset while maintaining full functionality and clarity through well-defined sub-actions.
