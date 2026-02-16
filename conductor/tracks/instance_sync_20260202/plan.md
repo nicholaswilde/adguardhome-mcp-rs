@@ -16,10 +16,10 @@ This phase focuses on extending the configuration system to handle multiple repl
 ## Phase 2: Implementation of Sync Logic
 This phase involves the logic for fetching data from the master and applying it to replicas with support for different modes.
 
-- [ ] Task: Implement Master Data Retrieval
+- [x] Task: Implement Master Data Retrieval
     - [ ] Implement methods in `AdGuardClient` or a dedicated sync service to fetch all scoped configuration (Filtering, Rules, Clients, DNS, Blocked Services).
     - [ ] **TDD:** Write unit tests with `Wiremock` to ensure all data is correctly aggregated.
-- [ ] Task: Implement Replica Application Logic (Push)
+- [x] Task: Implement Replica Application Logic (Push)
     - [ ] Implement logic to compare and apply configuration to a replica.
     - [ ] Support "Full Overwrite" mode (delete items on replica not in master).
     - [ ] Support "Additive Merge" mode (only add missing items).
