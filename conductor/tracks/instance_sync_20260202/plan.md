@@ -13,7 +13,7 @@ This phase focuses on extending the configuration system to handle multiple repl
     - [ ] **TDD:** Write unit tests for serialization/deserialization of these models.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Configuration and Multi-Instance Support' (Protocol in workflow.md)
 
-## Phase 2: Implementation of Sync Logic
+## Phase 2: Implementation of Sync Logic [checkpoint: 7a00bf1]
 This phase involves the logic for fetching data from the master and applying it to replicas with support for different modes.
 
 - [x] Task: Implement Master Data Retrieval
