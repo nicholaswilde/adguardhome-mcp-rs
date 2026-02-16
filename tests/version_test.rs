@@ -9,7 +9,8 @@ fn test_version_flag() {
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("adguardhome-mcp-rs 0.1.12"));
+    let expected = format!("adguardhome-mcp-rs {}", env!("CARGO_PKG_VERSION"));
+    assert!(stdout.contains(&expected));
 }
 
 #[test]
@@ -21,5 +22,6 @@ fn test_version_flag_short() {
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("adguardhome-mcp-rs 0.1.12"));
+    let expected = format!("adguardhome-mcp-rs {}", env!("CARGO_PKG_VERSION"));
+    assert!(stdout.contains(&expected));
 }
