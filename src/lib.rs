@@ -3,6 +3,7 @@ pub mod config;
 pub mod error;
 pub mod mcp;
 pub mod server;
+pub mod sync;
 pub mod tools;
 
 pub async fn run(args: Vec<String>) -> anyhow::Result<()> {

@@ -23,6 +23,18 @@ pub struct AppConfig {
     pub log_level: String,
     #[serde(default = "default_no_verify_ssl")]
     pub no_verify_ssl: bool,
+    #[serde(default)]
+    pub replicas: Vec<ReplicaConfig>,
+    #[serde(default = "default_sync_interval")]
+    pub sync_interval_seconds: u64,
+    #[serde(default = "default_sync_mode")]
+    pub default_sync_mode: String,
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
+pub struct ReplicaConfig {
+    pub url: String,
+    pub api_key: String,
 }
 
 fn default_transport() -> String {
@@ -45,6 +57,34 @@ fn default_no_verify_ssl() -> bool {
     true
 }
 
+fn default_sync_interval() -> u64 {
+    3600
+}
+
+fn default_sync_mode() -> String {
+    "additive-merge".to_string()
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        Self {
+            adguard_host: "localhost".to_string(),
+            adguard_port: 3000,
+            adguard_username: None,
+            adguard_password: None,
+            mcp_transport: "stdio".to_string(),
+            lazy_mode: false,
+            http_port: 3000,
+            http_auth_token: None,
+            log_level: "info".to_string(),
+            no_verify_ssl: true,
+            replicas: Vec::new(),
+            sync_interval_seconds: 3600,
+            default_sync_mode: "additive-merge".to_string(),
+        }
+    }
+}
+
 impl AppConfig {
     pub fn load(file_path: Option<String>, cli_args: Vec<String>) -> Result<Self, ConfigError> {
         let mut builder = Config::builder();
@@ -63,7 +103,9 @@ impl AppConfig {
             .set_default("lazy_mode", false)?
             .set_default("http_port", 3000)?
             .set_default("log_level", "info")?
-            .set_default("no_verify_ssl", true)?;
+            .set_default("no_verify_ssl", true)?
+            .set_default("sync_interval_seconds", 3600)?
+            .set_default("default_sync_mode", "additive-merge")?;
 
         // 3. Load from File
         if let Some(path) = path_to_load {
@@ -88,6 +130,14 @@ impl AppConfig {
                 .separator("__")
                 .try_parsing(true),
         );
+
+        if let Ok(replicas_json) = std::env::var("ADGUARD_REPLICAS") {
+            let wrapped_json = format!(r#"{{"replicas": {}}}"#, replicas_json);
+            builder = builder.add_source(config::File::from_str(
+                &wrapped_json,
+                config::FileFormat::Json,
+            ));
+        }
 
         // 5. Apply CLI overrides
         if let Some(host) = matches.get_one::<String>("adguard_host") {
@@ -212,15 +262,7 @@ mod tests {
 
         let _config = AppConfig::load(None, vec![]).unwrap_or_else(|_| AppConfig {
             adguard_host: "".to_string(),
-            adguard_port: 3000,
-            adguard_username: None,
-            adguard_password: None,
-            mcp_transport: "stdio".to_string(),
-            lazy_mode: false,
-            http_port: 3000,
-            http_auth_token: None,
-            log_level: "info".to_string(),
-            no_verify_ssl: true,
+            ..Default::default()
         });
     }
 
@@ -332,5 +374,59 @@ mod tests {
         ];
         let config = AppConfig::load(None, args).unwrap();
         assert!(config.no_verify_ssl);
+    }
+
+    #[test]
+    fn test_replica_config_loading() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let mut file = tempfile::Builder::new().suffix(".toml").tempfile().unwrap();
+        writeln!(
+            file,
+            r#"
+adguard_host = "master.com"
+sync_interval_seconds = 60
+default_sync_mode = "full-overwrite"
+
+[[replicas]]
+url = "http://replica1.com:3000"
+api_key = "key1"
+
+[[replicas]]
+url = "http://replica2.com:3000"
+api_key = "key2"
+"#
+        )
+        .unwrap();
+        let path = file.path().to_str().unwrap().to_string();
+
+        let config = AppConfig::load(Some(path), vec![]).unwrap();
+        assert_eq!(config.replicas.len(), 2);
+        assert_eq!(config.replicas[0].url, "http://replica1.com:3000");
+        assert_eq!(config.replicas[0].api_key, "key1");
+        assert_eq!(config.sync_interval_seconds, 60);
+        assert_eq!(config.default_sync_mode, "full-overwrite");
+    }
+
+    #[test]
+    fn test_replica_env_loading() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        unsafe {
+            std::env::set_var("ADGUARD_HOST", "master.com");
+            std::env::set_var(
+                "ADGUARD_REPLICAS",
+                r#"[{"url": "http://env-replica.com", "api_key": "env-key"}]"#,
+            );
+        }
+
+        let config = AppConfig::load(None, vec![]).unwrap();
+
+        unsafe {
+            std::env::remove_var("ADGUARD_HOST");
+            std::env::remove_var("ADGUARD_REPLICAS");
+        }
+
+        assert_eq!(config.replicas.len(), 1);
+        assert_eq!(config.replicas[0].url, "http://env-replica.com");
+        assert_eq!(config.replicas[0].api_key, "env-key");
     }
 }

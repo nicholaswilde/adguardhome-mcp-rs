@@ -3,12 +3,12 @@
 ## Phase 1: Configuration and Multi-Instance Support
 This phase focuses on extending the configuration system to handle multiple replica instances and sync-specific settings.
 
-- [ ] Task: Extend Configuration and Data Structures
+- [x] Task: Extend Configuration and Data Structures
     - [ ] Update `src/config.rs` to support a list of replica instances (URL and API Key).
     - [ ] Add support for loading replicas from environment variables (e.g., `ADGUARD_REPLICAS` as a JSON string or delimited list).
     - [ ] Add sync-related settings to `Config` (interval, default sync mode).
     - [ ] **TDD:** Write unit tests in `src/config.rs` to verify replica loading from file and env vars.
-- [ ] Task: Define Sync Data Models
+- [x] Task: Define Sync Data Models
     - [ ] Create data structures in a new module (e.g., `src/sync.rs`) to represent the aggregate configuration state (filtering, rules, clients, etc.).
     - [ ] **TDD:** Write unit tests for serialization/deserialization of these models.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Configuration and Multi-Instance Support' (Protocol in workflow.md)

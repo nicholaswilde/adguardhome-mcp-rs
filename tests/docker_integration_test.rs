@@ -90,14 +90,10 @@ async fn test_mcp_http_transport() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
         mcp_transport: "http".to_string(),
-        lazy_mode: false,
         http_port: 0,
         http_auth_token: Some("test-token".to_string()),
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
 
     let adguard_client = AdGuardClient::new(config.clone());
@@ -159,14 +155,7 @@ async fn test_adguardhome_no_auth() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config);
 
@@ -217,14 +206,7 @@ users:
     let config_no_auth = AppConfig {
         adguard_host: adguard_host.clone(),
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client_no_auth = AdGuardClient::new(config_no_auth);
 
@@ -251,12 +233,7 @@ users:
         adguard_port,
         adguard_username: Some("admin".to_string()),
         adguard_password: Some("password".to_string()),
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client_auth = AdGuardClient::new(config_auth);
 
@@ -295,14 +272,7 @@ async fn test_dns_rewrites() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -384,14 +354,7 @@ async fn test_monitoring_tools() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -449,14 +412,7 @@ async fn test_protection_tools() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -531,14 +487,7 @@ async fn test_filtering_tools() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -643,14 +592,7 @@ async fn test_client_tools() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -743,14 +685,7 @@ async fn test_blocked_services() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -829,14 +764,7 @@ async fn test_dns_config_tools() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -908,14 +836,7 @@ async fn test_access_control_tools() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -985,14 +906,7 @@ async fn test_dhcp_tools() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -1036,14 +950,7 @@ async fn test_check_filtering() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -1117,14 +1024,7 @@ async fn test_maintenance_tools_integration() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -1214,14 +1114,7 @@ async fn test_filter_list_crud_integration() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -1329,14 +1222,7 @@ async fn test_advanced_protection_integration() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -1436,14 +1322,7 @@ async fn test_query_log_config_integration() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -1513,14 +1392,7 @@ async fn test_system_info_integration() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
@@ -1579,14 +1451,7 @@ async fn test_tls_config_integration() -> Result<()> {
     let config = AppConfig {
         adguard_host,
         adguard_port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);

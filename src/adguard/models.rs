@@ -71,7 +71,7 @@ where
     Ok(opt.unwrap_or_default())
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FilteringConfig {
     pub enabled: bool,
     pub interval: u32,

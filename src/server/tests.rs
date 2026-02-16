@@ -13,14 +13,8 @@ fn setup() -> (
     let config = AppConfig {
         adguard_host: "localhost".to_string(),
         adguard_port: 80,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
         lazy_mode: true,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);

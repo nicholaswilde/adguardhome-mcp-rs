@@ -22,14 +22,7 @@ async fn setup() -> (MockServer, AdGuardClient, ToolRegistry) {
             .unwrap()
             .parse()
             .unwrap(),
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let client = AdGuardClient::new(config.clone());
     let registry = ToolRegistry::new(&config);

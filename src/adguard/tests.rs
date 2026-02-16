@@ -7,14 +7,7 @@ fn test_config(host: String, port: u16) -> AppConfig {
     AppConfig {
         adguard_host: host,
         adguard_port: port,
-        adguard_username: None,
-        adguard_password: None,
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     }
 }
 
@@ -940,12 +933,7 @@ async fn test_client_with_auth() {
         adguard_port: 80,
         adguard_username: Some("user".to_string()),
         adguard_password: Some("pass".to_string()),
-        mcp_transport: "stdio".to_string(),
-        lazy_mode: false,
-        http_port: 3000,
-        http_auth_token: None,
-        log_level: "info".to_string(),
-        no_verify_ssl: true,
+        ..Default::default()
     };
     let _client = AdGuardClient::new(config);
     // This just tests the constructor logic for auth
