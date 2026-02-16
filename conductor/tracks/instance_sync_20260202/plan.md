@@ -39,7 +39,7 @@ This phase exposes the sync functionality via the MCP server and implements the 
     - [ ] **TDD:** Write unit tests to verify the interval-based triggering logic.
 - [x] Task: Conductor - User Manual Verification 'Phase 3: MCP Interface and Background Sync' (Protocol in workflow.md)
 
-## Phase 4: Integration Testing and Quality Gates
+## Phase 4: Integration Testing and Quality Gates [checkpoint: afaab93]
 This phase ensures the entire system works end-to-end and meets quality standards.
 
 - [x] Task: Docker Integration Tests for Sync
