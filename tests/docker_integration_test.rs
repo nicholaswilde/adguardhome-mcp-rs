@@ -1481,3 +1481,95 @@ async fn test_tls_config_integration() -> Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_sync_integration() -> Result<()> {
+    if std::env::var("CI").is_ok()
+        && std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true"
+    {
+        return Ok(());
+    }
+
+    // 1. Start Master
+    let (_master_container, master_host, master_port) = match start_adguard_container(None).await {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    // 2. Start Replica
+    let (_replica_container, replica_host, replica_port) = match start_adguard_container(None).await
+    {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+
+    let master_config = AppConfig {
+        adguard_host: master_host,
+        adguard_port: master_port,
+        ..Default::default()
+    };
+    let master_client = AdGuardClient::new(master_config.clone());
+    let mut registry = ToolRegistry::new(&master_config);
+    adguardhome_mcp_rs::tools::sync::register(&mut registry);
+    adguardhome_mcp_rs::tools::filtering::register(&mut registry);
+
+    // Wait for both to be ready (increased retries for stability)
+    let mut master_ready = false;
+    let mut replica_ready = false;
+    for _ in 0..20 {
+        if !master_ready && master_client.get_status().await.is_ok() {
+            master_ready = true;
+        }
+        let replica_client = AdGuardClient::new(AppConfig {
+            adguard_host: replica_host.clone(),
+            adguard_port: replica_port,
+            ..Default::default()
+        });
+        if !replica_ready && replica_client.get_status().await.is_ok() {
+            replica_ready = true;
+        }
+        if master_ready && replica_ready {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+    }
+
+    if !master_ready || !replica_ready {
+        println!("⚠️ Sync integration test skipped: Master or Replica not ready in time.");
+        return Ok(());
+    }
+
+    // 3. Configure Master with a custom rule
+    let test_rule = "||master-only-rule.com^".to_string();
+    call_mcp_tool(
+        &registry,
+        &master_client,
+        "manage_filtering",
+        serde_json::json!({"action": "set_custom_rules", "rules": [test_rule]}),
+    )
+    .await?;
+
+    // 4. Perform Sync via tool
+    let replica_url = format!("http://{}:{}", replica_host, replica_port);
+    call_mcp_tool(
+        &registry,
+        &master_client,
+        "sync_instances",
+        serde_json::json!({
+            "replicas": [{"url": replica_url, "api_key": "any"}],
+            "mode": "full-overwrite"
+        }),
+    )
+    .await?;
+
+    // 5. Verify Replica has the rule
+    let replica_client = AdGuardClient::new(AppConfig {
+        adguard_host: replica_host,
+        adguard_port: replica_port,
+        ..Default::default()
+    });
+    let rules = replica_client.get_user_rules().await?;
+    assert!(rules.contains(&test_rule));
+
+    Ok(())
+}

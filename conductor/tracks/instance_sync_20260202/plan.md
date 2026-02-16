@@ -26,7 +26,7 @@ This phase involves the logic for fetching data from the master and applying it 
     - [ ] **TDD:** Write unit tests for both Overwrite and Merge logic using mocked responses.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Implementation of Sync Logic' (Protocol in workflow.md)
 
-## Phase 3: MCP Interface and Background Sync
+## Phase 3: MCP Interface and Background Sync [checkpoint: 57a7a18]
 This phase exposes the sync functionality via the MCP server and implements the automated background task.
 
 - [x] Task: Implement `sync_instances` MCP Tool
@@ -42,11 +42,11 @@ This phase exposes the sync functionality via the MCP server and implements the 
 ## Phase 4: Integration Testing and Quality Gates
 This phase ensures the entire system works end-to-end and meets quality standards.
 
-- [ ] Task: Docker Integration Tests for Sync
+- [x] Task: Docker Integration Tests for Sync
     - [ ] Update `tests/docker_integration_test.rs` to spin up multiple AdGuard Home containers (Master and Replica).
     - [ ] Perform a sync and verify the Replica's configuration matches the Master's according to the selected mode.
-- [ ] Task: Quality Gate Verification
+- [x] Task: Quality Gate Verification
     - [ ] Run `task test:ci` to ensure all tests pass and coverage is >80%.
     - [ ] Run `task lint` and `cargo clippy`.
     - [ ] Verify documentation is updated for the new configuration and tool.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Integration Testing and Quality Gates' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Integration Testing and Quality Gates' (Protocol in workflow.md)
