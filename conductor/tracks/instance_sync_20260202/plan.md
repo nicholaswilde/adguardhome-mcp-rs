@@ -1,6 +1,6 @@
 # Implementation Plan: AdGuard Home Instance Sync
 
-## Phase 1: Configuration and Multi-Instance Support
+## Phase 1: Configuration and Multi-Instance Support [checkpoint: 4986302]
 This phase focuses on extending the configuration system to handle multiple replica instances and sync-specific settings.
 
 - [x] Task: Extend Configuration and Data Structures
