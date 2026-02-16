@@ -5,7 +5,7 @@
 [![ci](https://img.shields.io/github/actions/workflow/status/nicholaswilde/adguardhome-mcp-rs/ci.yml?label=ci&style=for-the-badge&branch=main&logo=github-actions)](https://github.com/nicholaswilde/adguardhome-mcp-rs/actions/workflows/ci.yml)
 
 > [!WARNING]
-> This project is currently in active development (v0.1.10) and is **not production-ready**. Features may change, and breaking changes may occur without notice. **Use this MCP server at your own risk.**
+> This project is currently in active development (v0.1.12) and is **not production-ready**. Features may change, and breaking changes may occur without notice. **Use this MCP server at your own risk.**
 
 A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](https://modelcontextprotocol.io/docs/getting-started/intro). This server connects to an AdGuard Home instance and exposes tools to monitor and manage filtering via the Model Context Protocol.
 
@@ -14,6 +14,7 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
 - **Multi-Transport Support:**
   - **Stdio:** Default transport for local integrations (e.g., Claude Desktop).
   - **HTTP/SSE:** Network-accessible transport for remote clients.
+- **Multi-Instance Synchronization:** Synchronize configuration (filtering rules, blocked services, DNS rewrites) from a master instance to one or more replica instances automatically or on-demand.
 - **Robust Configuration:** Supports configuration via CLI arguments, environment variables, and configuration files (TOML, YAML, JSON).
 - **Authentication:**
   - Connects to AdGuard Home using username/password.
@@ -25,6 +26,7 @@ A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](h
     - `manage_protection`: Global protection state, safe search, safe browsing, and parental control.
     - `manage_filtering`: Adblock filter lists, custom user rules, and service blocking.
     - `manage_clients`: Network client management, DHCP leases, and access control.
+    - `sync_instances`: Manually trigger synchronization to replica instances.
     - `manage_tools`: (Lazy Mode only) Dynamic on-demand loading of the above tools.
 
 ## :package: Installation
@@ -37,13 +39,34 @@ brew install nicholaswilde/tap/adguardhome-mcp-rs
 
 ## :hammer_and_wrench: Build
 
-To build the project, you need a Rust toolchain installed.
+To build the project, you need a Rust toolchain installed. For cross-compilation, [cross](https://github.com/cross-rs/cross) is used.
+
+### Local Build
 
 ```bash
-cargo build --release
+# Build in release mode
+task build:local
 ```
 
 The binary will be available at `target/release/adguardhome-mcp-rs`.
+
+### Cross-Compilation
+
+Supported architectures can be built using `task`:
+
+```bash
+# Build for AMD64 (x86_64)
+task build:amd64
+
+# Build for ARM64 (aarch64)
+task build:arm64
+
+# Build for ARMv7
+task build:armv7
+
+# Build for all supported architectures
+task build
+```
 
 ## :rocket: Usage
 
@@ -70,6 +93,9 @@ The server can be configured via CLI arguments or environment variables.
 | `--no-verify-ssl` | `ADGUARD_NO_VERIFY_SSL` | Disable SSL certificate verification | `true` |
 | `--lazy` | `ADGUARD_LAZY_MODE` | Enable token-optimized lazy loading | `false` |
 | `--log-level` | `ADGUARD_LOG_LEVEL` | Log level (`info`, `debug`, etc.) | `info` |
+| - | `ADGUARD_REPLICAS` | JSON array of replica objects (`url`, `api_key`) | `[]` |
+| - | `ADGUARD_SYNC_INTERVAL_SECONDS` | Interval for automated background sync | `3600` |
+| - | `ADGUARD_DEFAULT_SYNC_MODE` | Default sync mode (`additive-merge` or `full-overwrite`) | `additive-merge` |
 
 ### :file_folder: Configuration File
 
@@ -86,6 +112,18 @@ mcp_transport = "http"
 http_port = 3000
 http_auth_token = "your-secure-token"
 lazy_mode = true
+
+# Synchronization settings
+sync_interval_seconds = 3600
+default_sync_mode = "additive-merge"
+
+[[replicas]]
+url = "http://192.168.1.11:3000"
+api_key = "replica-api-key-1"
+
+[[replicas]]
+url = "http://192.168.1.12:3000"
+api_key = "replica-api-key-2"
 ```
 
 ### :robot: Configuration Example (Claude Desktop)
@@ -122,8 +160,12 @@ task test
 # Run Docker integration tests (requires Docker)
 RUN_DOCKER_TESTS=true task test:integration
 
+# Run MCP Inspector (requires npx)
+task inspector
+
 # Update cargo dependencies
 task update
+```
 
 ### :bar_chart: Coverage
 
