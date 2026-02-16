@@ -2,6 +2,7 @@ pub mod clients;
 pub mod dns;
 pub mod filtering;
 pub mod protection;
+pub mod sync;
 pub mod system;
 
 use crate::adguard::AdGuardClient;

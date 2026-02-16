@@ -12,7 +12,7 @@ pub async fn run(args: Vec<String>) -> anyhow::Result<()> {
     use crate::server::http::run_http_server;
     use crate::server::mcp::McpServer;
     use crate::tools::ToolRegistry;
-    use crate::tools::{clients, dns, filtering, protection, system};
+    use crate::tools::{clients, dns, filtering, protection, sync as sync_tools, system};
 
     // Load configuration
     let config = AppConfig::load(None, args)?;
@@ -26,8 +26,15 @@ pub async fn run(args: Vec<String>) -> anyhow::Result<()> {
     protection::register(&mut registry);
     filtering::register(&mut registry);
     clients::register(&mut registry);
+    sync_tools::register(&mut registry);
 
     let (server, rx) = McpServer::new(adguard_client, registry, config.clone());
+
+    // Start background sync task
+    let sync_config = config.clone();
+    tokio::spawn(async move {
+        crate::sync::SyncState::run_background_sync(sync_config).await;
+    });
 
     match config.mcp_transport.as_str() {
         "http" => {

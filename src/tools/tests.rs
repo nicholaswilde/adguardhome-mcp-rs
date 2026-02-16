@@ -319,6 +319,85 @@ async fn test_system_tools() {
 }
 
 #[tokio::test]
+async fn test_sync_instances_tool() {
+    let (server, client, mut registry) = setup().await;
+    super::sync::register(&mut registry);
+
+    // Mock Master calls
+    Mock::given(method("GET"))
+        .and(path("/control/filtering/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": true, "interval": 1, "filters": [], "whitelist_filters": [], "user_rules": []
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/clients"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"clients": []})))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/dns_info"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "upstream_dns": [], "upstream_dns_file": "", "bootstrap_dns": [], "fallback_dns": [],
+            "all_servers": false, "fastest_addr": false, "fastest_timeout": 0, "cache_size": 0,
+            "cache_ttl_min": 0, "cache_ttl_max": 0, "cache_optimistic": false, "upstream_mode": "",
+            "use_private_ptr_resolvers": false, "local_ptr_upstreams": []
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/blocked_services/list"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/rewrite/list"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&server)
+        .await;
+
+    // Mock Replica calls (set_rules, set_blocked_services, add_rewrite)
+    Mock::given(method("POST"))
+        .and(path("/control/filtering/set_rules"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/blocked_services/set"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    // Additive mode check existing rewrites
+    Mock::given(method("GET"))
+        .and(path("/control/rewrite/list"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&server)
+        .await;
+
+    // Call tool with ad-hoc replica (targeting the same mock server)
+    let replica_url = format!("http://{}", server.uri().replace("http://", ""));
+    let res = registry
+        .call_tool(
+            "sync_instances",
+            &client,
+            Some(json!({
+                "replicas": [{"url": replica_url, "api_key": "test"}],
+                "mode": "additive-merge"
+            })),
+        )
+        .await
+        .unwrap();
+
+    assert!(
+        res["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("Successfully synced")
+    );
+}
+
+#[tokio::test]
 async fn test_protection_tools() {
     let (server, client, mut registry) = setup().await;
     super::protection::register(&mut registry);

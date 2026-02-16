@@ -29,15 +29,15 @@ This phase involves the logic for fetching data from the master and applying it 
 ## Phase 3: MCP Interface and Background Sync
 This phase exposes the sync functionality via the MCP server and implements the automated background task.
 
-- [ ] Task: Implement `sync_instances` MCP Tool
+- [x] Task: Implement `sync_instances` MCP Tool
     - [ ] Register a new tool `sync_instances` in `src/mcp.rs`.
     - [ ] Allow optional parameters to override configured replicas and sync mode.
     - [ ] **TDD:** Write unit tests in `src/mcp.rs` to verify tool registration and argument handling.
-- [ ] Task: Implement Background Sync Task
+- [x] Task: Implement Background Sync Task
     - [ ] Implement a background loop (using `tokio::time::interval`) that triggers a sync based on the configuration.
     - [ ] Ensure the background task handles errors gracefully without crashing the server.
     - [ ] **TDD:** Write unit tests to verify the interval-based triggering logic.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: MCP Interface and Background Sync' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: MCP Interface and Background Sync' (Protocol in workflow.md)
 
 ## Phase 4: Integration Testing and Quality Gates
 This phase ensures the entire system works end-to-end and meets quality standards.

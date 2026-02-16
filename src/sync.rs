@@ -1,7 +1,10 @@
 use crate::adguard::AdGuardClient;
 use crate::adguard::models::{AdGuardClientDevice, DnsConfig, DnsRewrite, FilteringConfig};
+use crate::config::AppConfig;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
+use tokio::time::interval;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SyncState {
@@ -13,6 +16,51 @@ pub struct SyncState {
 }
 
 impl SyncState {
+    pub async fn run_background_sync(config: AppConfig) {
+        if config.replicas.is_empty() {
+            tracing::info!("No replicas configured, skipping background sync.");
+            return;
+        }
+
+        let mut interval = interval(Duration::from_secs(config.sync_interval_seconds));
+        let master_client = AdGuardClient::new(config.clone());
+
+        loop {
+            interval.tick().await;
+            tracing::info!("Starting background synchronization...");
+
+            match Self::fetch(&master_client).await {
+                Ok(state) => {
+                    for replica in &config.replicas {
+                        let mut replica_config = config.clone();
+                        let url = replica.url.clone();
+                        match url::Url::parse(&url) {
+                            Ok(parsed_url) => {
+                                replica_config.adguard_host =
+                                    parsed_url.host_str().unwrap_or("localhost").to_string();
+                                replica_config.adguard_port = parsed_url.port().unwrap_or(80);
+                                replica_config.adguard_username = None;
+                                replica_config.adguard_password = Some(replica.api_key.clone());
+
+                                let replica_client = AdGuardClient::new(replica_config);
+                                if let Err(e) = state
+                                    .push_to_replica(&replica_client, &config.default_sync_mode)
+                                    .await
+                                {
+                                    tracing::error!("Failed to sync to replica {}: {}", url, e);
+                                } else {
+                                    tracing::info!("Successfully synced to replica {}", url);
+                                }
+                            }
+                            Err(e) => tracing::error!("Failed to parse replica URL {}: {}", url, e),
+                        }
+                    }
+                }
+                Err(e) => tracing::error!("Failed to fetch master state for sync: {}", e),
+            }
+        }
+    }
+
     pub async fn fetch(client: &AdGuardClient) -> Result<Self> {
         let filtering = client.list_filters().await?;
         let clients = client.list_clients().await?;
