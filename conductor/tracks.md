@@ -7,13 +7,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Refactor tests/**
 *Link: [./tracks/refactor_tests_20260202/](./tracks/refactor_tests_20260202/)*
 
-- [x] **Track: AdGuard Home Instance Sync**
-*Link: [./tracks/instance_sync_20260202/](./tracks/instance_sync_20260202/)*
-
 - [ ] **Track: Multi-Instance Support**
 *Link: [./tracks/multi_instance_support_20260202/](./tracks/multi_instance_support_20260202/)*
 
 ## Completed Tracks
+
+- [x] [AdGuard Home Instance Sync](./archive/instance_sync_20260202/index.md) - Synchronize configuration from master to replica instances.
 
 - [x] [Refactor src/](./archive/refactor_src_20260202/index.md) - Reorganize src directory into modular sub-modules.
 
