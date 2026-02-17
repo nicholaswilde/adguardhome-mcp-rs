@@ -1,6 +1,6 @@
 # Plan - Refactor tests/ (refactor_tests_20260202)
 
-## Phase 1: Common Infrastructure & Helpers
+## Phase 1: Common Infrastructure & Helpers [checkpoint: 382e49b]
 Establish the foundational helpers to reduce boilerplate in all integration tests.
 
 - [x] Task: Create `tests/common/` directory and initialize `mod.rs`
