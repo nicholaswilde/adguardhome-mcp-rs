@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [ ] **Track: Refactor tests/**
+- [~] **Track: Refactor tests/**
 *Link: [./tracks/refactor_tests_20260202/](./tracks/refactor_tests_20260202/)*
 
 - [ ] **Track: Multi-Instance Support**

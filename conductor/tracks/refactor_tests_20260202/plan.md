@@ -3,14 +3,14 @@
 ## Phase 1: Common Infrastructure & Helpers
 Establish the foundational helpers to reduce boilerplate in all integration tests.
 
-- [ ] Task: Create `tests/common/` directory and initialize `mod.rs`
-- [ ] Task: Implement `Unified AdGuard Home Container Helper`
+- [x] Task: Create `tests/common/` directory and initialize `mod.rs`
+- [x] Task: Implement `Unified AdGuard Home Container Helper`
     - [ ] Define a struct/function to manage `testcontainers` lifecycle
     - [ ] Standardize container configuration (env vars, ports, health checks)
-- [ ] Task: Implement `Tool Execution Helpers`
+- [x] Task: Implement `Tool Execution Helpers`
     - [ ] Create macros or functions to wrap `stdio` and `http` MCP calls
     - [ ] Standardize assertions on `CallToolResult`
-- [ ] Task: Implement `Transport-Agnostic Test Runner`
+- [x] Task: Implement `Transport-Agnostic Test Runner`
     - [ ] Create a pattern to execute a test closure against multiple transport configurations
 - [ ] Task: Conductor - User Manual Verification 'Common Infrastructure & Helpers' (Protocol in workflow.md)
 

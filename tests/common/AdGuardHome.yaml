@@ -1,0 +1,9 @@
+http:
+  address: 0.0.0.0:80
+  session_ttl: 720h
+dns:
+  bind_hosts:
+    - 0.0.0.0
+  port: 53
+auth_name: admin
+auth_pass: password
