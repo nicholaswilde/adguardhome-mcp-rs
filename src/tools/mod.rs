@@ -28,6 +28,7 @@ pub struct Tool {
     pub handler: Arc<ToolHandler>,
 }
 
+#[derive(Clone)]
 pub struct ToolRegistry {
     tools: HashMap<String, Tool>,
     enabled_tools: HashSet<String>,

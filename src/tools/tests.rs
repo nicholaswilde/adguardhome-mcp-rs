@@ -461,7 +461,7 @@ async fn test_protection_tools() {
         .unwrap();
 
     Mock::given(method("GET"))
-        .and(path("/control/safesearch/settings"))
+        .and(path("/control/safesearch/status"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"enabled": true, "bing": true, "duckduckgo": true, "google": true, "pixabay": true, "yandex": true, "youtube": true})))
         .mount(&server)
         .await;

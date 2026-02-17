@@ -1275,7 +1275,7 @@ async fn test_get_safe_search_settings() {
     let client = AdGuardClient::new(config);
 
     Mock::given(method("GET"))
-        .and(path("/control/safesearch/settings"))
+        .and(path("/control/safesearch/status"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "enabled": true,
             "bing": true,

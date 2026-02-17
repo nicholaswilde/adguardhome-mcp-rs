@@ -276,14 +276,19 @@ pub struct VersionInfo {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct TlsConfig {
     pub enabled: bool,
+    #[serde(default)]
     pub server_name: String,
     pub force_https: bool,
     pub port_https: u16,
     pub port_dns_over_tls: u16,
     pub port_dns_over_quic: u16,
+    #[serde(default)]
     pub certificate_chain: String,
+    #[serde(default)]
     pub private_key: String,
+    #[serde(default)]
     pub certificate_path: String,
+    #[serde(default)]
     pub private_key_path: String,
     #[serde(default)]
     pub valid_cert: bool,

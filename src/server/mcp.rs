@@ -23,11 +23,19 @@ impl McpServer {
         registry: ToolRegistry,
         config: AppConfig,
     ) -> (Self, mpsc::Receiver<Notification>) {
+        Self::with_registry(client, Arc::new(Mutex::new(registry)), config)
+    }
+
+    pub fn with_registry(
+        client: AdGuardClient,
+        registry: Arc<Mutex<ToolRegistry>>,
+        config: AppConfig,
+    ) -> (Self, mpsc::Receiver<Notification>) {
         let (tx, rx) = mpsc::channel(100);
         (
             Self {
                 client,
-                registry: Arc::new(Mutex::new(registry)),
+                registry,
                 config,
                 notification_tx: tx,
             },

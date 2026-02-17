@@ -12,19 +12,19 @@ Establish the foundational helpers to reduce boilerplate in all integration test
     - [ ] Standardize assertions on `CallToolResult`
 - [x] Task: Implement `Transport-Agnostic Test Runner`
     - [ ] Create a pattern to execute a test closure against multiple transport configurations
-- [ ] Task: Conductor - User Manual Verification 'Common Infrastructure & Helpers' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Common Infrastructure & Helpers' (Protocol in workflow.md)
 
 ## Phase 2: Domain Split & Migration (Protection)
 Migrate the priority domain to the new structure as a proof of concept for the refactor.
 
-- [ ] Task: Create `tests/protection_tests.rs`
-- [ ] Task: Migrate protection-related tests from `docker_integration_test.rs`
-    - [ ] Global protection toggles
-    - [ ] Safe Search settings
-    - [ ] Parental Control settings
-- [ ] Task: Refactor migrated tests to use Phase 1 helpers
-- [ ] Task: Verify `protection_tests.rs` passes against both transports
-- [ ] Task: Conductor - User Manual Verification 'Domain Split & Migration (Protection)' (Protocol in workflow.md)
+- [x] Task: Create `tests/protection_tests.rs`
+- [x] Task: Migrate protection-related tests from `docker_integration_test.rs`
+    - [x] Global protection toggles
+    - [x] Safe Search settings
+    - [x] Parental Control settings
+- [x] Task: Refactor migrated tests to use Phase 1 helpers
+- [x] Task: Verify `protection_tests.rs` passes against both transports
+- [~] Task: Conductor - User Manual Verification 'Domain Split & Migration (Protection)' (Protocol in workflow.md)
 
 ## Phase 3: Suite Consolidation & Modernization
 Migrate remaining tests and finalize the suite structure.

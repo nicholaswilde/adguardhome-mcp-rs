@@ -77,7 +77,7 @@ impl AdGuardClient {
 
     pub async fn get_safe_search_settings(&self) -> Result<SafeSearchConfig> {
         let url = format!(
-            "http://{}:{}/control/safesearch/settings",
+            "http://{}:{}/control/safesearch/status",
             self.config.adguard_host, self.config.adguard_port
         );
         let request = self.add_auth(self.client.get(&url));

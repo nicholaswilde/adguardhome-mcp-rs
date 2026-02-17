@@ -7,8 +7,8 @@ async fn test_context_setup() {
         return;
     }
 
-    let ctx = TestContext::new().await.expect("Failed to setup context");
-    assert!(ctx.container.port() > 0);
+    let (ctx, _container) = TestContext::new().await.expect("Failed to setup context");
+    assert!(ctx.adguard_port > 0);
 
     let status = ctx.client.get_status().await.expect("Failed to get status");
     assert!(!status.version.is_empty());
