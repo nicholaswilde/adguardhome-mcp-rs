@@ -14,7 +14,7 @@ Establish the foundational helpers to reduce boilerplate in all integration test
     - [ ] Create a pattern to execute a test closure against multiple transport configurations
 - [x] Task: Conductor - User Manual Verification 'Common Infrastructure & Helpers' (Protocol in workflow.md)
 
-## Phase 2: Domain Split & Migration (Protection)
+## Phase 2: Domain Split & Migration (Protection) [checkpoint: 42de927]
 Migrate the priority domain to the new structure as a proof of concept for the refactor.
 
 - [x] Task: Create `tests/protection_tests.rs`
@@ -24,12 +24,12 @@ Migrate the priority domain to the new structure as a proof of concept for the r
     - [x] Parental Control settings
 - [x] Task: Refactor migrated tests to use Phase 1 helpers
 - [x] Task: Verify `protection_tests.rs` passes against both transports
-- [~] Task: Conductor - User Manual Verification 'Domain Split & Migration (Protection)' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Domain Split & Migration (Protection)' (Protocol in workflow.md)
 
 ## Phase 3: Suite Consolidation & Modernization
 Migrate remaining tests and finalize the suite structure.
 
-- [ ] Task: Migrate remaining domains (Filtering, DNS, Clients, System) to focused test files
+- [~] Task: Migrate remaining domains (Filtering, DNS, Clients, System) to focused test files
 - [ ] Task: Update `docker_integration_test.rs` or remove if fully migrated
 - [ ] Task: Final Quality Audit
     - [ ] `task lint`
