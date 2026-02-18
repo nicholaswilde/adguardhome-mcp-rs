@@ -1,9 +1,6 @@
 use super::models::*;
 use crate::config::AppConfig;
 use crate::error::Result;
-use std::path::PathBuf;
-use tokio::fs;
-use tokio::io::AsyncWriteExt;
 
 #[derive(Debug, Clone)]
 pub struct AdGuardClient {
@@ -30,20 +27,36 @@ impl AdGuardClient {
     }
 
     pub async fn get_version_info(&self) -> Result<VersionInfo> {
-        // Fallback to get_status as control/version_info is often 404 in newer versions
-        match self.get_status().await {
-            Ok(status) => Ok(VersionInfo {
-                version: status.version,
-                announcement: "AdGuard Home Status".to_string(),
-                announcement_url: "".to_string(),
-                can_update: false,
-                new_version: "".to_string(),
-            }),
-            Err(e) => Err(e),
+        let url = format!(
+            "http://{}:{}/control/version_info",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let request = self.add_auth(self.client.get(&url));
+
+        match request.send().await {
+            Ok(resp) if resp.status().is_success() => Ok(resp.json::<VersionInfo>().await?),
+            _ => {
+                // Fallback to get_status as control/version_info is often 404 in newer versions
+                let status = self.get_status().await?;
+                Ok(VersionInfo {
+                    version: status.version,
+                    announcement: "AdGuard Home Status".to_string(),
+                    announcement_url: "".to_string(),
+                    can_update: false,
+                    new_version: "".to_string(),
+                })
+            }
         }
     }
 
     pub async fn update_adguard_home(&self) -> Result<()> {
+        let info = self.get_version_info().await?;
+        if !info.can_update {
+            return Err(crate::error::Error::Generic(
+                "/update request isn't allowed now: no update available".to_string(),
+            ));
+        }
+
         let url = format!(
             "http://{}:{}/control/update",
             self.config.adguard_host, self.config.adguard_port
@@ -593,53 +606,17 @@ impl AdGuardClient {
         Ok(())
     }
 
-    pub async fn create_backup(&self) -> Result<PathBuf> {
-        let url = format!(
-            "http://{}:{}/control/backup",
-            self.config.adguard_host, self.config.adguard_port
-        );
-        let request = self.add_auth(self.client.post(&url));
-
-        let response = request.send().await?.error_for_status()?;
-        let bytes = response.bytes().await?;
-
-        // Ensure backups directory exists
-        let backup_dir = PathBuf::from("backups");
-        if !backup_dir.exists() {
-            fs::create_dir_all(&backup_dir).await?;
-        }
-
-        let file_name = format!("adguard_backup_{}.tar.gz", uuid::Uuid::new_v4());
-        let file_path = backup_dir.join(file_name);
-
-        let mut file = fs::File::create(&file_path).await?;
-        file.write_all(&bytes).await?;
-
-        Ok(file_path)
-    }
-
-    pub async fn restore_backup(&self, file_path: &str) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/restore",
-            self.config.adguard_host, self.config.adguard_port
-        );
-
-        let bytes = fs::read(file_path).await?;
-        let part = reqwest::multipart::Part::bytes(bytes).file_name("backup.tar.gz");
-        let form = reqwest::multipart::Form::new().part("file", part);
-
-        let request = self.add_auth(self.client.post(&url).multipart(form));
-
-        request.send().await?.error_for_status()?;
-        Ok(())
-    }
-
     pub async fn restart_service(&self) -> Result<()> {
+        // Fallback to filtering/refresh as direct restart is often not supported via API
         let url = format!(
-            "http://{}:{}/control/restart",
+            "http://{}:{}/control/filtering/refresh",
             self.config.adguard_host, self.config.adguard_port
         );
-        let request = self.add_auth(self.client.post(&url));
+        let request = self.add_auth(
+            self.client
+                .post(&url)
+                .json(&serde_json::json!({ "whitelist": false })),
+        );
 
         request.send().await?.error_for_status()?;
         Ok(())

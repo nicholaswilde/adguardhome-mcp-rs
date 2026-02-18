@@ -1,4 +1,8 @@
 use super::ToolRegistry;
+use crate::sync::SyncState;
+use std::path::PathBuf;
+use tokio::fs;
+use tokio::io::AsyncWriteExt;
 
 pub fn register(registry: &mut ToolRegistry) {
     registry.register(
@@ -131,12 +135,27 @@ pub fn register(registry: &mut ToolRegistry) {
                         Ok(serde_json::json!({ "content": [{ "type": "text", "text": "Update triggered" }] }))
                     }
                     "create_backup" => {
-                        let path = client.create_backup().await?;
-                        Ok(serde_json::json!({ "content": [{ "type": "text", "text": format!("Backup: {}", path.display()) }] }))
+                        let state = SyncState::fetch(&client).await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
+                        let json = serde_json::to_vec_pretty(&state)?;
+                        
+                        let backup_dir = PathBuf::from("backups");
+                        if !backup_dir.exists() {
+                            fs::create_dir_all(&backup_dir).await?;
+                        }
+
+                        let file_name = format!("adguard_backup_{}.json", uuid::Uuid::new_v4());
+                        let file_path = backup_dir.join(file_name);
+
+                        let mut file = fs::File::create(&file_path).await?;
+                        file.write_all(&json).await?;
+
+                        Ok(serde_json::json!({ "content": [{ "type": "text", "text": format!("Backup: {}", file_path.display()) }] }))
                     }
                     "restore_backup" => {
                         let path = params["file_path"].as_str().unwrap_or_default();
-                        client.restore_backup(path).await?;
+                        let json = fs::read(path).await?;
+                        let state: SyncState = serde_json::from_slice(&json)?;
+                        state.push_to_replica(&client, "full-overwrite").await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
                         Ok(serde_json::json!({ "content": [{ "type": "text", "text": "Backup restored" }] }))
                     }
                     "restart_service" => {

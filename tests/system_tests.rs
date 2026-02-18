@@ -64,8 +64,7 @@ async fn test_maintenance_tools_integration() -> Result<()> {
         )
         .await?;
 
-        // Call create_backup - disabled as it's 404 in newer AdGuard versions
-        /*
+        // Call create_backup
         let res = ctx
             .call_tool(
                 "manage_system",
@@ -85,16 +84,13 @@ async fn test_maintenance_tools_integration() -> Result<()> {
         .await?;
 
         let _ = tokio::fs::remove_file(backup_path).await;
-        */
 
-        // Call restart_service - disabled as it's 404 in newer AdGuard versions
-        /*
+        // Call restart_service
         ctx.call_tool(
             "manage_system",
             serde_json::json!({"action": "restart_service"}),
         )
         .await?;
-        */
 
         Ok(())
     })
@@ -173,14 +169,23 @@ async fn test_system_info_integration() -> Result<()> {
                 .contains("version")
         );
 
-        // Trigger update - disabled as it's 400 in newer AdGuard versions
-        /*
-        ctx.call_tool(
+        // Trigger update
+        let res = ctx.call_tool(
             "manage_system",
             serde_json::json!({"action": "update_adguard_home"}),
-        )
-        .await?;
-        */
+        ).await;
+        
+        match res {
+            Ok(_) => println!("Update triggered successfully"),
+            Err(e) => {
+                let err_msg = e.to_string();
+                if err_msg.contains("no update available") {
+                    println!("Verified: Update correctly rejected when none available.");
+                } else {
+                    return Err(e);
+                }
+            }
+        }
 
         Ok(())
     })

@@ -7,7 +7,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Multi-Instance Support**
 *Link: [./tracks/multi_instance_support_20260202/](./tracks/multi_instance_support_20260202/)*
 
-- [ ] **Track: Restore System Tools**
+- [x] **Track: Restore System Tools**
 *Link: [./tracks/restore_system_tools_20260218/](./tracks/restore_system_tools_20260218/)*
 
 ## Completed Tracks

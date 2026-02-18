@@ -1532,6 +1532,18 @@ async fn test_update_adguard_home() {
     );
     let client = AdGuardClient::new(config);
 
+    Mock::given(method("GET"))
+        .and(path("/control/version_info"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "version": "v0.107.0",
+            "announcement": "New version released!",
+            "announcement_url": "https://example.com",
+            "can_update": true,
+            "new_version": "v0.108.0"
+        })))
+        .mount(&server)
+        .await;
+
     Mock::given(method("POST"))
         .and(path("/control/update"))
         .respond_with(ResponseTemplate::new(200))
@@ -2216,77 +2228,6 @@ async fn test_check_host() {
 }
 
 #[tokio::test]
-async fn test_create_backup() {
-    let server = MockServer::start().await;
-    let config = test_config(
-        server
-            .uri()
-            .replace("http://", "")
-            .split(':')
-            .next()
-            .unwrap()
-            .to_string(),
-        server
-            .uri()
-            .split(':')
-            .next_back()
-            .unwrap()
-            .parse()
-            .unwrap(),
-    );
-    let client = AdGuardClient::new(config);
-
-    Mock::given(method("POST"))
-        .and(path("/control/backup"))
-        .respond_with(ResponseTemplate::new(200).set_body_bytes(vec![1, 2, 3, 4]))
-        .mount(&server)
-        .await;
-
-    let path = client.create_backup().await.unwrap();
-    assert!(path.exists());
-
-    // Cleanup
-    tokio::fs::remove_file(path).await.unwrap();
-}
-
-#[tokio::test]
-async fn test_restore_backup() {
-    let server = MockServer::start().await;
-    let config = test_config(
-        server
-            .uri()
-            .replace("http://", "")
-            .split(':')
-            .next()
-            .unwrap()
-            .to_string(),
-        server
-            .uri()
-            .split(':')
-            .next_back()
-            .unwrap()
-            .parse()
-            .unwrap(),
-    );
-    let client = AdGuardClient::new(config);
-
-    Mock::given(method("POST"))
-        .and(path("/control/restore"))
-        .respond_with(ResponseTemplate::new(200))
-        .mount(&server)
-        .await;
-
-    // Create a dummy file
-    let file_path = "test_backup.tar.gz";
-    tokio::fs::write(file_path, vec![1, 2, 3, 4]).await.unwrap();
-
-    client.restore_backup(file_path).await.unwrap();
-
-    // Cleanup
-    tokio::fs::remove_file(file_path).await.unwrap();
-}
-
-#[tokio::test]
 async fn test_restart_service() {
     let server = MockServer::start().await;
     let config = test_config(
@@ -2308,7 +2249,7 @@ async fn test_restart_service() {
     let client = AdGuardClient::new(config);
 
     Mock::given(method("POST"))
-        .and(path("/control/restart"))
+        .and(path("/control/filtering/refresh"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;

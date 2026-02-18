@@ -1,5 +1,8 @@
 use crate::adguard::AdGuardClient;
-use crate::adguard::models::{AdGuardClientDevice, DnsConfig, DnsRewrite, FilteringConfig};
+use crate::adguard::models::{
+    AccessList, AdGuardClientDevice, DnsConfig, DnsRewrite, FilteringConfig, ParentalControlConfig,
+    QueryLogConfig, SafeSearchConfig,
+};
 use crate::config::AppConfig;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -13,6 +16,11 @@ pub struct SyncState {
     pub dns: DnsConfig,
     pub blocked_services: Vec<String>,
     pub rewrites: Vec<DnsRewrite>,
+    pub access_list: AccessList,
+    pub query_log_config: QueryLogConfig,
+    pub safe_search: SafeSearchConfig,
+    pub safe_browsing: bool,
+    pub parental_control: ParentalControlConfig,
 }
 
 impl SyncState {
@@ -39,7 +47,7 @@ impl SyncState {
                                 replica_config.adguard_host =
                                     parsed_url.host_str().unwrap_or("localhost").to_string();
                                 replica_config.adguard_port = parsed_url.port().unwrap_or(80);
-                                replica_config.adguard_username = None;
+                                replica_config.adguard_username = Some("admin".to_string());
                                 replica_config.adguard_password = Some(replica.api_key.clone());
 
                                 let replica_client = AdGuardClient::new(replica_config);
@@ -67,6 +75,11 @@ impl SyncState {
         let dns = client.get_dns_info().await?;
         let blocked_services = client.list_blocked_services().await?;
         let rewrites = client.list_rewrites().await?;
+        let access_list = client.get_access_list().await?;
+        let query_log_config = client.get_query_log_config().await?;
+        let safe_search = client.get_safe_search_settings().await?;
+        let status = client.get_status().await?;
+        let parental_control = client.get_parental_settings().await?;
 
         Ok(Self {
             filtering,
@@ -74,6 +87,11 @@ impl SyncState {
             dns,
             blocked_services,
             rewrites,
+            access_list,
+            query_log_config,
+            safe_search,
+            safe_browsing: status.protection_enabled, // Approximation
+            parental_control,
         })
     }
 
@@ -140,8 +158,29 @@ impl SyncState {
             }
         }
 
-        // TODO: Implement other modules (Clients, DNS, Filters) in subsequent steps if needed,
-        // but this covers the failing test case for rules, services, and rewrites.
+        // 4. Sync DNS Config
+        client.set_dns_config(self.dns.clone()).await?;
+
+        // 5. Sync Access List
+        client.set_access_list(self.access_list.clone()).await?;
+
+        // 6. Sync Query Log Config
+        client
+            .set_query_log_config(self.query_log_config.clone())
+            .await?;
+
+        // 7. Sync Safe Search
+        client
+            .set_safe_search_settings(self.safe_search.clone())
+            .await?;
+
+        // 8. Sync Parental Control
+        client
+            .set_parental_settings(self.parental_control.clone())
+            .await?;
+
+        // 9. Sync Protection
+        client.set_protection(self.safe_browsing).await?;
 
         Ok(())
     }
@@ -207,6 +246,32 @@ mod tests {
             },
             blocked_services: Vec::new(),
             rewrites: Vec::new(),
+            access_list: AccessList {
+                allowed_clients: vec![],
+                disallowed_clients: vec![],
+                blocked_hosts: vec![],
+            },
+            query_log_config: QueryLogConfig {
+                enabled: true,
+                interval: 1,
+                anonymize_client_ip: false,
+                allowed_clients: vec![],
+                disallowed_clients: vec![],
+            },
+            safe_search: SafeSearchConfig {
+                enabled: true,
+                bing: true,
+                duckduckgo: true,
+                google: true,
+                pixabay: true,
+                yandex: true,
+                youtube: true,
+            },
+            safe_browsing: true,
+            parental_control: ParentalControlConfig {
+                enabled: true,
+                sensitivity: None,
+            },
         };
 
         // Mock Replica Current State (Has items)
@@ -237,6 +302,60 @@ mod tests {
             .mount(&server)
             .await;
 
+        Mock::given(method("GET"))
+            .and(path("/control/access/list"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "allowed_clients": [],
+                "disallowed_clients": [],
+                "blocked_hosts": []
+            })))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/control/querylog/config"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "enabled": true,
+                "interval": 1,
+                "anonymize_client_ip": false,
+                "allowed_clients": [],
+                "disallowed_clients": []
+            })))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/control/safesearch/status"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "enabled": true,
+                "bing": true,
+                "duckduckgo": true,
+                "google": true,
+                "pixabay": true,
+                "yandex": true,
+                "youtube": true
+            })))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/control/status"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "version": "v0.107.0",
+                "language": "en",
+                "protection_enabled": true
+            })))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("GET"))
+            .and(path("/control/parental/status"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "enabled": true
+            })))
+            .mount(&server)
+            .await;
+
         // Expect calls to overwrite/delete
         Mock::given(method("POST"))
             .and(path("/control/filtering/set_rules"))
@@ -252,6 +371,42 @@ mod tests {
 
         Mock::given(method("POST"))
             .and(path("/control/rewrite/delete"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/control/dns_config"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/control/access/set"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("PUT"))
+            .and(path("/control/querylog/config/update"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("PUT"))
+            .and(path("/control/safesearch/settings"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/control/parental/enable"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/control/protection"))
             .respond_with(ResponseTemplate::new(200))
             .mount(&server)
             .await;

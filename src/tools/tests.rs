@@ -1,10 +1,14 @@
-use super::ToolRegistry;
-use crate::adguard::AdGuardClient;
-use crate::config::AppConfig;
-use serde_json::json;
-use wiremock::matchers::{method, path};
-use wiremock::{Mock, MockServer, ResponseTemplate};
-
+    use super::ToolRegistry;
+    use crate::adguard::models::{
+        AccessList, DnsConfig, FilteringConfig, ParentalControlConfig, QueryLogConfig,
+        SafeSearchConfig,
+    };
+    use crate::adguard::AdGuardClient;
+    use crate::config::AppConfig;
+    use crate::sync::SyncState;
+    use serde_json::json;
+    use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 async fn setup() -> (MockServer, AdGuardClient, ToolRegistry) {
     let server = MockServer::start().await;
     let config = AppConfig {
@@ -242,10 +246,10 @@ async fn test_system_tools() {
         .unwrap();
 
     Mock::given(method("GET"))
-        .and(path("/control/status"))
+        .and(path("/control/version_info"))
         .respond_with(
             ResponseTemplate::new(200).set_body_json(
-                json!({"version": "v", "language": "en", "protection_enabled": true}),
+                json!({"version": "v", "announcement": "", "announcement_url": "", "can_update": true, "new_version": ""}),
             ),
         )
         .mount(&server)
@@ -273,11 +277,70 @@ async fn test_system_tools() {
         .await
         .unwrap();
 
-    Mock::given(method("POST"))
-        .and(path("/control/backup"))
-        .respond_with(ResponseTemplate::new(200).set_body_bytes(vec![1]))
+    // Mock all for SyncState::fetch
+    Mock::given(method("GET"))
+        .and(path("/control/filtering/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": true, "interval": 1, "filters": [], "whitelist_filters": [], "user_rules": []
+        })))
         .mount(&server)
         .await;
+    Mock::given(method("GET"))
+        .and(path("/control/clients"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"clients": []})))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/dns_info"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "upstream_dns": [], "bootstrap_dns": [], "all_servers": false, "fastest_addr": false, "fastest_timeout": 0, "cache_size": 0, "cache_ttl_min": 0, "cache_ttl_max": 0, "cache_optimistic": false, "upstream_mode": "", "use_private_ptr_resolvers": false, "local_ptr_upstreams": []
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/blocked_services/list"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/rewrite/list"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/access/list"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "allowed_clients": [], "disallowed_clients": [], "blocked_hosts": []
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/querylog/config"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": true, "interval": 1, "anonymize_client_ip": false, "allowed_clients": [], "disallowed_clients": []
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/safesearch/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": true, "bing": true, "duckduckgo": true, "google": true, "pixabay": true, "yandex": true, "youtube": true
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "version": "v", "language": "en", "protection_enabled": true
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/parental/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"enabled": true})))
+        .mount(&server)
+        .await;
+
     let resp = registry
         .call_tool(
             "manage_system",
@@ -292,7 +355,7 @@ async fn test_system_tools() {
     }
 
     Mock::given(method("POST"))
-        .and(path("/control/restart"))
+        .and(path("/control/filtering/refresh"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;
@@ -306,20 +369,118 @@ async fn test_system_tools() {
         .unwrap();
 
     Mock::given(method("POST"))
-        .and(path("/control/restore"))
+        .and(path("/control/filtering/set_rules"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;
-    let _ = std::fs::write("test.tar.gz", vec![1]);
+    Mock::given(method("POST"))
+        .and(path("/control/blocked_services/set"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/rewrite/list"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/dns_config"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/access/set"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path("/control/querylog/config/update"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path("/control/safesearch/settings"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/parental/enable"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/protection"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    let backup_file = tempfile::NamedTempFile::new().unwrap();
+    let backup_path = backup_file.path().to_str().unwrap().to_string();
+    let state = SyncState {
+        filtering: FilteringConfig {
+            enabled: true,
+            interval: 1,
+            filters: vec![],
+            whitelist_filters: vec![],
+            user_rules: vec![],
+        },
+        clients: vec![],
+        dns: DnsConfig {
+            upstream_dns: vec![],
+            upstream_dns_file: "".to_string(),
+            bootstrap_dns: vec![],
+            fallback_dns: vec![],
+            all_servers: false,
+            fastest_addr: false,
+            fastest_timeout: 0,
+            cache_size: 0,
+            cache_ttl_min: 0,
+            cache_ttl_max: 0,
+            cache_optimistic: false,
+            upstream_mode: "".to_string(),
+            use_private_ptr_resolvers: false,
+            local_ptr_upstreams: vec![],
+        },
+        blocked_services: vec![],
+        rewrites: vec![],
+        access_list: AccessList {
+            allowed_clients: vec![],
+            disallowed_clients: vec![],
+            blocked_hosts: vec![],
+        },
+        query_log_config: QueryLogConfig {
+            enabled: true,
+            interval: 1,
+            anonymize_client_ip: false,
+            allowed_clients: vec![],
+            disallowed_clients: vec![],
+        },
+        safe_search: SafeSearchConfig {
+            enabled: true,
+            bing: true,
+            duckduckgo: true,
+            google: true,
+            pixabay: true,
+            yandex: true,
+            youtube: true,
+        },
+        safe_browsing: true,
+        parental_control: ParentalControlConfig {
+            enabled: true,
+            sensitivity: None,
+        },
+    };
+    let json = serde_json::to_vec_pretty(&state).unwrap();
+    std::fs::write(&backup_path, json).unwrap();
+
     registry
         .call_tool(
             "manage_system",
             &client,
-            Some(json!({"action": "restore_backup", "file_path": "test.tar.gz"})),
+            Some(json!({"action": "restore_backup", "file_path": backup_path})),
         )
         .await
         .unwrap();
-    let _ = std::fs::remove_file("test.tar.gz");
 }
 
 #[tokio::test]
@@ -360,8 +521,41 @@ async fn test_sync_instances_tool() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
         .mount(&server)
         .await;
+    Mock::given(method("GET"))
+        .and(path("/control/access/list"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "allowed_clients": [], "disallowed_clients": [], "blocked_hosts": []
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/querylog/config"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": true, "interval": 1, "anonymize_client_ip": false, "allowed_clients": [], "disallowed_clients": []
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/safesearch/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": true, "bing": true, "duckduckgo": true, "google": true, "pixabay": true, "yandex": true, "youtube": true
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "version": "v", "language": "en", "protection_enabled": true
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/parental/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"enabled": true})))
+        .mount(&server)
+        .await;
 
-    // Mock Replica calls (set_rules, set_blocked_services, add_rewrite)
+    // Mock Replica calls
     Mock::given(method("POST"))
         .and(path("/control/filtering/set_rules"))
         .respond_with(ResponseTemplate::new(200))
@@ -372,6 +566,37 @@ async fn test_sync_instances_tool() {
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;
+    Mock::given(method("POST"))
+        .and(path("/control/dns_config"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/access/set"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path("/control/querylog/config/update"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path("/control/safesearch/settings"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/parental/enable"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/protection"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
     // Additive mode check existing rewrites
     Mock::given(method("GET"))
         .and(path("/control/rewrite/list"))
