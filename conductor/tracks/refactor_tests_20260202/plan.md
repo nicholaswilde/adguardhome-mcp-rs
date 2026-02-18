@@ -26,7 +26,7 @@ Migrate the priority domain to the new structure as a proof of concept for the r
 - [x] Task: Verify `protection_tests.rs` passes against both transports
 - [x] Task: Conductor - User Manual Verification 'Domain Split & Migration (Protection)' (Protocol in workflow.md)
 
-## Phase 3: Suite Consolidation & Modernization
+## Phase 3: Suite Consolidation & Modernization [checkpoint: ebf4b42]
 Migrate remaining tests and finalize the suite structure.
 
 - [x] Task: Migrate remaining domains (Filtering, DNS, Clients, System) to focused test files
