@@ -20,8 +20,6 @@ impl AdGuardContainer {
     pub async fn new(config_path: Option<String>) -> Result<Self> {
         println!("🐳 Starting AdGuard Home container...");
 
-        let mut temp_dir_handle = None;
-
         let image = GenericImage::new("adguard/adguardhome", "latest")
             .with_exposed_port(ContainerPort::Tcp(80))
             .with_exposed_port(ContainerPort::Tcp(3000))
@@ -29,20 +27,19 @@ impl AdGuardContainer {
                 "AdGuard Home is available at",
             ));
 
-        let container = if let Some(path) = config_path {
+        let (container, temp_dir_handle) = if let Some(path) = config_path {
             let temp_dir = tempfile::Builder::new()
                 .prefix("adguard-test-")
                 .tempdir_in("./target")?;
             std::fs::copy(&path, temp_dir.path().join("AdGuardHome.yaml"))?;
-            let res = image
+            let c = image
                 .with_mount(Mount::bind_mount(
                     std::fs::canonicalize(temp_dir.path())?.to_str().unwrap(),
                     "/opt/adguardhome/conf",
                 ))
                 .start()
                 .await?;
-            temp_dir_handle = Some(temp_dir);
-            res
+            (c, Some(temp_dir))
         } else {
             // ALWAYS use the stable test config
             let temp_dir = tempfile::Builder::new()
@@ -52,15 +49,14 @@ impl AdGuardContainer {
                 "tests/common/AdGuardHome.yaml",
                 temp_dir.path().join("AdGuardHome.yaml"),
             )?;
-            let res = image
+            let c = image
                 .with_mount(Mount::bind_mount(
                     std::fs::canonicalize(temp_dir.path())?.to_str().unwrap(),
                     "/opt/adguardhome/conf",
                 ))
                 .start()
                 .await?;
-            temp_dir_handle = Some(temp_dir);
-            res
+            (c, Some(temp_dir))
         };
 
         // Pipe stdout logs
@@ -293,24 +289,21 @@ impl TestContext {
                         buffer.push_str(&String::from_utf8_lossy(&chunk));
                         let events: Vec<&str> = buffer.split("\n\n").collect();
                         for event in events {
-                            if event.contains("message") && event.contains(&req_id) {
-                                if let Some(data_pos) = event.find("data: ") {
-                                    let data_text = &event[data_pos + 6..].trim();
-                                    if let Ok(mcp_resp) =
-                                        serde_json::from_str::<serde_json::Value>(data_text)
-                                    {
-                                        if mcp_resp["id"] == req_id {
-                                            if let Some(res) = mcp_resp.get("result") {
-                                                result = Some(Ok(res.clone()));
-                                                break;
-                                            } else if let Some(err) = mcp_resp.get("error") {
-                                                result = Some(Err(anyhow::anyhow!(
-                                                    "MCP Error: {}",
-                                                    err
-                                                )));
-                                                break;
-                                            }
-                                        }
+                            if event.contains("message")
+                                && event.contains(&req_id)
+                                && let Some(data_pos) = event.find("data: ")
+                            {
+                                let data_text = &event[data_pos + 6..].trim();
+                                if let Ok(mcp_resp) =
+                                    serde_json::from_str::<serde_json::Value>(data_text)
+                                    && mcp_resp["id"] == req_id
+                                {
+                                    if let Some(res) = mcp_resp.get("result") {
+                                        result = Some(Ok(res.clone()));
+                                        break;
+                                    } else if let Some(err) = mcp_resp.get("error") {
+                                        result = Some(Err(anyhow::anyhow!("MCP Error: {}", err)));
+                                        break;
                                     }
                                 }
                             }
