@@ -170,11 +170,13 @@ async fn test_system_info_integration() -> Result<()> {
         );
 
         // Trigger update
-        let res = ctx.call_tool(
-            "manage_system",
-            serde_json::json!({"action": "update_adguard_home"}),
-        ).await;
-        
+        let res = ctx
+            .call_tool(
+                "manage_system",
+                serde_json::json!({"action": "update_adguard_home"}),
+            )
+            .await;
+
         match res {
             Ok(_) => println!("Update triggered successfully"),
             Err(e) => {

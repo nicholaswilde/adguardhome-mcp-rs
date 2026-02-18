@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [ ] **Track: Backup & Restore Enhancements**
+- [~] **Track: Backup & Restore Enhancements**
 *Link: [./tracks/backup_restore_enhancements_20260218/](./tracks/backup_restore_enhancements_20260218/)*
 
 - [ ] **Track: Multi-Instance Support**

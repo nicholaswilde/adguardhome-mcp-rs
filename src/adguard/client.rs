@@ -484,6 +484,40 @@ impl AdGuardClient {
         Ok(status)
     }
 
+    pub async fn set_dhcp_config(&self, config: DhcpStatus) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/dhcp/set_config",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let request = self.add_auth(self.client.post(&url).json(&config));
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
+    pub async fn get_profile_info(&self) -> Result<ProfileInfo> {
+        let url = format!(
+            "http://{}:{}/control/profile",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let request = self.add_auth(self.client.get(&url));
+
+        let response = request.send().await?.error_for_status()?;
+        let profile = response.json::<ProfileInfo>().await?;
+        Ok(profile)
+    }
+
+    pub async fn set_profile_info(&self, profile: ProfileInfo) -> Result<()> {
+        let url = format!(
+            "http://{}:{}/control/profile/update",
+            self.config.adguard_host, self.config.adguard_port
+        );
+        let request = self.add_auth(self.client.put(&url).json(&profile));
+
+        request.send().await?.error_for_status()?;
+        Ok(())
+    }
+
     pub async fn add_static_lease(&self, lease: StaticLease) -> Result<()> {
         let url = format!(
             "http://{}:{}/control/dhcp/add_static_lease",

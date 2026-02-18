@@ -224,14 +224,38 @@ pub struct DnsConfig {
     pub local_ptr_upstreams: Vec<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DhcpStatus {
     pub enabled: bool,
     pub interface_name: String,
+    pub v4: Option<DhcpConfigV4>,
+    pub v6: Option<DhcpConfigV6>,
     #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub leases: Vec<DhcpLease>,
     #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub static_leases: Vec<StaticLease>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DhcpConfigV4 {
+    pub gateway_ip: Option<String>,
+    pub subnet_mask: Option<String>,
+    pub range_start: Option<String>,
+    pub range_end: Option<String>,
+    pub lease_duration: Option<u32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DhcpConfigV6 {
+    pub range_start: Option<String>,
+    pub lease_duration: Option<u32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ProfileInfo {
+    pub name: String,
+    pub language: String,
+    pub theme: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -137,7 +137,7 @@ pub fn register(registry: &mut ToolRegistry) {
                     "create_backup" => {
                         let state = SyncState::fetch(&client).await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
                         let json = serde_json::to_vec_pretty(&state)?;
-                        
+
                         let backup_dir = PathBuf::from("backups");
                         if !backup_dir.exists() {
                             fs::create_dir_all(&backup_dir).await?;

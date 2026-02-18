@@ -1998,6 +1998,170 @@ async fn test_remove_static_lease() {
 }
 
 #[tokio::test]
+async fn test_get_dhcp_config() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/dhcp/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "enabled": true,
+            "interface_name": "eth0",
+            "v4": {
+                "gateway_ip": "192.168.1.1",
+                "subnet_mask": "255.255.255.0",
+                "range_start": "192.168.1.10",
+                "range_end": "192.168.1.100",
+                "lease_duration": 86400
+            },
+            "v6": {
+                "range_start": "2001:db8::10",
+                "lease_duration": 86400
+            },
+            "leases": [],
+            "static_leases": []
+        })))
+        .mount(&server)
+        .await;
+
+    let status = client.get_dhcp_status().await.unwrap();
+    assert!(status.enabled);
+    let v4 = status.v4.unwrap();
+    assert_eq!(v4.gateway_ip.unwrap(), "192.168.1.1");
+}
+
+#[tokio::test]
+async fn test_set_dhcp_config() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("POST"))
+        .and(path("/control/dhcp/set_config"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    let dhcp_config = DhcpStatus {
+        enabled: true,
+        interface_name: "eth0".to_string(),
+        v4: Some(DhcpConfigV4 {
+            gateway_ip: Some("192.168.1.1".to_string()),
+            subnet_mask: Some("255.255.255.0".to_string()),
+            range_start: Some("192.168.1.10".to_string()),
+            range_end: Some("192.168.1.100".to_string()),
+            lease_duration: Some(86400),
+        }),
+        v6: None,
+        leases: vec![],
+        static_leases: vec![],
+    };
+    client.set_dhcp_config(dhcp_config).await.unwrap();
+}
+
+#[tokio::test]
+async fn test_get_profile_info() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("GET"))
+        .and(path("/control/profile"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "name": "admin",
+            "language": "en",
+            "theme": "dark"
+        })))
+        .mount(&server)
+        .await;
+
+    let profile = client.get_profile_info().await.unwrap();
+    assert_eq!(profile.name, "admin");
+    assert_eq!(profile.language, "en");
+}
+
+#[tokio::test]
+async fn test_set_profile_info() {
+    let server = MockServer::start().await;
+    let config = test_config(
+        server
+            .uri()
+            .replace("http://", "")
+            .split(':')
+            .next()
+            .unwrap()
+            .to_string(),
+        server
+            .uri()
+            .split(':')
+            .next_back()
+            .unwrap()
+            .parse()
+            .unwrap(),
+    );
+    let client = AdGuardClient::new(config);
+
+    Mock::given(method("PUT"))
+        .and(path("/control/profile/update"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    let profile = ProfileInfo {
+        name: "admin".to_string(),
+        language: "en".to_string(),
+        theme: "dark".to_string(),
+    };
+    client.set_profile_info(profile).await.unwrap();
+}
+
+#[tokio::test]
 async fn test_get_dns_info() {
     let server = MockServer::start().await;
     let config = test_config(

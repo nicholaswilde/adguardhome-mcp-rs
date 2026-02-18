@@ -5,9 +5,9 @@
 ## Phase 1: Configuration Expansion
 Enhance `AdGuardClient` and `SyncState` to include the missing configuration modules.
 
-- [ ] Task: Update `AdGuardClient` and `models.rs` for new modules
-    - [ ] Implement `get_dhcp_config`, `set_dhcp_config`, `get_profile_info`, and `set_profile_info`.
-    - [ ] **TDD:** Write unit tests for the new client methods in `src/adguard/tests.rs`.
+- [x] Task: Update `AdGuardClient` and `models.rs` for new modules
+    - [x] Implement `get_dhcp_config`, `set_dhcp_config`, `get_profile_info`, and `set_profile_info`.
+    - [x] **TDD:** Write unit tests for the new client methods in `src/adguard/tests.rs`.
 - [ ] Task: Update `SyncState` struct and logic in `src/sync.rs`
     - [ ] Add fields for `dhcp`, `tls_status` (already has some), and `profile_info`.
     - [ ] Update `fetch` and `push_to_replica` to include these modules.

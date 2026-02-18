@@ -1,14 +1,13 @@
-    use super::ToolRegistry;
-    use crate::adguard::models::{
-        AccessList, DnsConfig, FilteringConfig, ParentalControlConfig, QueryLogConfig,
-        SafeSearchConfig,
-    };
-    use crate::adguard::AdGuardClient;
-    use crate::config::AppConfig;
-    use crate::sync::SyncState;
-    use serde_json::json;
-    use wiremock::matchers::{method, path};
-    use wiremock::{Mock, MockServer, ResponseTemplate};
+use super::ToolRegistry;
+use crate::adguard::AdGuardClient;
+use crate::adguard::models::{
+    AccessList, DnsConfig, FilteringConfig, ParentalControlConfig, QueryLogConfig, SafeSearchConfig,
+};
+use crate::config::AppConfig;
+use crate::sync::SyncState;
+use serde_json::json;
+use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 async fn setup() -> (MockServer, AdGuardClient, ToolRegistry) {
     let server = MockServer::start().await;
     let config = AppConfig {
