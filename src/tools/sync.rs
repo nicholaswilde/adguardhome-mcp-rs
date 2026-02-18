@@ -86,7 +86,7 @@ async fn sync_instances(client: &AdGuardClient, args: Option<Value>) -> Result<V
             url::Url::parse(&url).map_err(|e| crate::error::Error::Config(e.to_string()))?;
         replica_app_config.adguard_host = parsed_url.host_str().unwrap_or("localhost").to_string();
         replica_app_config.adguard_port = parsed_url.port().unwrap_or(80);
-        replica_app_config.adguard_username = None; // Use API Key
+        replica_app_config.adguard_username = Some("admin".to_string());
         replica_app_config.adguard_password = Some(replica_config.api_key.clone());
 
         let replica_client = AdGuardClient::new(replica_app_config);

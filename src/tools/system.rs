@@ -111,7 +111,7 @@ pub fn register(registry: &mut ToolRegistry) {
                     "set_query_log_config" => {
                         let mut config = client.get_query_log_config().await?;
                         if let Some(e) = params["enabled"].as_bool() { config.enabled = e; }
-                        if let Some(i) = params["interval"].as_u64() { config.interval = i as u32; }
+                        if let Some(i) = params["interval"].as_u64() { config.interval = i; }
                         if let Some(a) = params["anonymize_client_ip"].as_bool() { config.anonymize_client_ip = a; }
                         if let Some(allowed) = params["allowed_clients"].as_array() {
                             config.allowed_clients = allowed.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect();

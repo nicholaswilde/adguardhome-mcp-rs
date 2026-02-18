@@ -11,7 +11,7 @@ use tokio::io::AsyncBufReadExt;
 
 pub struct AdGuardContainer {
     _container: testcontainers::ContainerAsync<GenericImage>,
-    _config_dir: tempfile::TempDir,
+    _config_dir: Option<tempfile::TempDir>,
     pub host: String,
     pub port: u16,
 }
@@ -20,38 +20,48 @@ impl AdGuardContainer {
     pub async fn new(config_path: Option<String>) -> Result<Self> {
         println!("🐳 Starting AdGuard Home container...");
 
-        let temp_dir = tempfile::Builder::new()
-            .prefix("adguard-test-")
-            .tempdir_in("./target")?;
+        let mut temp_dir_handle = None;
 
-        if let Some(path) = config_path {
-            std::fs::copy(&path, temp_dir.path().join("AdGuardHome.yaml"))?;
-        } else {
-            // Use a minimal config that works with older versions too
-            let minimal_config = r#"
-http:
-  address: 0.0.0.0:80
-auth_name: admin
-auth_pass: password
-schema_version: 20
-"#;
-            std::fs::write(temp_dir.path().join("AdGuardHome.yaml"), minimal_config)?;
-        };
-
-        // Use latest
         let image = GenericImage::new("adguard/adguardhome", "latest")
             .with_exposed_port(ContainerPort::Tcp(80))
+            .with_exposed_port(ContainerPort::Tcp(3000))
             .with_wait_for(WaitFor::message_on_either_std(
                 "AdGuard Home is available at",
             ));
 
-        let container = image
-            .with_mount(Mount::bind_mount(
-                std::fs::canonicalize(temp_dir.path())?.to_str().unwrap(),
-                "/opt/adguardhome/conf",
-            ))
-            .start()
-            .await?;
+        let container = if let Some(path) = config_path {
+            let temp_dir = tempfile::Builder::new()
+                .prefix("adguard-test-")
+                .tempdir_in("./target")?;
+            std::fs::copy(&path, temp_dir.path().join("AdGuardHome.yaml"))?;
+            let res = image
+                .with_mount(Mount::bind_mount(
+                    std::fs::canonicalize(temp_dir.path())?.to_str().unwrap(),
+                    "/opt/adguardhome/conf",
+                ))
+                .start()
+                .await?;
+            temp_dir_handle = Some(temp_dir);
+            res
+        } else {
+            // ALWAYS use the stable test config
+            let temp_dir = tempfile::Builder::new()
+                .prefix("adguard-test-")
+                .tempdir_in("./target")?;
+            std::fs::copy(
+                "tests/common/AdGuardHome.yaml",
+                temp_dir.path().join("AdGuardHome.yaml"),
+            )?;
+            let res = image
+                .with_mount(Mount::bind_mount(
+                    std::fs::canonicalize(temp_dir.path())?.to_str().unwrap(),
+                    "/opt/adguardhome/conf",
+                ))
+                .start()
+                .await?;
+            temp_dir_handle = Some(temp_dir);
+            res
+        };
 
         // Pipe stdout logs
         let stdout = container.stdout(true);
@@ -69,18 +79,18 @@ schema_version: 20
             }
         });
 
-        let port = container.get_host_port_ipv4(80).await?;
+        let port_80 = container.get_host_port_ipv4(80).await?;
         let host = "localhost".to_string();
 
         println!(
             "✅ AdGuard Home container started at http://{}:{}",
-            host, port
+            host, port_80
         );
 
         // Wait for web server to be ready
         let config = AppConfig {
             adguard_host: host.clone(),
-            adguard_port: port,
+            adguard_port: port_80,
             adguard_username: Some("admin".to_string()),
             adguard_password: Some("password".to_string()),
             ..Default::default()
@@ -100,9 +110,9 @@ schema_version: 20
 
         Ok(Self {
             _container: container,
-            _config_dir: temp_dir,
+            _config_dir: temp_dir_handle,
             host,
-            port,
+            port: port_80,
         })
     }
 

@@ -26,13 +26,13 @@ tasks:
   coverage:
     desc: Run tests and show coverage summary
     cmds:
-      - cargo llvm-cov --workspace --all-features --summary-only -- --skip docker_integration_test
+      - cargo llvm-cov --workspace --all-features --summary-only
 
   coverage:report:
     desc: Generate coverage reports (lcov and html)
     cmds:
-      - cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info -- --skip docker_integration_test
-      - cargo llvm-cov --workspace --all-features --html -- --skip docker_integration_test
+      - cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
+      - cargo llvm-cov --workspace --all-features --html
 
   coverage:upload:
     desc: Upload coverage report to Coveralls
@@ -133,7 +133,7 @@ tasks:
     cmds:
       - task: fmt:check
       - task: lint
-      - cargo test --lib --tests -- --skip docker_integration_test
+      - cargo test --lib --tests
       - task: clippy
 
   test:ci:
@@ -141,13 +141,13 @@ tasks:
     cmds:
       - task: fmt:check
       - task: lint
-      - cargo test --lib --tests --profile ci -- --skip docker_integration_test
+      - cargo test --lib --tests --profile ci
       - task: clippy
 
   test:integration:
     desc: Run end-to-end integration tests
     cmds:
-      - cargo test --test docker_integration_test
+      - cargo test --tests
 
   fmt:
     desc: Format code with rustfmt

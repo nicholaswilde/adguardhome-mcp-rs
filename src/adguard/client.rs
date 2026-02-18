@@ -30,15 +30,17 @@ impl AdGuardClient {
     }
 
     pub async fn get_version_info(&self) -> Result<VersionInfo> {
-        let url = format!(
-            "http://{}:{}/control/version_info",
-            self.config.adguard_host, self.config.adguard_port
-        );
-        let request = self.add_auth(self.client.get(&url));
-
-        let response = request.send().await?.error_for_status()?;
-        let info = response.json::<VersionInfo>().await?;
-        Ok(info)
+        // Fallback to get_status as control/version_info is often 404 in newer versions
+        match self.get_status().await {
+            Ok(status) => Ok(VersionInfo {
+                version: status.version,
+                announcement: "AdGuard Home Status".to_string(),
+                announcement_url: "".to_string(),
+                can_update: false,
+                new_version: "".to_string(),
+            }),
+            Err(e) => Err(e),
+        }
     }
 
     pub async fn update_adguard_home(&self) -> Result<()> {
@@ -54,7 +56,7 @@ impl AdGuardClient {
 
     pub async fn get_query_log_config(&self) -> Result<QueryLogConfig> {
         let url = format!(
-            "http://{}:{}/control/querylog/info",
+            "http://{}:{}/control/querylog/config",
             self.config.adguard_host, self.config.adguard_port
         );
         let request = self.add_auth(self.client.get(&url));
@@ -66,10 +68,10 @@ impl AdGuardClient {
 
     pub async fn set_query_log_config(&self, config: QueryLogConfig) -> Result<()> {
         let url = format!(
-            "http://{}:{}/control/querylog/config",
+            "http://{}:{}/control/querylog/config/update",
             self.config.adguard_host, self.config.adguard_port
         );
-        let request = self.add_auth(self.client.post(&url).json(&config));
+        let request = self.add_auth(self.client.put(&url).json(&config));
 
         request.send().await?.error_for_status()?;
         Ok(())

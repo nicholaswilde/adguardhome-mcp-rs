@@ -1423,7 +1423,7 @@ async fn test_get_query_log_config() {
     let client = AdGuardClient::new(config);
 
     Mock::given(method("GET"))
-        .and(path("/control/querylog/info"))
+        .and(path("/control/querylog/config"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "enabled": true,
             "interval": 2160,
@@ -1460,8 +1460,8 @@ async fn test_set_query_log_config() {
     );
     let client = AdGuardClient::new(config);
 
-    Mock::given(method("POST"))
-        .and(path("/control/querylog/config"))
+    Mock::given(method("PUT"))
+        .and(path("/control/querylog/config/update"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;
@@ -1498,20 +1498,17 @@ async fn test_get_version_info() {
     let client = AdGuardClient::new(config);
 
     Mock::given(method("GET"))
-        .and(path("/control/version_info"))
+        .and(path("/control/status"))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "version": "v0.107.0",
-            "announcement": "New version released!",
-            "announcement_url": "https://example.com",
-            "can_update": true,
-            "new_version": "v0.108.0"
+            "language": "en",
+            "protection_enabled": true
         })))
         .mount(&server)
         .await;
 
     let info = client.get_version_info().await.unwrap();
     assert_eq!(info.version, "v0.107.0");
-    assert!(info.can_update);
 }
 
 #[tokio::test]

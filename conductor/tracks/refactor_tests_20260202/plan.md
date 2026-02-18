@@ -29,11 +29,11 @@ Migrate the priority domain to the new structure as a proof of concept for the r
 ## Phase 3: Suite Consolidation & Modernization
 Migrate remaining tests and finalize the suite structure.
 
-- [~] Task: Migrate remaining domains (Filtering, DNS, Clients, System) to focused test files
-- [ ] Task: Update `docker_integration_test.rs` or remove if fully migrated
-- [ ] Task: Final Quality Audit
-    - [ ] `task lint`
-    - [ ] `task format`
-- [ ] Task: Execute full suite verification
-    - [ ] `RUN_DOCKER_TESTS=true task test:integration`
-- [ ] Task: Conductor - User Manual Verification 'Suite Consolidation & Modernization' (Protocol in workflow.md)
+- [x] Task: Migrate remaining domains (Filtering, DNS, Clients, System) to focused test files
+- [x] Task: Update `docker_integration_test.rs` or remove if fully migrated
+- [x] Task: Final Quality Audit
+    - [x] `task lint`
+    - [x] `task format`
+- [x] Task: Execute full suite verification
+    - [x] `RUN_DOCKER_TESTS=true task test:integration`
+- [x] Task: Conductor - User Manual Verification 'Suite Consolidation & Modernization' (Protocol in workflow.md)

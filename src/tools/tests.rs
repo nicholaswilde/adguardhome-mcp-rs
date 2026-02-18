@@ -212,7 +212,7 @@ async fn test_system_tools() {
         .unwrap();
 
     Mock::given(method("GET"))
-        .and(path("/control/querylog/info"))
+        .and(path("/control/querylog/config"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "enabled": true, "interval": 1, "anonymize_client_ip": false, "allowed_clients": [], "disallowed_clients": []
         })))
@@ -227,8 +227,8 @@ async fn test_system_tools() {
         .await
         .unwrap();
 
-    Mock::given(method("POST"))
-        .and(path("/control/querylog/config"))
+    Mock::given(method("PUT"))
+        .and(path("/control/querylog/config/update"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;
@@ -242,8 +242,12 @@ async fn test_system_tools() {
         .unwrap();
 
     Mock::given(method("GET"))
-        .and(path("/control/version_info"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"version": "v", "announcement": "", "announcement_url": "", "can_update": false, "new_version": ""})))
+        .and(path("/control/status"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(
+                json!({"version": "v", "language": "en", "protection_enabled": true}),
+            ),
+        )
         .mount(&server)
         .await;
     registry

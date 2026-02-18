@@ -49,6 +49,7 @@ pub struct QueryLogQuestion {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QueryLogResponse {
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub data: Vec<QueryLogEntry>,
 }
 
@@ -132,6 +133,7 @@ pub struct UpdateFilterData {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AdGuardClientDevice {
     pub name: String,
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub ids: Vec<String>,
     pub use_global_settings: bool,
     pub filtering_enabled: bool,
@@ -155,6 +157,7 @@ pub struct BlockedService {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BlockedServicesAllResponse {
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub services: Vec<BlockedService>,
 }
 
@@ -191,19 +194,33 @@ pub struct StaticLease {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DnsConfig {
+    #[serde(default)]
     pub upstream_dns: Vec<String>,
+    #[serde(default)]
     pub upstream_dns_file: String,
+    #[serde(default)]
     pub bootstrap_dns: Vec<String>,
+    #[serde(default)]
     pub fallback_dns: Vec<String>,
+    #[serde(default)]
     pub all_servers: bool,
+    #[serde(default)]
     pub fastest_addr: bool,
+    #[serde(default)]
     pub fastest_timeout: u32,
+    #[serde(default)]
     pub cache_size: u32,
+    #[serde(default)]
     pub cache_ttl_min: u32,
+    #[serde(default)]
     pub cache_ttl_max: u32,
+    #[serde(default)]
     pub cache_optimistic: bool,
+    #[serde(default)]
     pub upstream_mode: String,
+    #[serde(default)]
     pub use_private_ptr_resolvers: bool,
+    #[serde(default)]
     pub local_ptr_upstreams: Vec<String>,
 }
 
@@ -211,14 +228,19 @@ pub struct DnsConfig {
 pub struct DhcpStatus {
     pub enabled: bool,
     pub interface_name: String,
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub leases: Vec<DhcpLease>,
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub static_leases: Vec<StaticLease>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AccessList {
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub allowed_clients: Vec<String>,
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub disallowed_clients: Vec<String>,
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub blocked_hosts: Vec<String>,
 }
 
@@ -227,11 +249,13 @@ pub struct FilterCheckResponse {
     pub reason: String,
     pub filter_id: Option<i64>,
     pub rule: Option<String>,
-    pub rules: Option<Vec<FilterCheckMatchedRule>>,
+    #[serde(default, deserialize_with = "deserialize_null_as_default")]
+    pub rules: Vec<FilterCheckMatchedRule>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FilterCheckMatchedRule {
+    #[serde(default)]
     pub filter_id: i64,
     pub text: String,
 }
@@ -256,7 +280,7 @@ pub struct ParentalControlConfig {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct QueryLogConfig {
     pub enabled: bool,
-    pub interval: u32, // retention interval in hours
+    pub interval: u64, // retention interval in milliseconds (v0.107+) or hours (older)
     pub anonymize_client_ip: bool,
     #[serde(default)]
     pub allowed_clients: Vec<String>,
