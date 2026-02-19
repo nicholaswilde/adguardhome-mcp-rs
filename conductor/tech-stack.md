@@ -8,6 +8,7 @@
 - **Tokio:** The industry-standard asynchronous runtime for Rust, providing the foundation for high-performance I/O operations.
 - **Serde:** A high-performance framework for serializing and deserializing Rust data structures, essential for handling MCP JSON-RPC messages and AdGuard Home API responses.
 - **go-task:** A task runner / build tool that uses a simple `Taskfile.yml` to define and run development tasks.
+- **Gemini CLI:** An AI-powered CLI tool used to automate development workflows and release management via custom commands.
 - **Config:** A configuration management library that layers default values, files (TOML, YAML, JSON), environment variables, and CLI arguments.
 - **Clap:** A command-line argument parser for Rust.
 - **Axum:** A web framework for Rust, used to implement the HTTP/SSE transport.
