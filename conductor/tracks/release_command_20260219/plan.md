@@ -25,7 +25,7 @@ Integrate git commands and ensure all project artifacts are kept in sync.
     - [x] Implement `git push --atomic origin main <tag>` command.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Git Operations & Maintenance' (Protocol in workflow.md)
 
-## Phase 3: Final Verification
+## Phase 3: Final Verification [checkpoint: 77e414302deb8b4c2fe9929ed0a5af62bb482814]
 Verify the end-to-end flow and refine the user experience.
 
 - [x] Task: End-to-End Dry Run
