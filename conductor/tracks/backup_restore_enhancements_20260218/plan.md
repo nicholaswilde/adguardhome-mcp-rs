@@ -26,7 +26,7 @@ Add metadata to the backup JSON and implement version safety checks.
     - [x] **TDD:** Write unit tests for warning/preventing restoration from a drastically different version.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Metadata and Versioning' (Protocol in workflow.md)
 
-## Phase 3: Dry Run and Comparison
+## Phase 3: Dry Run and Comparison [checkpoint: 41a38bf]
 Implement the ability to preview changes before a full restoration.
 
 - [x] Task: Implement `restore_backup_diff` tool action
