@@ -1,0 +1,43 @@
+services:
+  adguardhome-mcp:
+    image: ghcr.io/nicholaswilde/adguardhome-mcp-rs:latest
+    container_name: adguardhome-mcp
+    restart: unless-stopped
+    # If using HTTP transport, expose the port
+    # ports:
+    #   - "3000:3000"
+    environment:
+      # --- Required ---
+      # The IP or hostname of your AdGuard Home instance.
+      - ADGUARD_HOST=192.168.1.10
+
+      # --- AdGuard Home Authentication ---
+      # Optional if not enabled on your AdGuard Home instance.
+      # - ADGUARD_USERNAME=admin
+      # - ADGUARD_PASSWORD=yourpassword
+
+      # --- Basic Configuration ---
+      # Port of your AdGuard Home instance. (Default: 3000)
+      # - ADGUARD_PORT=3000
+      
+      # Disable SSL certificate verification (Useful for self-signed certs). (Default: true)
+      # - ADGUARD_NO_VERIFY_SSL=true
+
+      # --- MCP Server Settings ---
+      # Transport mode: "stdio" (local) or "http" (network). (Default: "stdio")
+      # - ADGUARD_MCP_TRANSPORT=stdio
+      
+      # Port to listen on (Only used if ADGUARD_MCP_TRANSPORT=http). (Default: 3000)
+      # - ADGUARD_HTTP_PORT=3000
+      
+      # Bearer token for HTTP security (Recommended for HTTP mode).
+      # Clients must provide this in the Authorization header: "Bearer <token>"
+      # - ADGUARD_HTTP_AUTH_TOKEN=your-secure-token
+
+      # --- Performance & Token Optimization ---
+      # Enable "Lazy Mode" to initially expose fewer tools to save AI context tokens. (Default: false)
+      # - ADGUARD_LAZY_MODE=false
+
+      # --- Logging ---
+      # Log level: "error", "warn", "info", "debug", "trace". (Default: "info")
+      # - ADGUARD_LOG_LEVEL=info
