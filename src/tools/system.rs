@@ -180,7 +180,7 @@ pub fn register(registry: &mut ToolRegistry) {
                         }
 
                         let result = state.push_to_replica(&client, "full-overwrite").await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
-                        
+
                         let mut text = if result.success {
                             "Backup restored successfully.\n".to_string()
                         } else {
@@ -205,7 +205,7 @@ pub fn register(registry: &mut ToolRegistry) {
                         let current_state = SyncState::fetch(&client).await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
 
                         let diff = backup_state.diff(&current_state);
-                        let mut text = format!("Dry Run: Configuration Comparison\nBackup Version: {}\n---\n", 
+                        let mut text = format!("Dry Run: Configuration Comparison\nBackup Version: {}\n---\n",
                             backup_state.metadata.as_ref().map(|m| m.version.as_str()).unwrap_or("Unknown"));
                         text.push_str(&diff);
 

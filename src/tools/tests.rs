@@ -517,25 +517,25 @@ async fn test_system_tools() {
             youtube: true,
         },
         safe_browsing: true,
-            parental_control: ParentalControlConfig {
-                enabled: true,
-                sensitivity: None,
-            },
-            dhcp: DhcpStatus {
-                enabled: false,
-                interface_name: "".to_string(),
-                v4: None,
-                v6: None,
-                leases: Vec::new(),
-                static_leases: Vec::new(),
-            },
-            tls: TlsConfig::default(),
-            profile_info: ProfileInfo {
-                name: "admin".to_string(),
-                language: "en".to_string(),
-                theme: "dark".to_string(),
-            },
-        };
+        parental_control: ParentalControlConfig {
+            enabled: true,
+            sensitivity: None,
+        },
+        dhcp: DhcpStatus {
+            enabled: false,
+            interface_name: "".to_string(),
+            v4: None,
+            v6: None,
+            leases: Vec::new(),
+            static_leases: Vec::new(),
+        },
+        tls: TlsConfig::default(),
+        profile_info: ProfileInfo {
+            name: "admin".to_string(),
+            language: "en".to_string(),
+            theme: "dark".to_string(),
+        },
+    };
     let json = serde_json::to_vec_pretty(&state).unwrap();
     std::fs::write(&backup_path, json).unwrap();
 
@@ -741,7 +741,7 @@ async fn test_restore_backup_version_mismatch() {
 
     let backup_file = tempfile::NamedTempFile::new().unwrap();
     let backup_path = backup_file.path().to_str().unwrap().to_string();
-    
+
     // Backup with old version (v0.106.0)
     let state = SyncState {
         metadata: Some(crate::sync::BackupMetadata {
@@ -750,36 +750,70 @@ async fn test_restore_backup_version_mismatch() {
             description: None,
         }),
         filtering: FilteringConfig {
-            enabled: true, interval: 1, filters: vec![], whitelist_filters: vec![], user_rules: vec![],
+            enabled: true,
+            interval: 1,
+            filters: vec![],
+            whitelist_filters: vec![],
+            user_rules: vec![],
         },
         clients: vec![],
         dns: DnsConfig {
-            upstream_dns: vec![], upstream_dns_file: "".to_string(), bootstrap_dns: vec![], fallback_dns: vec![],
-            all_servers: false, fastest_addr: false, fastest_timeout: 0, cache_size: 0,
-            cache_ttl_min: 0, cache_ttl_max: 0, cache_optimistic: false, upstream_mode: "".to_string(),
-            use_private_ptr_resolvers: false, local_ptr_upstreams: vec![],
+            upstream_dns: vec![],
+            upstream_dns_file: "".to_string(),
+            bootstrap_dns: vec![],
+            fallback_dns: vec![],
+            all_servers: false,
+            fastest_addr: false,
+            fastest_timeout: 0,
+            cache_size: 0,
+            cache_ttl_min: 0,
+            cache_ttl_max: 0,
+            cache_optimistic: false,
+            upstream_mode: "".to_string(),
+            use_private_ptr_resolvers: false,
+            local_ptr_upstreams: vec![],
         },
         blocked_services: vec![],
         rewrites: vec![],
         access_list: AccessList {
-            allowed_clients: vec![], disallowed_clients: vec![], blocked_hosts: vec![],
+            allowed_clients: vec![],
+            disallowed_clients: vec![],
+            blocked_hosts: vec![],
         },
         query_log_config: QueryLogConfig {
-            enabled: true, interval: 1, anonymize_client_ip: false, allowed_clients: vec![], disallowed_clients: vec![],
+            enabled: true,
+            interval: 1,
+            anonymize_client_ip: false,
+            allowed_clients: vec![],
+            disallowed_clients: vec![],
         },
         safe_search: SafeSearchConfig {
-            enabled: true, bing: true, duckduckgo: true, google: true, pixabay: true, yandex: true, youtube: true,
+            enabled: true,
+            bing: true,
+            duckduckgo: true,
+            google: true,
+            pixabay: true,
+            yandex: true,
+            youtube: true,
         },
         safe_browsing: true,
         parental_control: ParentalControlConfig {
-            enabled: true, sensitivity: None,
+            enabled: true,
+            sensitivity: None,
         },
         dhcp: DhcpStatus {
-            enabled: false, interface_name: "".to_string(), v4: None, v6: None, leases: Vec::new(), static_leases: Vec::new(),
+            enabled: false,
+            interface_name: "".to_string(),
+            v4: None,
+            v6: None,
+            leases: Vec::new(),
+            static_leases: Vec::new(),
         },
         tls: TlsConfig::default(),
         profile_info: ProfileInfo {
-            name: "admin".to_string(), language: "en".to_string(), theme: "dark".to_string(),
+            name: "admin".to_string(),
+            language: "en".to_string(),
+            theme: "dark".to_string(),
         },
     };
     let json = serde_json::to_vec_pretty(&state).unwrap();
@@ -808,7 +842,7 @@ async fn test_restore_backup_version_mismatch() {
             Some(json!({"action": "restore_backup", "file_path": backup_path})),
         )
         .await;
-    
+
     assert!(res_major.is_err());
     let err_msg = res_major.err().unwrap().to_string();
     assert!(err_msg.contains("Major version mismatch"));
@@ -907,7 +941,7 @@ async fn test_restore_backup_diff() {
 
     let backup_file = tempfile::NamedTempFile::new().unwrap();
     let backup_path = backup_file.path().to_str().unwrap().to_string();
-    
+
     // Backup state (Different from live)
     let state = SyncState {
         metadata: Some(crate::sync::BackupMetadata {
@@ -916,36 +950,70 @@ async fn test_restore_backup_diff() {
             description: Some("Diff Test".to_string()),
         }),
         filtering: FilteringConfig {
-            enabled: true, interval: 1, filters: vec![], whitelist_filters: vec![], user_rules: vec![],
+            enabled: true,
+            interval: 1,
+            filters: vec![],
+            whitelist_filters: vec![],
+            user_rules: vec![],
         },
         clients: vec![],
         dns: DnsConfig {
-            upstream_dns: vec!["8.8.8.8".to_string()], upstream_dns_file: "".to_string(), bootstrap_dns: vec![], fallback_dns: vec![],
-            all_servers: false, fastest_addr: false, fastest_timeout: 0, cache_size: 0,
-            cache_ttl_min: 0, cache_ttl_max: 0, cache_optimistic: false, upstream_mode: "".to_string(),
-            use_private_ptr_resolvers: false, local_ptr_upstreams: vec![],
+            upstream_dns: vec!["8.8.8.8".to_string()],
+            upstream_dns_file: "".to_string(),
+            bootstrap_dns: vec![],
+            fallback_dns: vec![],
+            all_servers: false,
+            fastest_addr: false,
+            fastest_timeout: 0,
+            cache_size: 0,
+            cache_ttl_min: 0,
+            cache_ttl_max: 0,
+            cache_optimistic: false,
+            upstream_mode: "".to_string(),
+            use_private_ptr_resolvers: false,
+            local_ptr_upstreams: vec![],
         },
         blocked_services: vec![],
         rewrites: vec![],
         access_list: AccessList {
-            allowed_clients: vec![], disallowed_clients: vec![], blocked_hosts: vec![],
+            allowed_clients: vec![],
+            disallowed_clients: vec![],
+            blocked_hosts: vec![],
         },
         query_log_config: QueryLogConfig {
-            enabled: true, interval: 1, anonymize_client_ip: false, allowed_clients: vec![], disallowed_clients: vec![],
+            enabled: true,
+            interval: 1,
+            anonymize_client_ip: false,
+            allowed_clients: vec![],
+            disallowed_clients: vec![],
         },
         safe_search: SafeSearchConfig {
-            enabled: true, bing: true, duckduckgo: true, google: true, pixabay: true, yandex: true, youtube: true,
+            enabled: true,
+            bing: true,
+            duckduckgo: true,
+            google: true,
+            pixabay: true,
+            yandex: true,
+            youtube: true,
         },
         safe_browsing: true,
         parental_control: ParentalControlConfig {
-            enabled: true, sensitivity: None,
+            enabled: true,
+            sensitivity: None,
         },
         dhcp: DhcpStatus {
-            enabled: false, interface_name: "".to_string(), v4: None, v6: None, leases: Vec::new(), static_leases: Vec::new(),
+            enabled: false,
+            interface_name: "".to_string(),
+            v4: None,
+            v6: None,
+            leases: Vec::new(),
+            static_leases: Vec::new(),
         },
         tls: TlsConfig::default(),
         profile_info: ProfileInfo {
-            name: "admin".to_string(), language: "en".to_string(), theme: "dark".to_string(),
+            name: "admin".to_string(),
+            language: "en".to_string(),
+            theme: "dark".to_string(),
         },
     };
     let json = serde_json::to_vec_pretty(&state).unwrap();

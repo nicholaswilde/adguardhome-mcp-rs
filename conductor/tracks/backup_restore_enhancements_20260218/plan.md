@@ -50,9 +50,9 @@ Refine the restart strategy and improve error tracking.
 ## Phase 5: Verification and Quality
 System-wide integration testing and final audit.
 
-- [ ] Task: Integration Testing
-    - [ ] Add integration tests in `tests/system_tests.rs` for full backup/restore of all modules.
-    - [ ] Verify metadata and diffing functionality against a real Docker instance.
-- [ ] Task: Final Quality Audit
-    - [ ] `task lint`, `task format`, `task test:ci`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: Verification and Quality' (Protocol in workflow.md)
+- [x] Task: Integration Testing
+    - [x] Add integration tests in `tests/system_tests.rs` for full backup/restore of all modules.
+    - [x] Verify metadata and diffing functionality against a real Docker instance.
+- [x] Task: Final Quality Audit
+    - [x] `task lint`, `task format`, `task test:ci`.
+- [x] Task: Conductor - User Manual Verification 'Phase 5: Verification and Quality' (Protocol in workflow.md)

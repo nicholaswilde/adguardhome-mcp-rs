@@ -193,3 +193,64 @@ async fn test_system_info_integration() -> Result<()> {
     })
     .await
 }
+
+#[tokio::test]
+async fn test_backup_restore_full_integration() -> Result<()> {
+    if std::env::var("RUN_DOCKER_TESTS").unwrap_or_default() != "true" {
+        return Ok(());
+    }
+
+    run_agnostic_test(|ctx| async move {
+        {
+            let mut reg = ctx.registry.lock().unwrap();
+            system::register(&mut reg);
+        }
+
+        // 1. Create Backup with metadata
+        let res = ctx
+            .call_tool(
+                "manage_system",
+                serde_json::json!({
+                    "action": "create_backup",
+                    "description": "Integration Test Backup"
+                }),
+            )
+            .await?;
+        let text = res["content"][0]["text"].as_str().unwrap();
+        let backup_path_str = text.split("Backup: ").nth(1).unwrap().trim();
+        let backup_path = std::path::Path::new(backup_path_str);
+        assert!(backup_path.exists());
+
+        // 2. Run Dry Run (Diff)
+        let res_diff = ctx
+            .call_tool(
+                "manage_system",
+                serde_json::json!({
+                    "action": "restore_backup_diff",
+                    "file_path": backup_path_str
+                }),
+            )
+            .await?;
+        let diff_text = res_diff["content"][0]["text"].as_str().unwrap();
+        assert!(diff_text.contains("Dry Run"));
+
+        // 3. Perform Full Restore
+        let res_restore = ctx
+            .call_tool(
+                "manage_system",
+                serde_json::json!({
+                    "action": "restore_backup",
+                    "file_path": backup_path_str
+                }),
+            )
+            .await?;
+        let restore_text = res_restore["content"][0]["text"].as_str().unwrap();
+        assert!(restore_text.contains("Applied:"));
+
+        // Cleanup
+        let _ = tokio::fs::remove_file(backup_path).await;
+
+        Ok(())
+    })
+    .await
+}

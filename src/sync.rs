@@ -218,7 +218,10 @@ impl SyncState {
         try_sync!("DNS Config", client.set_dns_config(self.dns.clone()));
 
         // 5. Sync Access List
-        try_sync!("Access List", client.set_access_list(self.access_list.clone()));
+        try_sync!(
+            "Access List",
+            client.set_access_list(self.access_list.clone())
+        );
 
         // 6. Sync Query Log Config
         try_sync!(
@@ -239,7 +242,10 @@ impl SyncState {
         );
 
         // 9. Sync Protection
-        try_sync!("Global Protection", client.set_protection(self.safe_browsing));
+        try_sync!(
+            "Global Protection",
+            client.set_protection(self.safe_browsing)
+        );
 
         // 10. Sync DHCP Config
         try_sync!("DHCP Config", client.set_dhcp_config(self.dhcp.clone()));
@@ -590,36 +596,70 @@ mod tests {
         let state1 = SyncState {
             metadata: None,
             filtering: FilteringConfig {
-                enabled: true, interval: 1, filters: vec![], whitelist_filters: vec![], user_rules: vec!["rule1".to_string()],
+                enabled: true,
+                interval: 1,
+                filters: vec![],
+                whitelist_filters: vec![],
+                user_rules: vec!["rule1".to_string()],
             },
             clients: vec![],
             dns: DnsConfig {
-                upstream_dns: vec!["1.1.1.1".to_string()], upstream_dns_file: "".to_string(), bootstrap_dns: vec![], fallback_dns: vec![],
-                all_servers: false, fastest_addr: false, fastest_timeout: 0, cache_size: 0,
-                cache_ttl_min: 0, cache_ttl_max: 0, cache_optimistic: false, upstream_mode: "".to_string(),
-                use_private_ptr_resolvers: false, local_ptr_upstreams: vec![],
+                upstream_dns: vec!["1.1.1.1".to_string()],
+                upstream_dns_file: "".to_string(),
+                bootstrap_dns: vec![],
+                fallback_dns: vec![],
+                all_servers: false,
+                fastest_addr: false,
+                fastest_timeout: 0,
+                cache_size: 0,
+                cache_ttl_min: 0,
+                cache_ttl_max: 0,
+                cache_optimistic: false,
+                upstream_mode: "".to_string(),
+                use_private_ptr_resolvers: false,
+                local_ptr_upstreams: vec![],
             },
             blocked_services: vec!["youtube".to_string()],
             rewrites: vec![],
             access_list: AccessList {
-                allowed_clients: vec![], disallowed_clients: vec![], blocked_hosts: vec![],
+                allowed_clients: vec![],
+                disallowed_clients: vec![],
+                blocked_hosts: vec![],
             },
             query_log_config: QueryLogConfig {
-                enabled: true, interval: 1, anonymize_client_ip: false, allowed_clients: vec![], disallowed_clients: vec![],
+                enabled: true,
+                interval: 1,
+                anonymize_client_ip: false,
+                allowed_clients: vec![],
+                disallowed_clients: vec![],
             },
             safe_search: SafeSearchConfig {
-                enabled: true, bing: true, duckduckgo: true, google: true, pixabay: true, yandex: true, youtube: true,
+                enabled: true,
+                bing: true,
+                duckduckgo: true,
+                google: true,
+                pixabay: true,
+                yandex: true,
+                youtube: true,
             },
             safe_browsing: true,
             parental_control: ParentalControlConfig {
-                enabled: true, sensitivity: None,
+                enabled: true,
+                sensitivity: None,
             },
             dhcp: DhcpStatus {
-                enabled: false, interface_name: "".to_string(), v4: None, v6: None, leases: Vec::new(), static_leases: Vec::new(),
+                enabled: false,
+                interface_name: "".to_string(),
+                v4: None,
+                v6: None,
+                leases: Vec::new(),
+                static_leases: Vec::new(),
             },
             tls: TlsConfig::default(),
             profile_info: ProfileInfo {
-                name: "admin".to_string(), language: "en".to_string(), theme: "dark".to_string(),
+                name: "admin".to_string(),
+                language: "en".to_string(),
+                theme: "dark".to_string(),
             },
         };
 
@@ -643,28 +683,75 @@ mod tests {
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
-        let server = MockServer::start().await;        let config = AppConfig {
-            adguard_host: server.uri().replace("http://", "").split(':').next().unwrap().to_string(),
-            adguard_port: server.uri().split(':').next_back().unwrap().parse().unwrap(),
+        let server = MockServer::start().await;
+        let config = AppConfig {
+            adguard_host: server
+                .uri()
+                .replace("http://", "")
+                .split(':')
+                .next()
+                .unwrap()
+                .to_string(),
+            adguard_port: server
+                .uri()
+                .split(':')
+                .next_back()
+                .unwrap()
+                .parse()
+                .unwrap(),
             ..Default::default()
         };
         let client = AdGuardClient::new(config);
 
         let state = SyncState {
             metadata: None,
-            filtering: FilteringConfig { enabled: true, interval: 1, filters: vec![], whitelist_filters: vec![], user_rules: vec![] },
+            filtering: FilteringConfig {
+                enabled: true,
+                interval: 1,
+                filters: vec![],
+                whitelist_filters: vec![],
+                user_rules: vec![],
+            },
             clients: vec![],
             dns: DnsConfig::default(),
             blocked_services: vec![],
             rewrites: vec![],
             access_list: AccessList::default(),
-            query_log_config: QueryLogConfig { enabled: true, interval: 1, anonymize_client_ip: false, allowed_clients: vec![], disallowed_clients: vec![] },
-            safe_search: SafeSearchConfig { enabled: true, bing: true, duckduckgo: true, google: true, pixabay: true, yandex: true, youtube: true },
+            query_log_config: QueryLogConfig {
+                enabled: true,
+                interval: 1,
+                anonymize_client_ip: false,
+                allowed_clients: vec![],
+                disallowed_clients: vec![],
+            },
+            safe_search: SafeSearchConfig {
+                enabled: true,
+                bing: true,
+                duckduckgo: true,
+                google: true,
+                pixabay: true,
+                yandex: true,
+                youtube: true,
+            },
             safe_browsing: true,
-            parental_control: ParentalControlConfig { enabled: true, sensitivity: None },
-            dhcp: DhcpStatus { enabled: false, interface_name: "".to_string(), v4: None, v6: None, leases: Vec::new(), static_leases: Vec::new() },
+            parental_control: ParentalControlConfig {
+                enabled: true,
+                sensitivity: None,
+            },
+            dhcp: DhcpStatus {
+                enabled: false,
+                interface_name: "".to_string(),
+                v4: None,
+                v6: None,
+                leases: Vec::new(),
+                static_leases: Vec::new(),
+            },
             tls: TlsConfig::default(),
-            profile_info: ProfileInfo { name: "admin".to_string(), language: "en".to_string(), theme: "dark".to_string() },
+            profile_info: ProfileInfo {
+                name: "admin".to_string(),
+                language: "en".to_string(),
+                theme: "dark".to_string(),
+            },
         };
 
         // 1. Success Mock
@@ -681,11 +768,18 @@ mod tests {
             .mount(&server)
             .await;
 
-        let result = state.push_to_replica(&client, "full-overwrite").await.unwrap();
-        
+        let result = state
+            .push_to_replica(&client, "full-overwrite")
+            .await
+            .unwrap();
+
         assert!(!result.success);
         assert!(result.applied_modules.contains(&"User Rules".to_string()));
-        assert!(result.failed_modules.contains(&"Blocked Services".to_string()));
+        assert!(
+            result
+                .failed_modules
+                .contains(&"Blocked Services".to_string())
+        );
         assert!(!result.errors.is_empty());
     }
 }
