@@ -23,8 +23,8 @@ Follow these steps exactly:
 - For `README.md` update, you can use `sed -i "s/v$VERSION/v$NEW_VERSION/g" README.md`.
 
 **Context Information**:
-- **Current Version**: !{ grep '^version =' Cargo.toml | sed -E 's/version = "(.*)"/\1/' }
-- **New Calculated Version**: !{ VERSION=$(grep '^version =' Cargo.toml | sed -E 's/version = "(.*)"/\1/'); IFS='.' read -r major minor patch <<< "$VERSION"; NEW_PATCH=$((patch + 1)); echo "$major.$minor.$NEW_PATCH" }
+- **Current Version**: !{ grep '^version =' Cargo.toml | sed -E 's/version = "(.*)"/\\1/' }
+- **New Calculated Version**: !{ VERSION=$(grep '^version =' Cargo.toml | sed -E 's/version = "(.*)"/\\1/'); IFS='.' read -r major minor patch <<< "$VERSION"; NEW_PATCH=$((patch + 1)); echo "$major.$minor.$NEW_PATCH" }
 
 **Files Changed (Current State)**:
 !{ git status --porcelain }
