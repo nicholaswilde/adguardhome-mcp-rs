@@ -5,19 +5,20 @@
 [![ci](https://img.shields.io/github/actions/workflow/status/nicholaswilde/adguardhome-mcp-rs/ci.yml?label=ci&style=for-the-badge&branch=main&logo=github-actions)](https://github.com/nicholaswilde/adguardhome-mcp-rs/actions/workflows/ci.yml)
 
 > [!WARNING]
-> This project is currently in active development (v0.1.12) and is **not production-ready**. Features may change, and breaking changes may occur without notice. **Use this MCP server at your own risk.**
+> This project is currently in active development (v0.1.14) and is **not production-ready**. Features may change, and breaking changes may occur without notice. **Use this MCP server at your own risk.**
 
-A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](https://modelcontextprotocol.io/docs/getting-started/intro). This server connects to an AdGuard Home instance and exposes tools to monitor and manage filtering via the Model Context Protocol.
+A Rust implementation of an AdGuard Home [MCP (Model Context Protocol) server](https://modelcontextprotocol.io/docs/getting-started/intro). This server connects to one or more AdGuard Home instances and exposes tools to monitor and manage filtering via the Model Context Protocol.
 
 ## :sparkles: Features
 
 - **Multi-Transport Support:**
   - **Stdio:** Default transport for local integrations (e.g., Claude Desktop).
   - **HTTP/SSE:** Network-accessible transport for remote clients.
+- **Multi-Instance Management:** Manage and target multiple AdGuard Home instances from a single MCP server. Tools accept an optional `instance` argument (name or index).
 - **Multi-Instance Synchronization:** Synchronize configuration (filtering rules, blocked services, DNS rewrites) from a master instance to one or more replica instances automatically or on-demand.
 - **Robust Configuration:** Supports configuration via CLI arguments, environment variables, and configuration files (TOML, YAML, JSON).
 - **Authentication:**
-  - Connects to AdGuard Home using username/password.
+  - Connects to AdGuard Home using username/password or API Key.
   - Secures HTTP transport with Bearer Token authentication.
 - **Token Optimization:** Consolidated granular tools into functional groups to optimize AI context window usage.
   - **Tools:**
@@ -93,6 +94,7 @@ The server can be configured via CLI arguments or environment variables.
 | `--no-verify-ssl` | `ADGUARD_NO_VERIFY_SSL` | Disable SSL certificate verification | `true` |
 | `--lazy` | `ADGUARD_LAZY_MODE` | Enable token-optimized lazy loading | `false` |
 | `--log-level` | `ADGUARD_LOG_LEVEL` | Log level (`info`, `debug`, etc.) | `info` |
+| - | `ADGUARD_INSTANCES__<N>__<FIELD>` | Configuration for multiple instances (see below) | - |
 | - | `ADGUARD_REPLICAS` | JSON array of replica objects (`url`, `api_key`) | `[]` |
 | - | `ADGUARD_SYNC_INTERVAL_SECONDS` | Interval for automated background sync | `3600` |
 | - | `ADGUARD_DEFAULT_SYNC_MODE` | Default sync mode (`additive-merge` or `full-overwrite`) | `additive-merge` |
@@ -101,17 +103,29 @@ The server can be configured via CLI arguments or environment variables.
 
 The server automatically looks for `config.toml`, `config.yaml`, or `config.json` in the current directory and `~/.config/adguardhome-mcp-rs/`.
 
-Example `config.toml`:
+#### Multi-Instance Configuration
+
+You can configure multiple AdGuard Home instances. The first instance in the list is the default.
 
 ```toml
+# Default instance (legacy format supported for single instance)
 adguard_host = "192.168.1.10"
 adguard_port = 8080
 adguard_username = "admin"
 adguard_password = "yourpassword"
-mcp_transport = "http"
-http_port = 3000
-http_auth_token = "your-secure-token"
-lazy_mode = true
+
+# OR use the instances list
+[[instances]]
+name = "primary"
+url = "http://192.168.1.10:8080"
+username = "admin"
+password = "yourpassword"
+
+[[instances]]
+name = "homelab"
+url = "http://10.0.0.5:3000"
+api_key = "your-api-key"
+no_verify_ssl = false
 
 # Synchronization settings
 sync_interval_seconds = 3600
@@ -120,11 +134,16 @@ default_sync_mode = "additive-merge"
 [[replicas]]
 url = "http://192.168.1.11:3000"
 api_key = "replica-api-key-1"
-
-[[replicas]]
-url = "http://192.168.1.12:3000"
-api_key = "replica-api-key-2"
 ```
+
+#### Environment Variables for Multiple Instances
+
+Use the pattern `ADGUARD_INSTANCES__<INDEX>__<FIELD>`:
+
+- `ADGUARD_INSTANCES__0__NAME=primary`
+- `ADGUARD_INSTANCES__0__URL=http://192.168.1.10:8080`
+- `ADGUARD_INSTANCES__1__NAME=secondary`
+- `ADGUARD_INSTANCES__1__URL=http://192.168.1.20:8080`
 
 ### :robot: Configuration Example (Claude Desktop)
 
