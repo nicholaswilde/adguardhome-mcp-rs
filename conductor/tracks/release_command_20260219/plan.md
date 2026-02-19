@@ -15,15 +15,15 @@ Establish the command structure and implement the core version bumping logic.
 ## Phase 2: Git Operations & Maintenance
 Integrate git commands and ensure all project artifacts are kept in sync.
 
-- [ ] Task: Implement Git Commit & Tag
-    - [ ] Implement logic to run `cargo check` to update `Cargo.lock`.
-    - [ ] Implement logic to update the version reference in `README.md`.
-    - [ ] Implement git commit for the changed files with message `chore: Bump version to <version>`.
-    - [ ] Implement creation of an annotated git tag `v<version>`.
-- [ ] Task: Implement Atomic Push & Pull logic
-    - [ ] Implement `git pull --rebase` logic to ensure local is up to date.
-    - [ ] Implement `git push --atomic origin main <tag>` command.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Git Operations & Maintenance' (Protocol in workflow.md)
+- [x] Task: Implement Git Commit & Tag
+    - [x] Implement logic to run `cargo check` to update `Cargo.lock`.
+    - [x] Implement logic to update the version reference in `README.md`.
+    - [x] Implement git commit for the changed files with message `chore: Bump version to <version>`.
+    - [x] Implement creation of an annotated git tag `v<version>`.
+- [x] Task: Implement Atomic Push & Pull logic
+    - [x] Implement `git pull --rebase` logic to ensure local is up to date.
+    - [x] Implement `git push --atomic origin main <tag>` command.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Git Operations & Maintenance' (Protocol in workflow.md)
 
 ## Phase 3: Final Verification
 Verify the end-to-end flow and refine the user experience.
