@@ -47,7 +47,7 @@ Refine the restart strategy and improve error tracking.
     - [x] **TDD:** Write unit tests for partial restoration failures.
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Reliable Service Management' (Protocol in workflow.md)
 
-## Phase 5: Verification and Quality
+## Phase 5: Verification and Quality [checkpoint: c8208bd]
 System-wide integration testing and final audit.
 
 - [x] Task: Integration Testing
