@@ -35,7 +35,7 @@ Implement the ability to preview changes before a full restoration.
     - [x] **TDD:** Write unit tests for diffing various configuration scenarios.
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Dry Run and Comparison' (Protocol in workflow.md)
 
-## Phase 4: Reliable Service Management
+## Phase 4: Reliable Service Management [checkpoint: 286be2f]
 Refine the restart strategy and improve error tracking.
 
 - [x] Task: Enhance `restart_service` tool action
