@@ -1,25 +1,27 @@
 use super::models::*;
-use crate::config::AppConfig;
+use crate::config::InstanceConfig;
 use crate::error::Result;
 
 #[derive(Debug, Clone)]
 pub struct AdGuardClient {
     pub client: reqwest::Client,
-    pub config: AppConfig,
+    pub config: InstanceConfig,
 }
 
 impl AdGuardClient {
-    pub fn new(config: AppConfig) -> Self {
+    pub fn new(config: InstanceConfig) -> Self {
         let client = reqwest::Client::builder()
-            .danger_accept_invalid_certs(config.no_verify_ssl)
+            .danger_accept_invalid_certs(config.no_verify_ssl.unwrap_or(true))
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
         Self { client, config }
     }
 
     fn add_auth(&self, mut request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
-        if let (Some(user), Some(pass)) =
-            (&self.config.adguard_username, &self.config.adguard_password)
+        if let Some(api_key) = &self.config.api_key {
+            request = request.header("X-API-Key", api_key);
+        } else if let (Some(user), Some(pass)) =
+            (&self.config.username, &self.config.password)
         {
             request = request.basic_auth(user, Some(pass));
         }
@@ -27,10 +29,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_version_info(&self) -> Result<VersionInfo> {
-        let url = format!(
-            "http://{}:{}/control/version_info",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/version_info", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         match request.send().await {
@@ -57,10 +56,7 @@ impl AdGuardClient {
             ));
         }
 
-        let url = format!(
-            "http://{}:{}/control/update",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/update", self.config.url);
         let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
@@ -68,10 +64,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_query_log_config(&self) -> Result<QueryLogConfig> {
-        let url = format!(
-            "http://{}:{}/control/querylog/config",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/querylog/config", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -80,10 +73,7 @@ impl AdGuardClient {
     }
 
     pub async fn set_query_log_config(&self, config: QueryLogConfig) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/querylog/config/update",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/querylog/config/update", self.config.url);
         let request = self.add_auth(self.client.put(&url).json(&config));
 
         request.send().await?.error_for_status()?;
@@ -91,10 +81,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_safe_search_settings(&self) -> Result<SafeSearchConfig> {
-        let url = format!(
-            "http://{}:{}/control/safesearch/status",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/safesearch/status", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -103,10 +90,7 @@ impl AdGuardClient {
     }
 
     pub async fn set_safe_search_settings(&self, settings: SafeSearchConfig) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/safesearch/settings",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/safesearch/settings", self.config.url);
         let request = self.add_auth(self.client.put(&url).json(&settings));
 
         request.send().await?.error_for_status()?;
@@ -114,10 +98,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_parental_settings(&self) -> Result<ParentalControlConfig> {
-        let url = format!(
-            "http://{}:{}/control/parental/status",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/parental/status", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -135,10 +116,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_status(&self) -> Result<Status> {
-        let url = format!(
-            "http://{}:{}/control/status",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/status", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -147,10 +125,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_stats(&self, time_period: Option<&str>) -> Result<Stats> {
-        let mut url = format!(
-            "http://{}:{}/control/stats",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let mut url = format!("{}/control/stats", self.config.url);
         if let Some(period) = time_period {
             url.push_str(&format!("?time_period={}", period));
         }
@@ -167,10 +142,7 @@ impl AdGuardClient {
         filter: Option<&str>,
         limit: Option<u32>,
     ) -> Result<QueryLogResponse> {
-        let mut url = format!(
-            "http://{}:{}/control/querylog",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let mut url = format!("{}/control/querylog", self.config.url);
         let mut params = Vec::new();
         if let Some(s) = search {
             params.push(format!("search={}", s));
@@ -195,10 +167,7 @@ impl AdGuardClient {
     }
 
     pub async fn list_rewrites(&self) -> Result<Vec<DnsRewrite>> {
-        let url = format!(
-            "http://{}:{}/control/rewrite/list",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/rewrite/list", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -207,10 +176,7 @@ impl AdGuardClient {
     }
 
     pub async fn add_rewrite(&self, rewrite: DnsRewrite) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/rewrite/add",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/rewrite/add", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&rewrite));
 
         request.send().await?.error_for_status()?;
@@ -218,10 +184,7 @@ impl AdGuardClient {
     }
 
     pub async fn delete_rewrite(&self, rewrite: DnsRewrite) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/rewrite/delete",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/rewrite/delete", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&rewrite));
 
         request.send().await?.error_for_status()?;
@@ -229,10 +192,7 @@ impl AdGuardClient {
     }
 
     pub async fn set_protection(&self, enabled: bool) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/protection",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/protection", self.config.url);
         let request = self.add_auth(
             self.client
                 .post(&url)
@@ -245,10 +205,7 @@ impl AdGuardClient {
 
     pub async fn set_safe_search(&self, enabled: bool) -> Result<()> {
         let path = if enabled { "enable" } else { "disable" };
-        let url = format!(
-            "http://{}:{}/control/safesearch/{}",
-            self.config.adguard_host, self.config.adguard_port, path
-        );
+        let url = format!("{}/control/safesearch/{}", self.config.url, path);
         let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
@@ -257,10 +214,7 @@ impl AdGuardClient {
 
     pub async fn set_safe_browsing(&self, enabled: bool) -> Result<()> {
         let path = if enabled { "enable" } else { "disable" };
-        let url = format!(
-            "http://{}:{}/control/safebrowsing/{}",
-            self.config.adguard_host, self.config.adguard_port, path
-        );
+        let url = format!("{}/control/safebrowsing/{}", self.config.url, path);
         let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
@@ -269,10 +223,7 @@ impl AdGuardClient {
 
     pub async fn set_parental_control(&self, enabled: bool) -> Result<()> {
         let path = if enabled { "enable" } else { "disable" };
-        let url = format!(
-            "http://{}:{}/control/parental/{}",
-            self.config.adguard_host, self.config.adguard_port, path
-        );
+        let url = format!("{}/control/parental/{}", self.config.url, path);
         let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
@@ -280,10 +231,7 @@ impl AdGuardClient {
     }
 
     pub async fn list_filters(&self) -> Result<FilteringConfig> {
-        let url = format!(
-            "http://{}:{}/control/filtering/status",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/filtering/status", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -292,10 +240,7 @@ impl AdGuardClient {
     }
 
     pub async fn add_filter(&self, name: String, url: String, whitelist: bool) -> Result<()> {
-        let endpoint = format!(
-            "http://{}:{}/control/filtering/add_url",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let endpoint = format!("{}/control/filtering/add_url", self.config.url);
         let request = self.add_auth(self.client.post(&endpoint).json(&AddFilterRequest {
             name,
             url,
@@ -307,10 +252,7 @@ impl AdGuardClient {
     }
 
     pub async fn toggle_filter(&self, url: String, name: String, enabled: bool) -> Result<()> {
-        let endpoint = format!(
-            "http://{}:{}/control/filtering/set_url",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let endpoint = format!("{}/control/filtering/set_url", self.config.url);
         let request = self.add_auth(self.client.post(&endpoint).json(&SetFilterUrlRequest {
             url: url.clone(),
             data: SetFilterUrlData { enabled, name, url },
@@ -321,10 +263,7 @@ impl AdGuardClient {
     }
 
     pub async fn remove_filter(&self, url: String, whitelist: bool) -> Result<()> {
-        let endpoint = format!(
-            "http://{}:{}/control/filtering/remove_url",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let endpoint = format!("{}/control/filtering/remove_url", self.config.url);
         let request = self.add_auth(
             self.client
                 .post(&endpoint)
@@ -343,10 +282,7 @@ impl AdGuardClient {
         whitelist: bool,
         enabled: bool,
     ) -> Result<()> {
-        let endpoint = format!(
-            "http://{}:{}/control/filtering/set_url",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let endpoint = format!("{}/control/filtering/set_url", self.config.url);
 
         let request = self.add_auth(self.client.post(&endpoint).json(&UpdateFilterRequest {
             url: current_url,
@@ -364,10 +300,7 @@ impl AdGuardClient {
     }
 
     pub async fn list_clients(&self) -> Result<Vec<AdGuardClientDevice>> {
-        let url = format!(
-            "http://{}:{}/control/clients",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/clients", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -391,10 +324,7 @@ impl AdGuardClient {
     }
 
     pub async fn set_user_rules(&self, rules: Vec<String>) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/filtering/set_rules",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/filtering/set_rules", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&SetRulesRequest { rules }));
 
         request.send().await?.error_for_status()?;
@@ -402,10 +332,7 @@ impl AdGuardClient {
     }
 
     pub async fn list_all_services(&self) -> Result<Vec<BlockedService>> {
-        let url = format!(
-            "http://{}:{}/control/blocked_services/all",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/blocked_services/all", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -414,10 +341,7 @@ impl AdGuardClient {
     }
 
     pub async fn list_blocked_services(&self) -> Result<Vec<String>> {
-        let url = format!(
-            "http://{}:{}/control/blocked_services/list",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/blocked_services/list", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -426,10 +350,7 @@ impl AdGuardClient {
     }
 
     pub async fn set_blocked_services(&self, ids: Vec<String>) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/blocked_services/set",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/blocked_services/set", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&ids));
 
         request.send().await?.error_for_status()?;
@@ -437,10 +358,7 @@ impl AdGuardClient {
     }
 
     pub async fn add_client(&self, client: AdGuardClientDevice) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/clients/add",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/clients/add", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&client));
 
         request.send().await?.error_for_status()?;
@@ -448,10 +366,7 @@ impl AdGuardClient {
     }
 
     pub async fn update_client(&self, old_name: String, client: AdGuardClientDevice) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/clients/update",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/clients/update", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&UpdateClientRequest {
             name: old_name,
             data: client,
@@ -462,10 +377,7 @@ impl AdGuardClient {
     }
 
     pub async fn delete_client(&self, name: String) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/clients/delete",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/clients/delete", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&DeleteClientRequest { name }));
 
         request.send().await?.error_for_status()?;
@@ -473,10 +385,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_dhcp_status(&self) -> Result<DhcpStatus> {
-        let url = format!(
-            "http://{}:{}/control/dhcp/status",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/dhcp/status", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -485,10 +394,7 @@ impl AdGuardClient {
     }
 
     pub async fn set_dhcp_config(&self, config: DhcpStatus) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/dhcp/set_config",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/dhcp/set_config", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&config));
 
         request.send().await?.error_for_status()?;
@@ -496,10 +402,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_profile_info(&self) -> Result<ProfileInfo> {
-        let url = format!(
-            "http://{}:{}/control/profile",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/profile", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -508,10 +411,7 @@ impl AdGuardClient {
     }
 
     pub async fn set_profile_info(&self, profile: ProfileInfo) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/profile/update",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/profile/update", self.config.url);
         let request = self.add_auth(self.client.put(&url).json(&profile));
 
         request.send().await?.error_for_status()?;
@@ -519,10 +419,7 @@ impl AdGuardClient {
     }
 
     pub async fn add_static_lease(&self, lease: StaticLease) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/dhcp/add_static_lease",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/dhcp/add_static_lease", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&lease));
 
         request.send().await?.error_for_status()?;
@@ -530,10 +427,7 @@ impl AdGuardClient {
     }
 
     pub async fn remove_static_lease(&self, lease: StaticLease) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/dhcp/remove_static_lease",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/dhcp/remove_static_lease", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&lease));
 
         request.send().await?.error_for_status()?;
@@ -541,10 +435,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_dns_info(&self) -> Result<DnsConfig> {
-        let url = format!(
-            "http://{}:{}/control/dns_info",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/dns_info", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -553,10 +444,7 @@ impl AdGuardClient {
     }
 
     pub async fn set_dns_config(&self, config: DnsConfig) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/dns_config",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/dns_config", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&config));
 
         request.send().await?.error_for_status()?;
@@ -564,10 +452,7 @@ impl AdGuardClient {
     }
 
     pub async fn clear_dns_cache(&self) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/cache_clear",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/cache_clear", self.config.url);
         let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
@@ -575,10 +460,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_access_list(&self) -> Result<AccessList> {
-        let url = format!(
-            "http://{}:{}/control/access/list",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/access/list", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -587,10 +469,7 @@ impl AdGuardClient {
     }
 
     pub async fn set_access_list(&self, list: AccessList) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/access/set",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/access/set", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&list));
 
         request.send().await?.error_for_status()?;
@@ -602,10 +481,7 @@ impl AdGuardClient {
         name: &str,
         client: Option<&str>,
     ) -> Result<FilterCheckResponse> {
-        let mut url = format!(
-            "http://{}:{}/control/filtering/check_host",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let mut url = format!("{}/control/filtering/check_host", self.config.url);
         url.push_str(&format!("?name={}", name));
         if let Some(c) = client {
             url.push_str(&format!("&client={}", c));
@@ -619,10 +495,7 @@ impl AdGuardClient {
     }
 
     pub async fn reset_stats(&self) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/stats_reset",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/stats_reset", self.config.url);
         let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
@@ -630,10 +503,7 @@ impl AdGuardClient {
     }
 
     pub async fn clear_query_log(&self) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/querylog_clear",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/querylog_clear", self.config.url);
         let request = self.add_auth(self.client.post(&url));
 
         request.send().await?.error_for_status()?;
@@ -642,20 +512,14 @@ impl AdGuardClient {
 
     pub async fn restart_service(&self, hard: bool) -> Result<()> {
         if hard {
-            let url = format!(
-                "http://{}:{}/control/restart",
-                self.config.adguard_host, self.config.adguard_port
-            );
+            let url = format!("{}/control/restart", self.config.url);
             let request = self.add_auth(self.client.post(&url));
             // We ignore error_for_status here because /restart often closes the connection
             // before returning a response, causing a "connection closed" error.
             let _ = request.send().await;
         } else {
             // Soft restart (refresh filters)
-            let url = format!(
-                "http://{}:{}/control/filtering/refresh",
-                self.config.adguard_host, self.config.adguard_port
-            );
+            let url = format!("{}/control/filtering/refresh", self.config.url);
             let request = self.add_auth(
                 self.client
                     .post(&url)
@@ -667,10 +531,7 @@ impl AdGuardClient {
     }
 
     pub async fn get_tls_status(&self) -> Result<TlsConfig> {
-        let url = format!(
-            "http://{}:{}/control/tls/status",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/tls/status", self.config.url);
         let request = self.add_auth(self.client.get(&url));
 
         let response = request.send().await?.error_for_status()?;
@@ -679,10 +540,7 @@ impl AdGuardClient {
     }
 
     pub async fn configure_tls(&self, config: TlsConfig) -> Result<()> {
-        let url = format!(
-            "http://{}:{}/control/tls/configure",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/tls/configure", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&config));
 
         request.send().await?.error_for_status()?;
@@ -690,10 +548,7 @@ impl AdGuardClient {
     }
 
     pub async fn validate_tls(&self, config: TlsConfig) -> Result<TlsConfig> {
-        let url = format!(
-            "http://{}:{}/control/tls/validate",
-            self.config.adguard_host, self.config.adguard_port
-        );
+        let url = format!("{}/control/tls/validate", self.config.url);
         let request = self.add_auth(self.client.post(&url).json(&config));
 
         let response = request.send().await?.error_for_status()?;

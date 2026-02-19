@@ -15,6 +15,7 @@ use std::sync::Arc;
 
 pub type ToolHandler = dyn Fn(
         &AdGuardClient,
+        &AppConfig,
         Option<Value>,
     ) -> Pin<Box<dyn std::future::Future<Output = Result<Value>> + Send>>
     + Send
@@ -51,14 +52,14 @@ impl ToolRegistry {
         input_schema: Value,
         handler: F,
     ) where
-        F: Fn(&AdGuardClient, Option<Value>) -> Fut + Send + Sync + 'static,
+        F: Fn(&AdGuardClient, &AppConfig, Option<Value>) -> Fut + Send + Sync + 'static,
         Fut: std::future::Future<Output = Result<Value>> + Send + 'static,
     {
         let tool = Tool {
             name: name.to_string(),
             description: description.to_string(),
             input_schema,
-            handler: Arc::new(move |client, params| Box::pin(handler(client, params))),
+            handler: Arc::new(move |client, config, params| Box::pin(handler(client, config, params))),
         };
         self.tools.insert(name.to_string(), tool);
 
@@ -73,10 +74,23 @@ impl ToolRegistry {
 
         for tool_name in &self.enabled_tools {
             if let Some(tool) = self.tools.get(tool_name) {
+                let mut input_schema = tool.input_schema.clone();
+                if let Some(obj) = input_schema.as_object_mut() {
+                    if let Some(properties) = obj.get_mut("properties").and_then(|p| p.as_object_mut()) {
+                        properties.insert(
+                            "instance".to_string(),
+                            serde_json::json!({
+                                "type": "string",
+                                "description": "The name or index of the AdGuard Home instance to target."
+                            }),
+                        );
+                    }
+                }
+
                 result.push(serde_json::json!({
                     "name": tool.name,
                     "description": tool.description,
-                    "inputSchema": tool.input_schema
+                    "inputSchema": input_schema
                 }));
             }
         }
@@ -91,6 +105,7 @@ impl ToolRegistry {
         &self,
         name: &str,
         client: &AdGuardClient,
+        config: &AppConfig,
         params: Option<Value>,
     ) -> Result<Value> {
         if !self.enabled_tools.contains(name) {
@@ -102,7 +117,7 @@ impl ToolRegistry {
         }
 
         if let Some(tool) = self.tools.get(name) {
-            (tool.handler)(client, params).await
+            (tool.handler)(client, config, params).await
         } else {
             Err(crate::error::Error::Mcp(crate::mcp::ResponseError {
                 code: -32601,

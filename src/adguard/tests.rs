@@ -4,11 +4,13 @@ use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 fn test_config(host: String, port: u16) -> AppConfig {
-    AppConfig {
+    let mut config = AppConfig {
         adguard_host: host,
         adguard_port: port,
         ..Default::default()
-    }
+    };
+    config.validate().unwrap();
+    config
 }
 
 #[tokio::test]
@@ -30,7 +32,7 @@ async fn test_error_handling_404() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/status"))
@@ -61,7 +63,7 @@ async fn test_error_handling_500() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/protection"))
@@ -92,7 +94,7 @@ async fn test_get_status() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/status"))
@@ -133,7 +135,7 @@ async fn test_configure_tls() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/tls/configure"))
@@ -178,7 +180,7 @@ async fn test_validate_tls() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/tls/validate"))
@@ -238,7 +240,7 @@ async fn test_get_client_info() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/clients"))
@@ -287,7 +289,7 @@ async fn test_get_version_info_error() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/version_info"))
@@ -318,7 +320,7 @@ async fn test_update_adguard_home_error() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/update"))
@@ -349,7 +351,7 @@ async fn test_add_filter_error() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/filtering/add_url"))
@@ -382,7 +384,7 @@ async fn test_reset_stats() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/stats_reset"))
@@ -412,7 +414,7 @@ async fn test_clear_query_log() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/querylog_clear"))
@@ -442,7 +444,7 @@ async fn test_list_rewrites() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/rewrite/list"))
@@ -477,7 +479,7 @@ async fn test_add_rewrite() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/rewrite/add"))
@@ -511,7 +513,7 @@ async fn test_delete_rewrite() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/rewrite/delete"))
@@ -545,7 +547,7 @@ async fn test_get_stats() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/stats"))
@@ -589,8 +591,10 @@ async fn test_client_with_auth_execution() {
     );
     config.adguard_username = Some("user".to_string());
     config.adguard_password = Some("pass".to_string());
+    config.instances.clear();
+    config.validate().unwrap();
 
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/status"))
@@ -628,7 +632,7 @@ async fn test_get_query_log() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/querylog"))
@@ -674,7 +678,7 @@ async fn test_get_query_log_with_params() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/querylog"))
@@ -713,7 +717,7 @@ async fn test_get_stats_with_period() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/stats"))
@@ -754,7 +758,7 @@ async fn test_set_parental_settings_disabled() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/parental/disable"))
@@ -788,7 +792,7 @@ async fn test_set_safe_search_disabled() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/safesearch/disable"))
@@ -818,7 +822,7 @@ async fn test_set_safe_browsing_disabled() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/safebrowsing/disable"))
@@ -848,7 +852,7 @@ async fn test_set_parental_control_disabled() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/parental/disable"))
@@ -878,7 +882,7 @@ async fn test_set_protection_disabled() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/protection"))
@@ -908,7 +912,7 @@ async fn test_check_host_with_client() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/filtering/check_host"))
@@ -928,14 +932,15 @@ async fn test_check_host_with_client() {
 
 #[tokio::test]
 async fn test_client_with_auth() {
-    let config = AppConfig {
+    let mut config = AppConfig {
         adguard_host: "localhost".to_string(),
         adguard_port: 80,
         adguard_username: Some("user".to_string()),
         adguard_password: Some("pass".to_string()),
         ..Default::default()
     };
-    let _client = AdGuardClient::new(config);
+    config.validate().unwrap();
+    let _client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
     // This just tests the constructor logic for auth
 }
 
@@ -958,7 +963,7 @@ async fn test_set_protection() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/protection"))
@@ -988,7 +993,7 @@ async fn test_set_safe_search() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/safesearch/enable"))
@@ -1018,7 +1023,7 @@ async fn test_set_safe_browsing() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/safebrowsing/enable"))
@@ -1048,7 +1053,7 @@ async fn test_set_parental_control() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/parental/enable"))
@@ -1078,7 +1083,7 @@ async fn test_list_filters() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/filtering/status"))
@@ -1126,7 +1131,7 @@ async fn test_add_filter() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/filtering/add_url"))
@@ -1163,7 +1168,7 @@ async fn test_toggle_filter() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/filtering/set_url"))
@@ -1200,7 +1205,7 @@ async fn test_remove_filter() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/filtering/remove_url"))
@@ -1233,7 +1238,7 @@ async fn test_update_filter() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/filtering/set_url"))
@@ -1272,7 +1277,7 @@ async fn test_get_safe_search_settings() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/safesearch/status"))
@@ -1312,7 +1317,7 @@ async fn test_set_safe_search_settings() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("PUT"))
         .and(path("/control/safesearch/settings"))
@@ -1351,7 +1356,7 @@ async fn test_get_parental_settings() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/parental/status"))
@@ -1386,7 +1391,7 @@ async fn test_set_parental_settings() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/parental/enable"))
@@ -1420,7 +1425,7 @@ async fn test_get_query_log_config() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/querylog/config"))
@@ -1458,7 +1463,7 @@ async fn test_set_query_log_config() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("PUT"))
         .and(path("/control/querylog/config/update"))
@@ -1495,7 +1500,7 @@ async fn test_get_version_info() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/status"))
@@ -1530,7 +1535,7 @@ async fn test_update_adguard_home() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/version_info"))
@@ -1572,7 +1577,7 @@ async fn test_list_clients() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/clients"))
@@ -1616,7 +1621,7 @@ async fn test_get_user_rules() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/filtering/status"))
@@ -1654,7 +1659,7 @@ async fn test_set_user_rules() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/filtering/set_rules"))
@@ -1687,7 +1692,7 @@ async fn test_list_all_services() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/blocked_services/all"))
@@ -1724,7 +1729,7 @@ async fn test_list_blocked_services() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/blocked_services/list"))
@@ -1756,7 +1761,7 @@ async fn test_set_blocked_services() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/blocked_services/set"))
@@ -1789,7 +1794,7 @@ async fn test_add_client() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/clients/add"))
@@ -1828,7 +1833,7 @@ async fn test_update_client() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/clients/update"))
@@ -1870,7 +1875,7 @@ async fn test_delete_client() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/clients/delete"))
@@ -1903,7 +1908,7 @@ async fn test_get_dhcp_status() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/dhcp/status"))
@@ -1946,7 +1951,7 @@ async fn test_add_static_lease() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/dhcp/add_static_lease"))
@@ -1981,7 +1986,7 @@ async fn test_remove_static_lease() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/dhcp/remove_static_lease"))
@@ -2016,7 +2021,7 @@ async fn test_get_dhcp_config() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/dhcp/status"))
@@ -2065,7 +2070,7 @@ async fn test_set_dhcp_config() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/dhcp/set_config"))
@@ -2109,7 +2114,7 @@ async fn test_get_profile_info() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/profile"))
@@ -2145,7 +2150,7 @@ async fn test_set_profile_info() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("PUT"))
         .and(path("/control/profile/update"))
@@ -2180,7 +2185,7 @@ async fn test_get_dns_info() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/dns_info"))
@@ -2227,7 +2232,7 @@ async fn test_set_dns_config() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/dns_config"))
@@ -2273,7 +2278,7 @@ async fn test_clear_dns_cache() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/cache_clear"))
@@ -2303,7 +2308,7 @@ async fn test_get_access_list() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/access/list"))
@@ -2339,7 +2344,7 @@ async fn test_set_access_list() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("POST"))
         .and(path("/control/access/set"))
@@ -2374,7 +2379,7 @@ async fn test_check_host() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/filtering/check_host"))
@@ -2410,7 +2415,7 @@ async fn test_restart_service() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     // Test Soft Restart
     Mock::given(method("POST"))
@@ -2450,7 +2455,7 @@ async fn test_get_tls_status() {
             .parse()
             .unwrap(),
     );
-    let client = AdGuardClient::new(config);
+    let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
     Mock::given(method("GET"))
         .and(path("/control/tls/status"))

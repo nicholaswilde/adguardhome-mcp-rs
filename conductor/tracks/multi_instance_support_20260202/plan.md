@@ -3,10 +3,10 @@
 ## Phase 1: Configuration Refactoring [checkpoint: c7e0b01c771e60dad6c408f9be68cf66900966f5]
 Update the configuration system to handle multiple instances from both files and environment variables.
 
-- [~] Task: Update Configuration Models
-    - [ ] Define `InstanceConfig` struct in `src/config.rs` with fields: `name`, `url`, `api_key`, `username`, `password`, `no_verify_ssl`.
-    - [ ] Update `Config` struct to include `instances: Vec<InstanceConfig>`.
-    - [ ] **TDD:** Write unit tests in `src/config.rs` for deserializing a list of instances from TOML.
+- [x] Task: Update Configuration Models
+    - [x] Define `InstanceConfig` struct in `src/config.rs` with fields: `name`, `url`, `api_key`, `username`, `password`, `no_verify_ssl`.
+    - [x] Update `Config` struct to include `instances: Vec<InstanceConfig>`.
+    - [x] **TDD:** Write unit tests in `src/config.rs` for deserializing a list of instances from TOML.
 - [x] Task: Implement Environment Variable Parsing
     - [x] Implement logic to parse `ADGUARD__INSTANCES__<N>__<FIELD>` environment variables.
     - [x] Ensure env-defined instances are merged/appended to file-defined instances.
@@ -20,18 +20,18 @@ Update the configuration system to handle multiple instances from both files and
 ## Phase 2: Core and MCP Logic Update
 Update the internal tool logic and MCP interface to target specific instances.
 
-- [ ] Task: Update MCP Tool Definitions
-    - [ ] Modify `src/mcp.rs` to add an optional `instance` argument to all tool schemas.
-    - [ ] Update tool handlers to extract the `instance` parameter.
-    - [ ] **TDD:** Write unit tests for a few representative tools to ensure the `instance` argument is correctly defined in the schema.
-- [ ] Task: Instance Selection Logic
-    - [ ] Implement a helper to select the correct instance configuration based on index or name.
-    - [ ] Default to the first instance if the argument is missing.
-    - [ ] **TDD:** Write unit tests for the selection logic, covering name matches, index matches, and fallbacks.
-- [ ] Task: Update Client Initialization
-    - [ ] Update `src/adguard.rs` (or relevant client module) to initialize the client based on the selected `InstanceConfig`.
-    - [ ] **TDD:** Write unit tests for client factory/creation using different instance configurations.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Core and MCP Logic Update' (Protocol in workflow.md)
+- [x] Task: Update MCP Tool Definitions
+    - [x] Modify `src/mcp.rs` to add an optional `instance` argument to all tool schemas.
+    - [x] Update tool handlers to extract the `instance` parameter.
+    - [x] **TDD:** Write unit tests for a few representative tools to ensure the `instance` argument is correctly defined in the schema.
+- [x] Task: Instance Selection Logic
+    - [x] Implement a helper to select the correct instance configuration based on index or name.
+    - [x] Default to the first instance if the argument is missing.
+    - [x] **TDD:** Write unit tests for the selection logic, covering name matches, index matches, and fallbacks.
+- [x] Task: Update Client Initialization
+    - [x] Update `src/adguard.rs` (or relevant client module) to initialize the client based on the selected `InstanceConfig`.
+    - [x] **TDD:** Write unit tests for client factory/creation using different instance configurations.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Core and MCP Logic Update' (Protocol in workflow.md)
 
 ## Phase 3: Verification and Quality
 Ensure system-wide compliance and performance.

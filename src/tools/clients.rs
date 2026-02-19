@@ -37,7 +37,7 @@ pub fn register(registry: &mut ToolRegistry) {
             },
             "required": ["action"]
         }),
-        |client, params| {
+        |client, _config, params| {
             let client = client.clone();
             let params = params.unwrap_or_default();
             let action = params["action"].as_str().unwrap_or_default().to_string();

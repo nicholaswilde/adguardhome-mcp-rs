@@ -14,7 +14,7 @@ async fn test_mcp_http_transport() -> Result<()> {
     let adguard_host = container.host.clone();
     let adguard_port = container.port;
 
-    let config = adguardhome_mcp_rs::config::AppConfig {
+    let mut config = adguardhome_mcp_rs::config::AppConfig {
         adguard_host,
         adguard_port,
         mcp_transport: "http".to_string(),
@@ -22,10 +22,10 @@ async fn test_mcp_http_transport() -> Result<()> {
         http_auth_token: Some("test-token".to_string()),
         ..Default::default()
     };
+    config.validate().unwrap();
 
-    let adguard_client = adguardhome_mcp_rs::adguard::AdGuardClient::new(config.clone());
     let registry = adguardhome_mcp_rs::tools::ToolRegistry::new(&config);
-    let (server, rx) = McpServer::new(adguard_client, registry, config.clone());
+    let (server, rx) = McpServer::new(registry, config.clone());
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
     let port = listener.local_addr()?.port();
@@ -100,12 +100,12 @@ users:
     let adguard_host = container.host.clone();
     let adguard_port = container.port;
 
-    let config_no_auth = adguardhome_mcp_rs::config::AppConfig {
+    let mut config_no_auth = adguardhome_mcp_rs::config::AppConfig {
         adguard_host: adguard_host.clone(),
         adguard_port,
         ..Default::default()
     };
-    let client_no_auth = adguardhome_mcp_rs::adguard::AdGuardClient::new(config_no_auth);
+    config_no_auth.validate().unwrap(); let client_no_auth = adguardhome_mcp_rs::adguard::AdGuardClient::new(config_no_auth.get_instance(None).unwrap().clone());
 
     let mut success = false;
     for _ in 0..5 {
@@ -125,14 +125,14 @@ users:
     }
     assert!(success, "Did not receive 401 Unauthorized as expected");
 
-    let config_auth = adguardhome_mcp_rs::config::AppConfig {
+    let mut config_auth = adguardhome_mcp_rs::config::AppConfig {
         adguard_host,
         adguard_port,
         adguard_username: Some("admin".to_string()),
         adguard_password: Some("password".to_string()),
         ..Default::default()
     };
-    let client_auth = adguardhome_mcp_rs::adguard::AdGuardClient::new(config_auth);
+    config_auth.validate().unwrap(); let client_auth = adguardhome_mcp_rs::adguard::AdGuardClient::new(config_auth.get_instance(None).unwrap().clone());
 
     let status = client_auth.get_status().await?;
     assert!(!status.version.is_empty());

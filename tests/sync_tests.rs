@@ -24,14 +24,15 @@ async fn test_sync_integration() -> Result<()> {
     let replica_host = replica_container.host.clone();
     let replica_port = replica_container.port;
 
-    let master_config = AppConfig {
+    let mut master_config = AppConfig {
         adguard_host: master_host,
         adguard_port: master_port,
         adguard_username: Some("admin".to_string()),
         adguard_password: Some("password".to_string()),
         ..Default::default()
     };
-    let master_client = AdGuardClient::new(master_config.clone());
+    master_config.validate().unwrap();
+    let master_client = AdGuardClient::new(master_config.get_instance(None).unwrap().clone());
     let mut registry = ToolRegistry::new(&master_config);
     sync_tools::register(&mut registry);
     filtering::register(&mut registry);
@@ -42,6 +43,7 @@ async fn test_sync_integration() -> Result<()> {
         .call_tool(
             "manage_filtering",
             &master_client,
+            &master_config,
             Some(serde_json::json!({"action": "set_custom_rules", "rules": [test_rule]})),
         )
         .await
@@ -53,6 +55,7 @@ async fn test_sync_integration() -> Result<()> {
         .call_tool(
             "sync_instances",
             &master_client,
+            &master_config,
             Some(serde_json::json!({
                 "mode": "full-overwrite",
                 "replicas": [
@@ -69,13 +72,15 @@ async fn test_sync_integration() -> Result<()> {
     println!("Sync response: {:?}", res);
 
     // 5. Verify Replica has the rule
-    let replica_client = AdGuardClient::new(AppConfig {
+    let mut replica_config = AppConfig {
         adguard_host: replica_host,
         adguard_port: replica_port,
         adguard_username: Some("admin".to_string()),
         adguard_password: Some("password".to_string()),
         ..Default::default()
-    });
+    };
+    replica_config.validate().unwrap();
+    let replica_client = AdGuardClient::new(replica_config.get_instance(None).unwrap().clone());
 
     let mut success = false;
     for _ in 0..20 {

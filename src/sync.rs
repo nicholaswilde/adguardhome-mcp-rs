@@ -3,7 +3,7 @@ use crate::adguard::models::{
     AccessList, AdGuardClientDevice, DhcpStatus, DnsConfig, DnsRewrite, FilteringConfig,
     ParentalControlConfig, ProfileInfo, QueryLogConfig, SafeSearchConfig, TlsConfig,
 };
-use crate::config::AppConfig;
+use crate::config::{AppConfig, InstanceConfig};
 use anyhow::Result;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -51,7 +51,8 @@ impl SyncState {
         }
 
         let mut interval = interval(Duration::from_secs(config.sync_interval_seconds));
-        let master_client = AdGuardClient::new(config.clone());
+        let master_instance = config.get_instance(None).expect("No instances configured").clone();
+        let master_client = AdGuardClient::new(master_instance);
 
         loop {
             interval.tick().await;
@@ -60,17 +61,17 @@ impl SyncState {
             match Self::fetch(&master_client).await {
                 Ok(state) => {
                     for replica in &config.replicas {
-                        let mut replica_config = config.clone();
                         let url = replica.url.clone();
                         match url::Url::parse(&url) {
-                            Ok(parsed_url) => {
-                                replica_config.adguard_host =
-                                    parsed_url.host_str().unwrap_or("localhost").to_string();
-                                replica_config.adguard_port = parsed_url.port().unwrap_or(80);
-                                replica_config.adguard_username = Some("admin".to_string());
-                                replica_config.adguard_password = Some(replica.api_key.clone());
+                            Ok(_parsed_url) => {
+                                let replica_instance = InstanceConfig {
+                                    name: Some("replica".to_string()),
+                                    url: url.clone(),
+                                    api_key: Some(replica.api_key.clone()),
+                                    ..Default::default()
+                                };
 
-                                let replica_client = AdGuardClient::new(replica_config);
+                                let replica_client = AdGuardClient::new(replica_instance);
                                 if let Err(e) = state
                                     .push_to_replica(&replica_client, &config.default_sync_mode)
                                     .await
@@ -339,7 +340,7 @@ mod tests {
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
         let server = MockServer::start().await;
-        let config = AppConfig {
+        let mut config = AppConfig {
             adguard_host: server
                 .uri()
                 .replace("http://", "")
@@ -356,7 +357,8 @@ mod tests {
                 .unwrap(),
             ..Default::default()
         };
-        let client = AdGuardClient::new(config);
+        config.validate().unwrap();
+        let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
         // Master state (Empty)
         let master_state = SyncState {
@@ -684,7 +686,7 @@ mod tests {
         use wiremock::{Mock, MockServer, ResponseTemplate};
 
         let server = MockServer::start().await;
-        let config = AppConfig {
+        let mut config = AppConfig {
             adguard_host: server
                 .uri()
                 .replace("http://", "")
@@ -701,7 +703,8 @@ mod tests {
                 .unwrap(),
             ..Default::default()
         };
-        let client = AdGuardClient::new(config);
+        config.validate().unwrap();
+        let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
 
         let state = SyncState {
             metadata: None,

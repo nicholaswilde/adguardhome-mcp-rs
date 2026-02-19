@@ -11,7 +11,6 @@ use tokio::sync::mpsc;
 
 #[derive(Clone)]
 pub struct McpServer {
-    pub client: AdGuardClient,
     pub registry: Arc<Mutex<ToolRegistry>>,
     pub config: AppConfig,
     pub notification_tx: mpsc::Sender<Notification>,
@@ -19,22 +18,19 @@ pub struct McpServer {
 
 impl McpServer {
     pub fn new(
-        client: AdGuardClient,
         registry: ToolRegistry,
         config: AppConfig,
     ) -> (Self, mpsc::Receiver<Notification>) {
-        Self::with_registry(client, Arc::new(Mutex::new(registry)), config)
+        Self::with_registry(Arc::new(Mutex::new(registry)), config)
     }
 
     pub fn with_registry(
-        client: AdGuardClient,
         registry: Arc<Mutex<ToolRegistry>>,
         config: AppConfig,
     ) -> (Self, mpsc::Receiver<Notification>) {
         let (tx, rx) = mpsc::channel(100);
         (
             Self {
-                client,
                 registry,
                 config,
                 notification_tx: tx,
@@ -176,12 +172,22 @@ impl McpServer {
                 if tool_name == "manage_tools" && self.config.lazy_mode {
                     self.handle_manage_tools(args).await
                 } else {
-                    // Logic to call tool without holding mutex across await
+                    // 1. Extract instance
+                    let instance_name = args.as_ref()
+                        .and_then(|a| a.get("instance"))
+                        .and_then(|i| i.as_str());
+
+                    // 2. Get instance config
+                    let instance_config = match self.config.get_instance(instance_name) {
+                        Ok(c) => c,
+                        Err(e) => return Err(anyhow::anyhow!(e)),
+                    };
+
+                    // 3. Create client for this instance
+                    let client = AdGuardClient::new(instance_config.clone());
+
                     let handler = {
                         let registry = self.registry.lock().unwrap();
-                        // We need a way to get the handler or clone the tool logic
-                        // Re-implementing logic here to avoid exposing too much from ToolRegistry?
-                        // Or add `get_handler` to ToolRegistry.
                         if !registry.is_tool_enabled(tool_name) {
                             return Err(anyhow::anyhow!(
                                 "Tool not found or not enabled: {}",
@@ -192,7 +198,7 @@ impl McpServer {
                     };
 
                     if let Some(handler) = handler {
-                        handler(&self.client, args)
+                        handler(&client, &self.config, args)
                             .await
                             .map_err(|e| anyhow::anyhow!(e))
                     } else {

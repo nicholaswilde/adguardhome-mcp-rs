@@ -7,7 +7,7 @@ pub mod sync;
 pub mod tools;
 
 pub async fn run(args: Vec<String>) -> anyhow::Result<()> {
-    use crate::adguard::AdGuardClient;
+    
     use crate::config::AppConfig;
     use crate::server::http::run_http_server;
     use crate::server::mcp::McpServer;
@@ -17,7 +17,6 @@ pub async fn run(args: Vec<String>) -> anyhow::Result<()> {
     // Load configuration
     let config = AppConfig::load(None, args)?;
 
-    let adguard_client = AdGuardClient::new(config.clone());
     let mut registry = ToolRegistry::new(&config);
 
     // Register tools from sub-modules
@@ -28,7 +27,7 @@ pub async fn run(args: Vec<String>) -> anyhow::Result<()> {
     clients::register(&mut registry);
     sync_tools::register(&mut registry);
 
-    let (server, rx) = McpServer::new(adguard_client, registry, config.clone());
+    let (server, rx) = McpServer::new(registry, config.clone());
 
     // Start background sync task
     let sync_config = config.clone();

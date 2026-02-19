@@ -268,6 +268,24 @@ impl AppConfig {
 
         Ok(())
     }
+
+    pub fn get_instance(&self, name_or_index: Option<&str>) -> std::result::Result<&InstanceConfig, String> {
+        match name_or_index {
+            None => self.instances.get(0).ok_or_else(|| "No instances configured".to_string()),
+            Some(s) => {
+                // Try as index
+                if let Ok(idx) = s.parse::<usize>() {
+                    if let Some(inst) = self.instances.get(idx) {
+                        return Ok(inst);
+                    }
+                }
+                // Try as name
+                self.instances.iter()
+                    .find(|i| i.name.as_deref() == Some(s))
+                    .ok_or_else(|| format!("Instance not found: {}", s))
+            }
+        }
+    }
 }
 
 fn parse_args(args: Vec<String>) -> ArgMatches {

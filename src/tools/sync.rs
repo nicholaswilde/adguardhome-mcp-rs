@@ -30,19 +30,20 @@ pub fn register(registry: &mut ToolRegistry) {
                 }
             }
         }),
-        |client, args| {
+        |client, config, args| {
             let client = client.clone();
-            async move { sync_instances(&client, args).await }
+            let config = config.clone();
+            async move { sync_instances(&client, &config, args).await }
         },
     );
 }
 
-async fn sync_instances(client: &AdGuardClient, args: Option<Value>) -> Result<Value> {
+async fn sync_instances(client: &AdGuardClient, config: &crate::config::AppConfig, args: Option<Value>) -> Result<Value> {
     let mode = args
         .as_ref()
         .and_then(|a| a.get("mode"))
         .and_then(|v| v.as_str())
-        .unwrap_or(client.config.default_sync_mode.as_str());
+        .unwrap_or(config.default_sync_mode.as_str());
 
     let replicas = if let Some(r) = args
         .as_ref()
@@ -57,7 +58,7 @@ async fn sync_instances(client: &AdGuardClient, args: Option<Value>) -> Result<V
             })
             .collect::<Vec<_>>()
     } else {
-        client.config.replicas.clone()
+        config.replicas.clone()
     };
 
     if replicas.is_empty() {
@@ -79,17 +80,19 @@ async fn sync_instances(client: &AdGuardClient, args: Option<Value>) -> Result<V
 
     // 2. Push to Replicas
     for replica_config in replicas {
-        let mut replica_app_config = client.config.clone();
         // Parse URL to host and port
         let url = replica_config.url.clone();
-        let parsed_url =
+        let _parsed_url =
             url::Url::parse(&url).map_err(|e| crate::error::Error::Config(e.to_string()))?;
-        replica_app_config.adguard_host = parsed_url.host_str().unwrap_or("localhost").to_string();
-        replica_app_config.adguard_port = parsed_url.port().unwrap_or(80);
-        replica_app_config.adguard_username = Some("admin".to_string());
-        replica_app_config.adguard_password = Some(replica_config.api_key.clone());
+        
+        let replica_instance = crate::config::InstanceConfig {
+            name: Some("replica".to_string()),
+            url: url.clone(),
+            api_key: Some(replica_config.api_key.clone()),
+            ..Default::default()
+        };
 
-        let replica_client = AdGuardClient::new(replica_app_config);
+        let replica_client = AdGuardClient::new(replica_instance);
 
         match master_state.push_to_replica(&replica_client, mode).await {
             Ok(result) => {

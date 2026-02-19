@@ -84,14 +84,15 @@ impl AdGuardContainer {
         );
 
         // Wait for web server to be ready
-        let config = AppConfig {
+        let mut config = AppConfig {
             adguard_host: host.clone(),
             adguard_port: port_80,
             adguard_username: Some("admin".to_string()),
             adguard_password: Some("password".to_string()),
             ..Default::default()
         };
-        let client = AdGuardClient::new(config);
+        config.validate().unwrap();
+        let client = AdGuardClient::new(config.get_instance(None).unwrap().clone());
         let mut ready = false;
         for _ in 0..20 {
             if client.get_status().await.is_ok() {
@@ -113,7 +114,9 @@ impl AdGuardContainer {
     }
 
     pub fn client(&self) -> AdGuardClient {
-        AdGuardClient::new(self.config())
+        let mut config = self.config();
+        config.validate().unwrap();
+        AdGuardClient::new(config.get_instance(None).unwrap().clone())
     }
 
     pub fn config(&self) -> AppConfig {
@@ -130,6 +133,7 @@ impl AdGuardContainer {
 pub async fn call_mcp_tool(
     registry: &Arc<Mutex<ToolRegistry>>,
     client: &AdGuardClient,
+    config: &AppConfig,
     name: &str,
     args: serde_json::Value,
 ) -> Result<serde_json::Value> {
@@ -139,7 +143,7 @@ pub async fn call_mcp_tool(
     };
 
     if let Some(handler) = handler {
-        handler(client, Some(args))
+        handler(client, config, Some(args))
             .await
             .map_err(|e| anyhow::anyhow!(e))
     } else {
@@ -157,6 +161,7 @@ pub enum Transport {
 pub struct TestContext {
     pub adguard_host: String,
     pub adguard_port: u16,
+    pub config: AppConfig,
     pub client: AdGuardClient,
     pub registry: Arc<Mutex<ToolRegistry>>,
     pub transport: Transport,
@@ -175,7 +180,8 @@ impl TestContext {
         container: &AdGuardContainer,
         transport: Transport,
     ) -> Result<Self> {
-        let config = container.config();
+        let mut config = container.config();
+        config.validate().unwrap();
         let adguard_client = container.client();
         let registry = Arc::new(Mutex::new(ToolRegistry::new(&config)));
         let auth_token = Some("test-token".to_string());
@@ -187,7 +193,7 @@ impl TestContext {
             use adguardhome_mcp_rs::server::mcp::McpServer;
 
             let (server, rx) =
-                McpServer::with_registry(adguard_client.clone(), registry.clone(), config.clone());
+                McpServer::with_registry(registry.clone(), config.clone());
 
             let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
             let port = listener.local_addr()?.port();
@@ -210,6 +216,7 @@ impl TestContext {
         Ok(Self {
             adguard_host: container.host.clone(),
             adguard_port: container.port,
+            config,
             client: adguard_client,
             registry,
             transport,
@@ -224,7 +231,7 @@ impl TestContext {
         args: serde_json::Value,
     ) -> Result<serde_json::Value> {
         match self.transport {
-            Transport::Stdio => call_mcp_tool(&self.registry, &self.client, name, args).await,
+            Transport::Stdio => call_mcp_tool(&self.registry, &self.client, &self.config, name, args).await,
             Transport::Http => {
                 let url = self.http_url.as_ref().expect("HTTP URL not set");
                 let client = reqwest::Client::new();
