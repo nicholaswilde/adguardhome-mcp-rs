@@ -222,6 +222,63 @@ impl SyncState {
 
         Ok(())
     }
+
+    pub fn diff(&self, other: &Self) -> String {
+        let mut changes = Vec::new();
+
+        if self.filtering.enabled != other.filtering.enabled {
+            changes.push(format!(
+                "Filtering: Enabled: {} -> {}",
+                other.filtering.enabled, self.filtering.enabled
+            ));
+        }
+
+        if self.filtering.user_rules != other.filtering.user_rules {
+            changes.push("User Rules: Changed".to_string());
+        }
+
+        if self.dns.upstream_dns != other.dns.upstream_dns {
+            changes.push("DNS: Upstream DNS changed".to_string());
+        }
+
+        if self.blocked_services != other.blocked_services {
+            changes.push("Blocked Services: Changed".to_string());
+        }
+
+        if self.safe_browsing != other.safe_browsing {
+            changes.push(format!(
+                "Safe Browsing: {} -> {}",
+                other.safe_browsing, self.safe_browsing
+            ));
+        }
+
+        if self.parental_control.enabled != other.parental_control.enabled {
+            changes.push(format!(
+                "Parental Control: {} -> {}",
+                other.parental_control.enabled, self.parental_control.enabled
+            ));
+        }
+
+        if self.dhcp.enabled != other.dhcp.enabled {
+            changes.push(format!(
+                "DHCP: {} -> {}",
+                other.dhcp.enabled, self.dhcp.enabled
+            ));
+        }
+
+        if self.tls.enabled != other.tls.enabled {
+            changes.push(format!(
+                "TLS: {} -> {}",
+                other.tls.enabled, self.tls.enabled
+            ));
+        }
+
+        if changes.is_empty() {
+            "No significant changes detected.".to_string()
+        } else {
+            changes.join("\n")
+        }
+    }
 }
 
 #[cfg(test)]
@@ -486,5 +543,57 @@ mod tests {
             .push_to_replica(&client, "full-overwrite")
             .await
             .unwrap();
+    }
+
+    #[tokio::test]
+    async fn test_sync_state_diff() {
+        use crate::adguard::models::*;
+        let state1 = SyncState {
+            metadata: None,
+            filtering: FilteringConfig {
+                enabled: true, interval: 1, filters: vec![], whitelist_filters: vec![], user_rules: vec!["rule1".to_string()],
+            },
+            clients: vec![],
+            dns: DnsConfig {
+                upstream_dns: vec!["1.1.1.1".to_string()], upstream_dns_file: "".to_string(), bootstrap_dns: vec![], fallback_dns: vec![],
+                all_servers: false, fastest_addr: false, fastest_timeout: 0, cache_size: 0,
+                cache_ttl_min: 0, cache_ttl_max: 0, cache_optimistic: false, upstream_mode: "".to_string(),
+                use_private_ptr_resolvers: false, local_ptr_upstreams: vec![],
+            },
+            blocked_services: vec!["youtube".to_string()],
+            rewrites: vec![],
+            access_list: AccessList {
+                allowed_clients: vec![], disallowed_clients: vec![], blocked_hosts: vec![],
+            },
+            query_log_config: QueryLogConfig {
+                enabled: true, interval: 1, anonymize_client_ip: false, allowed_clients: vec![], disallowed_clients: vec![],
+            },
+            safe_search: SafeSearchConfig {
+                enabled: true, bing: true, duckduckgo: true, google: true, pixabay: true, yandex: true, youtube: true,
+            },
+            safe_browsing: true,
+            parental_control: ParentalControlConfig {
+                enabled: true, sensitivity: None,
+            },
+            dhcp: DhcpStatus {
+                enabled: false, interface_name: "".to_string(), v4: None, v6: None, leases: Vec::new(), static_leases: Vec::new(),
+            },
+            tls: TlsConfig::default(),
+            profile_info: ProfileInfo {
+                name: "admin".to_string(), language: "en".to_string(), theme: "dark".to_string(),
+            },
+        };
+
+        let mut state2 = state1.clone();
+        state2.filtering.enabled = false;
+        state2.dns.upstream_dns = vec!["8.8.8.8".to_string()];
+        state2.blocked_services = vec!["facebook".to_string()];
+        state2.filtering.user_rules = vec!["rule2".to_string()];
+
+        let diff = state1.diff(&state2);
+        assert!(diff.contains("Filtering: Enabled: false -> true"));
+        assert!(diff.contains("DNS: Upstream DNS changed"));
+        assert!(diff.contains("Blocked Services: Changed"));
+        assert!(diff.contains("User Rules: Changed"));
     }
 }

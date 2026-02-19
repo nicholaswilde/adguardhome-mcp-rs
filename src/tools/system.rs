@@ -18,7 +18,7 @@ pub fn register(registry: &mut ToolRegistry) {
                         "get_status", "get_stats", "clear_stats", "get_query_log",
                         "clear_query_log", "get_top_blocked_domains", "get_query_log_config",
                         "set_query_log_config", "get_version_info", "update_adguard_home",
-                        "create_backup", "restore_backup", "restart_service"
+                        "create_backup", "restore_backup", "restore_backup_diff", "restart_service"
                     ]
                 },
                 "time_period": { "type": "string", "enum": ["24h", "7d", "30d"], "description": "For stats" },
@@ -180,6 +180,19 @@ pub fn register(registry: &mut ToolRegistry) {
 
                         state.push_to_replica(&client, "full-overwrite").await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
                         Ok(serde_json::json!({ "content": [{ "type": "text", "text": "Backup restored" }] }))
+                    }
+                    "restore_backup_diff" => {
+                        let path = params["file_path"].as_str().unwrap_or_default();
+                        let json = fs::read(path).await?;
+                        let backup_state: SyncState = serde_json::from_slice(&json)?;
+                        let current_state = SyncState::fetch(&client).await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
+
+                        let diff = backup_state.diff(&current_state);
+                        let mut text = format!("Dry Run: Configuration Comparison\nBackup Version: {}\n---\n", 
+                            backup_state.metadata.as_ref().map(|m| m.version.as_str()).unwrap_or("Unknown"));
+                        text.push_str(&diff);
+
+                        Ok(serde_json::json!({ "content": [{ "type": "text", "text": text }] }))
                     }
                     "restart_service" => {
                         client.restart_service().await?;

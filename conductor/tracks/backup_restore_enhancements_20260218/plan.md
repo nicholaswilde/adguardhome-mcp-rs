@@ -29,11 +29,11 @@ Add metadata to the backup JSON and implement version safety checks.
 ## Phase 3: Dry Run and Comparison
 Implement the ability to preview changes before a full restoration.
 
-- [ ] Task: Implement `restore_backup_diff` tool action
-    - [ ] Create logic in `SyncState` to diff a JSON snapshot against a live client.
-    - [ ] Format the diff into a human-readable summary for the MCP output.
-    - [ ] **TDD:** Write unit tests for diffing various configuration scenarios.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Dry Run and Comparison' (Protocol in workflow.md)
+- [x] Task: Implement `restore_backup_diff` tool action
+    - [x] Create logic in `SyncState` to diff a JSON snapshot against a live client.
+    - [x] Format the diff into a human-readable summary for the MCP output.
+    - [x] **TDD:** Write unit tests for diffing various configuration scenarios.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Dry Run and Comparison' (Protocol in workflow.md)
 
 ## Phase 4: Reliable Service Management
 Refine the restart strategy and improve error tracking.
