@@ -179,6 +179,26 @@ tasks:
     cmds:
       - docker buildx build --load -t adguardhome-mcp-rs .
 
+  compose:up:
+    desc: Start services with Docker Compose
+    cmds:
+      - docker compose up -d
+
+  compose:down:
+    desc: Stop services with Docker Compose
+    cmds:
+      - docker compose down
+
+  compose:logs:
+    desc: Show Docker Compose logs
+    cmds:
+      - docker compose logs -f
+
+  compose:restart:
+    desc: Restart services with Docker Compose
+    cmds:
+      - docker compose restart
+
   clean:
     desc: Clean build artifacts
     cmds:
