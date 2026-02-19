@@ -1,6 +1,9 @@
 # AdGuard Home MCP Server Configuration Example
 
-# AdGuard Home Connection Settings
+# --- Single Instance Configuration (Legacy/Default) ---
+# These settings will be used to create a default instance named "default"
+# if no [[instances]] are defined.
+
 # Host of your AdGuard Home instance (Required)
 adguard_host = "192.168.1.10"
 
@@ -15,7 +18,37 @@ no_verify_ssl = true
 adguard_username = "admin"
 adguard_password = "yourpassword"
 
-# MCP Server Settings
+# --- Multi-Instance Configuration ---
+# You can define multiple instances. The first one will be the default.
+# All tools accept an optional "instance" argument (name or index).
+
+# [[instances]]
+# name = "primary"
+# url = "http://192.168.1.10:8080"
+# username = "admin"
+# password = "yourpassword"
+# no_verify_ssl = true
+
+# [[instances]]
+# name = "secondary"
+# url = "http://192.168.1.20:3000"
+# api_key = "your-api-key"
+
+# --- Synchronization Settings ---
+# Automatically sync configuration from the master (first instance) to replicas.
+
+# Interval for automated background sync in seconds. Default: 3600
+# sync_interval_seconds = 3600
+
+# Default sync mode: "additive-merge" (safe) or "full-overwrite" (destructive).
+# Default: "additive-merge"
+# default_sync_mode = "additive-merge"
+
+# [[replicas]]
+# url = "http://192.168.1.11:3000"
+# api_key = "replica-api-key-1"
+
+# --- MCP Server Settings ---
 # Transport mode: "stdio" (local) or "http" (network)
 # Default: "stdio"
 mcp_transport = "stdio"
@@ -28,12 +61,12 @@ http_port = 3000
 # Clients must provide this in the Authorization header: "Bearer <token>"
 http_auth_token = "your-secure-token"
 
-# Performance & Token Optimization
+# --- Performance & Token Optimization ---
 # Enable "Lazy Mode" to initially expose fewer tools to save AI context tokens.
 # Default: false
 lazy_mode = false
 
-# Logging
+# --- Logging ---
 # Log level: "error", "warn", "info", "debug", "trace"
 # Default: "info"
 log_level = "info"
