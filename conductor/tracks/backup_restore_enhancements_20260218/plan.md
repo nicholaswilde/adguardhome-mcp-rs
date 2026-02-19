@@ -2,7 +2,7 @@
 
 **Track ID:** `backup_restore_enhancements_20260218`
 
-## Phase 1: Configuration Expansion
+## Phase 1: Configuration Expansion [checkpoint: 7c6a909]
 Enhance `AdGuardClient` and `SyncState` to include the missing configuration modules.
 
 - [x] Task: Update `AdGuardClient` and `models.rs` for new modules
