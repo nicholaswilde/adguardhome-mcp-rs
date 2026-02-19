@@ -192,7 +192,7 @@ pub struct StaticLease {
     pub hostname: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DnsConfig {
     #[serde(default)]
     pub upstream_dns: Vec<String>,
@@ -258,7 +258,7 @@ pub struct ProfileInfo {
     pub theme: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct AccessList {
     #[serde(default, deserialize_with = "deserialize_null_as_default")]
     pub allowed_clients: Vec<String>,

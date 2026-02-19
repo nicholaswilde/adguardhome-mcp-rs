@@ -2412,13 +2412,23 @@ async fn test_restart_service() {
     );
     let client = AdGuardClient::new(config);
 
+    // Test Soft Restart
     Mock::given(method("POST"))
         .and(path("/control/filtering/refresh"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;
 
-    client.restart_service().await.unwrap();
+    client.restart_service(false).await.unwrap();
+
+    // Test Hard Restart
+    Mock::given(method("POST"))
+        .and(path("/control/restart"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+
+    client.restart_service(true).await.unwrap();
 }
 
 #[tokio::test]

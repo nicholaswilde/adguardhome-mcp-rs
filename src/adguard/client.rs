@@ -640,19 +640,29 @@ impl AdGuardClient {
         Ok(())
     }
 
-    pub async fn restart_service(&self) -> Result<()> {
-        // Fallback to filtering/refresh as direct restart is often not supported via API
-        let url = format!(
-            "http://{}:{}/control/filtering/refresh",
-            self.config.adguard_host, self.config.adguard_port
-        );
-        let request = self.add_auth(
-            self.client
-                .post(&url)
-                .json(&serde_json::json!({ "whitelist": false })),
-        );
-
-        request.send().await?.error_for_status()?;
+    pub async fn restart_service(&self, hard: bool) -> Result<()> {
+        if hard {
+            let url = format!(
+                "http://{}:{}/control/restart",
+                self.config.adguard_host, self.config.adguard_port
+            );
+            let request = self.add_auth(self.client.post(&url));
+            // We ignore error_for_status here because /restart often closes the connection
+            // before returning a response, causing a "connection closed" error.
+            let _ = request.send().await;
+        } else {
+            // Soft restart (refresh filters)
+            let url = format!(
+                "http://{}:{}/control/filtering/refresh",
+                self.config.adguard_host, self.config.adguard_port
+            );
+            let request = self.add_auth(
+                self.client
+                    .post(&url)
+                    .json(&serde_json::json!({ "whitelist": false })),
+            );
+            request.send().await?.error_for_status()?;
+        }
         Ok(())
     }
 

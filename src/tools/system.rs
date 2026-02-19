@@ -31,7 +31,8 @@ pub fn register(registry: &mut ToolRegistry) {
                 "allowed_clients": { "type": "array", "items": { "type": "string" } },
                 "disallowed_clients": { "type": "array", "items": { "type": "string" } },
                 "file_path": { "type": "string", "description": "For restore_backup" },
-                "description": { "type": "string", "description": "Optional description for the backup" }
+                "description": { "type": "string", "description": "Optional description for the backup" },
+                "force": { "type": "boolean", "description": "If true, performs a full service restart. If false (default), performs a configuration reload." }
             },
             "required": ["action"]
         }),
@@ -178,8 +179,24 @@ pub fn register(registry: &mut ToolRegistry) {
                             }
                         }
 
-                        state.push_to_replica(&client, "full-overwrite").await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
-                        Ok(serde_json::json!({ "content": [{ "type": "text", "text": "Backup restored" }] }))
+                        let result = state.push_to_replica(&client, "full-overwrite").await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
+                        
+                        let mut text = if result.success {
+                            "Backup restored successfully.\n".to_string()
+                        } else {
+                            "Backup restoration completed with errors.\n".to_string()
+                        };
+
+                        text.push_str(&format!("Applied: {}\n", result.applied_modules.join(", ")));
+                        if !result.failed_modules.is_empty() {
+                            text.push_str(&format!("Failed: {}\n", result.failed_modules.join(", ")));
+                            text.push_str("Errors:\n");
+                            for err in result.errors {
+                                text.push_str(&format!("- {}\n", err));
+                            }
+                        }
+
+                        Ok(serde_json::json!({ "content": [{ "type": "text", "text": text }] }))
                     }
                     "restore_backup_diff" => {
                         let path = params["file_path"].as_str().unwrap_or_default();
@@ -195,8 +212,10 @@ pub fn register(registry: &mut ToolRegistry) {
                         Ok(serde_json::json!({ "content": [{ "type": "text", "text": text }] }))
                     }
                     "restart_service" => {
-                        client.restart_service().await?;
-                        Ok(serde_json::json!({ "content": [{ "type": "text", "text": "Restart sent" }] }))
+                        let hard = params["force"].as_bool().unwrap_or(false);
+                        client.restart_service(hard).await?;
+                        let msg = if hard { "Hard restart sent" } else { "Soft restart sent" };
+                        Ok(serde_json::json!({ "content": [{ "type": "text", "text": msg }] }))
                     }
                     _ => Err(crate::error::Error::Mcp(crate::mcp::ResponseError {
                         code: -32602,

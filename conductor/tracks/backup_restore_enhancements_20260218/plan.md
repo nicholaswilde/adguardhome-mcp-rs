@@ -38,14 +38,14 @@ Implement the ability to preview changes before a full restoration.
 ## Phase 4: Reliable Service Management
 Refine the restart strategy and improve error tracking.
 
-- [ ] Task: Enhance `restart_service` tool action
-    - [ ] Update `manage_system` to support an optional `force` (hard) vs. `soft` (reload) restart parameter.
-    - [ ] **TDD:** Write unit tests for both restart types.
-- [ ] Task: Improve Atomic Restoration and Error Reporting
-    - [ ] Update `push_to_replica` to return a list of successfully applied vs. failed modules.
-    - [ ] Update `restore_backup` to output this detailed report.
-    - [ ] **TDD:** Write unit tests for partial restoration failures.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Reliable Service Management' (Protocol in workflow.md)
+- [x] Task: Enhance `restart_service` tool action
+    - [x] Update `manage_system` to support an optional `force` (hard) vs. `soft` (reload) restart parameter.
+    - [x] **TDD:** Write unit tests for both restart types.
+- [x] Task: Improve Atomic Restoration and Error Reporting
+    - [x] Update `push_to_replica` to return a list of successfully applied vs. failed modules.
+    - [x] Update `restore_backup` to output this detailed report.
+    - [x] **TDD:** Write unit tests for partial restoration failures.
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Reliable Service Management' (Protocol in workflow.md)
 
 ## Phase 5: Verification and Quality
 System-wide integration testing and final audit.

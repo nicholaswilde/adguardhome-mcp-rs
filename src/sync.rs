@@ -35,6 +35,14 @@ pub struct SyncState {
     pub profile_info: ProfileInfo,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SyncResult {
+    pub success: bool,
+    pub applied_modules: Vec<String>,
+    pub failed_modules: Vec<String>,
+    pub errors: Vec<String>,
+}
+
 impl SyncState {
     pub async fn run_background_sync(config: AppConfig) {
         if config.replicas.is_empty() {
@@ -124,103 +132,134 @@ impl SyncState {
         })
     }
 
-    pub async fn push_to_replica(&self, client: &AdGuardClient, mode: &str) -> Result<()> {
-        // 1. Sync User Rules
-        if mode == "full-overwrite" {
-            client
-                .set_user_rules(self.filtering.user_rules.clone())
-                .await?;
-        } else {
-            // Additive: Fetch existing, merge, then set
-            let existing_rules = client.get_user_rules().await?;
-            let mut merged_rules = existing_rules;
-            for rule in &self.filtering.user_rules {
-                if !merged_rules.contains(rule) {
-                    merged_rules.push(rule.clone());
+    pub async fn push_to_replica(&self, client: &AdGuardClient, mode: &str) -> Result<SyncResult> {
+        let mut applied = Vec::new();
+        let mut failed = Vec::new();
+        let mut errors = Vec::new();
+
+        macro_rules! try_sync {
+            ($module:expr, $op:expr) => {
+                match $op.await {
+                    Ok(_) => applied.push($module.to_string()),
+                    Err(e) => {
+                        failed.push($module.to_string());
+                        errors.push(format!("{}: {}", $module, e));
+                    }
                 }
-            }
-            client.set_user_rules(merged_rules).await?;
+            };
         }
+
+        // 1. Sync User Rules
+        try_sync!("User Rules", async {
+            if mode == "full-overwrite" {
+                client
+                    .set_user_rules(self.filtering.user_rules.clone())
+                    .await
+            } else {
+                let existing_rules = client.get_user_rules().await?;
+                let mut merged_rules = existing_rules;
+                for rule in &self.filtering.user_rules {
+                    if !merged_rules.contains(rule) {
+                        merged_rules.push(rule.clone());
+                    }
+                }
+                client.set_user_rules(merged_rules).await
+            }
+        });
 
         // 2. Sync Blocked Services
-        if mode == "full-overwrite" {
-            client
-                .set_blocked_services(self.blocked_services.clone())
-                .await?;
-        } else {
-            let existing_services = client.list_blocked_services().await?;
-            let mut merged_services = existing_services;
-            for service in &self.blocked_services {
-                if !merged_services.contains(service) {
-                    merged_services.push(service.clone());
+        try_sync!("Blocked Services", async {
+            if mode == "full-overwrite" {
+                client
+                    .set_blocked_services(self.blocked_services.clone())
+                    .await
+            } else {
+                let existing_services = client.list_blocked_services().await?;
+                let mut merged_services = existing_services;
+                for service in &self.blocked_services {
+                    if !merged_services.contains(service) {
+                        merged_services.push(service.clone());
+                    }
                 }
+                client.set_blocked_services(merged_services).await
             }
-            client.set_blocked_services(merged_services).await?;
-        }
+        });
 
         // 3. Sync Rewrites
-        let existing_rewrites = client.list_rewrites().await?;
-        if mode == "full-overwrite" {
-            // Remove rewrites not in master
-            for rewrite in existing_rewrites {
-                let exists_in_master = self
-                    .rewrites
-                    .iter()
-                    .any(|r| r.domain == rewrite.domain && r.answer == rewrite.answer);
-                if !exists_in_master {
-                    client.delete_rewrite(rewrite).await?;
+        try_sync!("DNS Rewrites", async {
+            let existing_rewrites = client.list_rewrites().await?;
+            if mode == "full-overwrite" {
+                for rewrite in existing_rewrites {
+                    let exists_in_master = self
+                        .rewrites
+                        .iter()
+                        .any(|r| r.domain == rewrite.domain && r.answer == rewrite.answer);
+                    if !exists_in_master {
+                        client.delete_rewrite(rewrite).await?;
+                    }
                 }
-            }
-            // Add all master rewrites (idempotency checks usually handled by API, but we can check existence)
-            for rewrite in &self.rewrites {
-                client.add_rewrite(rewrite.clone()).await?;
-            }
-        } else {
-            // Additive: Only add missing
-            for rewrite in &self.rewrites {
-                let exists_in_replica = existing_rewrites
-                    .iter()
-                    .any(|r| r.domain == rewrite.domain && r.answer == rewrite.answer);
-                if !exists_in_replica {
+                for rewrite in &self.rewrites {
                     client.add_rewrite(rewrite.clone()).await?;
                 }
+            } else {
+                for rewrite in &self.rewrites {
+                    let exists_in_replica = existing_rewrites
+                        .iter()
+                        .any(|r| r.domain == rewrite.domain && r.answer == rewrite.answer);
+                    if !exists_in_replica {
+                        client.add_rewrite(rewrite.clone()).await?;
+                    }
+                }
             }
-        }
+            Ok::<(), anyhow::Error>(())
+        });
 
         // 4. Sync DNS Config
-        client.set_dns_config(self.dns.clone()).await?;
+        try_sync!("DNS Config", client.set_dns_config(self.dns.clone()));
 
         // 5. Sync Access List
-        client.set_access_list(self.access_list.clone()).await?;
+        try_sync!("Access List", client.set_access_list(self.access_list.clone()));
 
         // 6. Sync Query Log Config
-        client
-            .set_query_log_config(self.query_log_config.clone())
-            .await?;
+        try_sync!(
+            "Query Log Config",
+            client.set_query_log_config(self.query_log_config.clone())
+        );
 
         // 7. Sync Safe Search
-        client
-            .set_safe_search_settings(self.safe_search.clone())
-            .await?;
+        try_sync!(
+            "Safe Search",
+            client.set_safe_search_settings(self.safe_search.clone())
+        );
 
         // 8. Sync Parental Control
-        client
-            .set_parental_settings(self.parental_control.clone())
-            .await?;
+        try_sync!(
+            "Parental Control",
+            client.set_parental_settings(self.parental_control.clone())
+        );
 
         // 9. Sync Protection
-        client.set_protection(self.safe_browsing).await?;
+        try_sync!("Global Protection", client.set_protection(self.safe_browsing));
 
         // 10. Sync DHCP Config
-        client.set_dhcp_config(self.dhcp.clone()).await?;
+        try_sync!("DHCP Config", client.set_dhcp_config(self.dhcp.clone()));
 
         // 11. Sync TLS Config
-        client.configure_tls(self.tls.clone()).await?;
+        try_sync!("TLS Config", client.configure_tls(self.tls.clone()));
 
         // 12. Sync Profile Info
-        client.set_profile_info(self.profile_info.clone()).await?;
+        try_sync!(
+            "Profile Info",
+            client.set_profile_info(self.profile_info.clone())
+        );
 
-        Ok(())
+        let success = failed.is_empty();
+        Ok(SyncResult {
+            success,
+            applied_modules: applied,
+            failed_modules: failed,
+            errors,
+        })
     }
 
     pub fn diff(&self, other: &Self) -> String {
@@ -595,5 +634,58 @@ mod tests {
         assert!(diff.contains("DNS: Upstream DNS changed"));
         assert!(diff.contains("Blocked Services: Changed"));
         assert!(diff.contains("User Rules: Changed"));
+    }
+
+    #[tokio::test]
+    async fn test_push_to_replica_partial_success() {
+        use crate::adguard::AdGuardClient;
+        use crate::config::AppConfig;
+        use wiremock::matchers::{method, path};
+        use wiremock::{Mock, MockServer, ResponseTemplate};
+
+        let server = MockServer::start().await;        let config = AppConfig {
+            adguard_host: server.uri().replace("http://", "").split(':').next().unwrap().to_string(),
+            adguard_port: server.uri().split(':').next_back().unwrap().parse().unwrap(),
+            ..Default::default()
+        };
+        let client = AdGuardClient::new(config);
+
+        let state = SyncState {
+            metadata: None,
+            filtering: FilteringConfig { enabled: true, interval: 1, filters: vec![], whitelist_filters: vec![], user_rules: vec![] },
+            clients: vec![],
+            dns: DnsConfig::default(),
+            blocked_services: vec![],
+            rewrites: vec![],
+            access_list: AccessList::default(),
+            query_log_config: QueryLogConfig { enabled: true, interval: 1, anonymize_client_ip: false, allowed_clients: vec![], disallowed_clients: vec![] },
+            safe_search: SafeSearchConfig { enabled: true, bing: true, duckduckgo: true, google: true, pixabay: true, yandex: true, youtube: true },
+            safe_browsing: true,
+            parental_control: ParentalControlConfig { enabled: true, sensitivity: None },
+            dhcp: DhcpStatus { enabled: false, interface_name: "".to_string(), v4: None, v6: None, leases: Vec::new(), static_leases: Vec::new() },
+            tls: TlsConfig::default(),
+            profile_info: ProfileInfo { name: "admin".to_string(), language: "en".to_string(), theme: "dark".to_string() },
+        };
+
+        // 1. Success Mock
+        Mock::given(method("POST"))
+            .and(path("/control/filtering/set_rules"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        // 2. Failure Mock
+        Mock::given(method("POST"))
+            .and(path("/control/blocked_services/set"))
+            .respond_with(ResponseTemplate::new(500))
+            .mount(&server)
+            .await;
+
+        let result = state.push_to_replica(&client, "full-overwrite").await.unwrap();
+        
+        assert!(!result.success);
+        assert!(result.applied_modules.contains(&"User Rules".to_string()));
+        assert!(result.failed_modules.contains(&"Blocked Services".to_string()));
+        assert!(!result.errors.is_empty());
     }
 }

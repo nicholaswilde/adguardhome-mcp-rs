@@ -391,6 +391,20 @@ async fn test_system_tools() {
         .unwrap();
 
     Mock::given(method("POST"))
+        .and(path("/control/restart"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    registry
+        .call_tool(
+            "manage_system",
+            &client,
+            Some(json!({"action": "restart_service", "force": true})),
+        )
+        .await
+        .unwrap();
+
+    Mock::given(method("POST"))
         .and(path("/control/filtering/set_rules"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)

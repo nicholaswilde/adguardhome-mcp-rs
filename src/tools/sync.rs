@@ -92,8 +92,20 @@ async fn sync_instances(client: &AdGuardClient, args: Option<Value>) -> Result<V
         let replica_client = AdGuardClient::new(replica_app_config);
 
         match master_state.push_to_replica(&replica_client, mode).await {
-            Ok(_) => results.push(format!("Successfully synced to {}", url)),
-            Err(e) => results.push(format!("Failed to sync to {}: {}", url, e)),
+            Ok(result) => {
+                let mut msg = format!("Replica {}: ", url);
+                if result.success {
+                    msg.push_str("Successfully synced.");
+                } else {
+                    msg.push_str(&format!(
+                        "Synced with errors. Failed modules: {}. Errors: {}",
+                        result.failed_modules.join(", "),
+                        result.errors.join("; ")
+                    ));
+                }
+                results.push(msg);
+            }
+            Err(e) => results.push(format!("Failed to connect or push to {}: {}", url, e)),
         }
     }
 
