@@ -33,7 +33,7 @@ Update the internal tool logic and MCP interface to target specific instances.
     - [x] **TDD:** Write unit tests for client factory/creation using different instance configurations.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Core and MCP Logic Update' (Protocol in workflow.md)
 
-## Phase 3: Verification and Quality
+## Phase 3: Verification and Quality [checkpoint: b3143faea72f66f6125e5894e9450547e8c265fd]
 Ensure system-wide compliance and performance.
 
 - [x] Task: Integration Testing
