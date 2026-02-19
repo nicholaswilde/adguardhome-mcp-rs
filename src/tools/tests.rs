@@ -45,7 +45,11 @@ async fn test_dns_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_dns", &client, &config, Some(json!({"action": "list_rewrites"})),
+        .call_tool(
+            "manage_dns",
+            &client,
+            &config,
+            Some(json!({"action": "list_rewrites"})),
         )
         .await
         .unwrap();
@@ -56,7 +60,11 @@ async fn test_dns_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_dns", &client, &config, Some(json!({"action": "add_rewrite", "domain": "a", "answer": "b"})),
+        .call_tool(
+            "manage_dns",
+            &client,
+            &config,
+            Some(json!({"action": "add_rewrite", "domain": "a", "answer": "b"})),
         )
         .await
         .unwrap();
@@ -67,7 +75,11 @@ async fn test_dns_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_dns", &client, &config, Some(json!({"action": "remove_rewrite", "domain": "a", "answer": "b"})),
+        .call_tool(
+            "manage_dns",
+            &client,
+            &config,
+            Some(json!({"action": "remove_rewrite", "domain": "a", "answer": "b"})),
         )
         .await
         .unwrap();
@@ -83,7 +95,12 @@ async fn test_dns_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_dns", &client, &config, Some(json!({"action": "get_config"})))
+        .call_tool(
+            "manage_dns",
+            &client,
+            &config,
+            Some(json!({"action": "get_config"})),
+        )
         .await
         .unwrap();
 
@@ -94,7 +111,10 @@ async fn test_dns_tools() {
         .await;
     registry
         .call_tool(
-            "manage_dns", &client, &config, Some(json!({"action": "set_config", "cache_size": 1024})),
+            "manage_dns",
+            &client,
+            &config,
+            Some(json!({"action": "set_config", "cache_size": 1024})),
         )
         .await
         .unwrap();
@@ -105,7 +125,11 @@ async fn test_dns_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_dns", &client, &config, Some(json!({"action": "clear_cache"})),
+        .call_tool(
+            "manage_dns",
+            &client,
+            &config,
+            Some(json!({"action": "clear_cache"})),
         )
         .await
         .unwrap();
@@ -126,7 +150,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "get_status"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "get_status"})),
         )
         .await
         .unwrap();
@@ -141,12 +169,20 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "get_stats"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "get_stats"})),
         )
         .await
         .unwrap();
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "get_top_blocked_domains"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "get_top_blocked_domains"})),
         )
         .await
         .unwrap();
@@ -157,7 +193,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "get_query_log"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "get_query_log"})),
         )
         .await
         .unwrap();
@@ -168,7 +208,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "clear_stats"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "clear_stats"})),
         )
         .await
         .unwrap();
@@ -179,7 +223,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "clear_query_log"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "clear_query_log"})),
         )
         .await
         .unwrap();
@@ -192,7 +240,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "get_query_log_config"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "get_query_log_config"})),
         )
         .await
         .unwrap();
@@ -203,7 +255,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "set_query_log_config", "enabled": false})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "set_query_log_config", "enabled": false})),
         )
         .await
         .unwrap();
@@ -218,7 +274,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "get_version_info"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "get_version_info"})),
         )
         .await
         .unwrap();
@@ -229,7 +289,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "update_adguard_home"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "update_adguard_home"})),
         )
         .await
         .unwrap();
@@ -321,7 +385,11 @@ async fn test_system_tools() {
         .await;
 
     let resp = registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "create_backup"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "create_backup"})),
         )
         .await
         .unwrap();
@@ -336,7 +404,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "restart_service"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "restart_service"})),
         )
         .await
         .unwrap();
@@ -347,7 +419,11 @@ async fn test_system_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "restart_service", "force": true})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "restart_service", "force": true})),
         )
         .await
         .unwrap();
@@ -488,7 +564,11 @@ async fn test_system_tools() {
     std::fs::write(&backup_path, json).unwrap();
 
     registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "restore_backup", "file_path": backup_path})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "restore_backup", "file_path": backup_path})),
         )
         .await
         .unwrap();
@@ -586,7 +666,11 @@ async fn test_backup_with_metadata() {
         .await;
 
     let resp = registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "create_backup", "description": "My Backup"})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "create_backup", "description": "My Backup"})),
         )
         .await
         .unwrap();
@@ -763,7 +847,11 @@ async fn test_restore_backup_version_mismatch() {
 
     // 1. Minor mismatch (should succeed with warning)
     let res = registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "restore_backup", "file_path": backup_path})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "restore_backup", "file_path": backup_path})),
         )
         .await;
     assert!(res.is_ok());
@@ -775,7 +863,11 @@ async fn test_restore_backup_version_mismatch() {
     std::fs::write(&backup_path, json_major).unwrap();
 
     let res_major = registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "restore_backup", "file_path": backup_path})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "restore_backup", "file_path": backup_path})),
         )
         .await;
 
@@ -956,7 +1048,11 @@ async fn test_restore_backup_diff() {
     std::fs::write(&backup_path, json).unwrap();
 
     let res = registry
-        .call_tool("manage_system", &client, &config, Some(json!({"action": "restore_backup_diff", "file_path": backup_path})),
+        .call_tool(
+            "manage_system",
+            &client,
+            &config,
+            Some(json!({"action": "restore_backup_diff", "file_path": backup_path})),
         )
         .await
         .unwrap();
@@ -1128,7 +1224,11 @@ async fn test_sync_instances_tool() {
     // Call tool with ad-hoc replica (targeting the same mock server)
     let replica_url = format!("http://{}", server.uri().replace("http://", ""));
     let res = registry
-        .call_tool("sync_instances", &client, &config, Some(json!({
+        .call_tool(
+            "sync_instances",
+            &client,
+            &config,
+            Some(json!({
                 "replicas": [{"url": replica_url, "api_key": "test"}],
                 "mode": "additive-merge"
             })),
@@ -1155,7 +1255,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_protection", &client, &config, Some(json!({"action": "toggle_feature", "feature": "global", "enabled": true})),
+        .call_tool(
+            "manage_protection",
+            &client,
+            &config,
+            Some(json!({"action": "toggle_feature", "feature": "global", "enabled": true})),
         )
         .await
         .unwrap();
@@ -1166,7 +1270,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_protection", &client, &config, Some(json!({"action": "toggle_feature", "feature": "safe_search", "enabled": true})),
+        .call_tool(
+            "manage_protection",
+            &client,
+            &config,
+            Some(json!({"action": "toggle_feature", "feature": "safe_search", "enabled": true})),
         )
         .await
         .unwrap();
@@ -1177,7 +1285,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_protection", &client, &config, Some(json!({"action": "toggle_feature", "feature": "safe_browsing", "enabled": true})),
+        .call_tool(
+            "manage_protection",
+            &client,
+            &config,
+            Some(json!({"action": "toggle_feature", "feature": "safe_browsing", "enabled": true})),
         )
         .await
         .unwrap();
@@ -1188,7 +1300,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_protection", &client, &config, Some(
+        .call_tool(
+            "manage_protection",
+            &client,
+            &config,
+            Some(
                 json!({"action": "toggle_feature", "feature": "parental_control", "enabled": true}),
             ),
         )
@@ -1217,7 +1333,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_protection", &client, &config, Some(json!({"action": "get_config"})),
+        .call_tool(
+            "manage_protection",
+            &client,
+            &config,
+            Some(json!({"action": "get_config"})),
         )
         .await
         .unwrap();
@@ -1233,7 +1353,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_protection", &client, &config, Some(json!({
+        .call_tool(
+            "manage_protection",
+            &client,
+            &config,
+            Some(json!({
                 "action": "set_config",
                 "safe_search": {"enabled": true},
                 "parental_control": {"enabled": true}
@@ -1251,7 +1375,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_protection", &client, &config, Some(json!({"action": "get_tls_config"})),
+        .call_tool(
+            "manage_protection",
+            &client,
+            &config,
+            Some(json!({"action": "get_tls_config"})),
         )
         .await
         .unwrap();
@@ -1262,7 +1390,11 @@ async fn test_protection_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_protection", &client, &config, Some(json!({"action": "set_tls_config", "enabled": true})),
+        .call_tool(
+            "manage_protection",
+            &client,
+            &config,
+            Some(json!({"action": "set_tls_config", "enabled": true})),
         )
         .await
         .unwrap();
@@ -1279,7 +1411,11 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "list_filters"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "list_filters"})),
         )
         .await
         .unwrap();
@@ -1290,7 +1426,11 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "add_filter", "name": "a", "url": "b"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "add_filter", "name": "a", "url": "b"})),
         )
         .await
         .unwrap();
@@ -1301,25 +1441,41 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "toggle_filter", "identifier": "a", "enabled": true})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "toggle_filter", "identifier": "a", "enabled": true})),
         )
         .await
         .unwrap();
     // Test filter not found
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "toggle_filter", "identifier": "not-found", "enabled": true})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "toggle_filter", "identifier": "not-found", "enabled": true})),
         )
         .await
         .unwrap();
 
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "update_filter", "identifier": "a", "new_name": "c"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "update_filter", "identifier": "a", "new_name": "c"})),
         )
         .await
         .unwrap();
     // Test filter not found
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "update_filter", "identifier": "not-found", "new_name": "c"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "update_filter", "identifier": "not-found", "new_name": "c"})),
         )
         .await
         .unwrap();
@@ -1330,19 +1486,31 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "remove_filter", "identifier": "a"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "remove_filter", "identifier": "a"})),
         )
         .await
         .unwrap();
     // Test filter not found
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "remove_filter", "identifier": "not-found"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "remove_filter", "identifier": "not-found"})),
         )
         .await
         .unwrap();
 
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "list_custom_rules"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "list_custom_rules"})),
         )
         .await
         .unwrap();
@@ -1353,30 +1521,50 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "set_custom_rules", "rules": ["a"]})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "set_custom_rules", "rules": ["a"]})),
         )
         .await
         .unwrap();
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "add_custom_rule", "rule": "new"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "add_custom_rule", "rule": "new"})),
         )
         .await
         .unwrap();
     // Test rule already exists
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "add_custom_rule", "rule": "rule1"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "add_custom_rule", "rule": "rule1"})),
         )
         .await
         .unwrap();
 
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "remove_custom_rule", "rule": "rule1"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "remove_custom_rule", "rule": "rule1"})),
         )
         .await
         .unwrap();
     // Test rule not found
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "remove_custom_rule", "rule": "not-found"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "remove_custom_rule", "rule": "not-found"})),
         )
         .await
         .unwrap();
@@ -1392,7 +1580,11 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "list_blocked_services"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "list_blocked_services"})),
         )
         .await
         .unwrap();
@@ -1414,7 +1606,11 @@ async fn test_filtering_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_filtering", &client, &config, Some(json!({"action": "check_host", "domain": "a"})),
+        .call_tool(
+            "manage_filtering",
+            &client,
+            &config,
+            Some(json!({"action": "check_host", "domain": "a"})),
         )
         .await
         .unwrap();
@@ -1436,12 +1632,20 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "list_clients"})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "list_clients"})),
         )
         .await
         .unwrap();
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "get_client_info", "identifier": "Test Client"})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "get_client_info", "identifier": "Test Client"})),
         )
         .await
         .unwrap();
@@ -1452,7 +1656,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "add_client", "name": "a", "ids": ["b"]})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "add_client", "name": "a", "ids": ["b"]})),
         )
         .await
         .unwrap();
@@ -1463,7 +1671,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "update_client", "old_name": "Test Client", "name": "New"})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "update_client", "old_name": "Test Client", "name": "New"})),
         )
         .await
         .unwrap();
@@ -1474,7 +1686,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "delete_client", "name": "a"})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "delete_client", "name": "a"})),
         )
         .await
         .unwrap();
@@ -1485,7 +1701,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "get_activity_report", "identifier": "a"})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "get_activity_report", "identifier": "a"})),
         )
         .await
         .unwrap();
@@ -1498,7 +1718,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "get_access_list"})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "get_access_list"})),
         )
         .await
         .unwrap();
@@ -1509,7 +1733,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "update_access_list", "allowed_clients": ["a"]})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "update_access_list", "allowed_clients": ["a"]})),
         )
         .await
         .unwrap();
@@ -1522,7 +1750,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "list_dhcp_leases"})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "list_dhcp_leases"})),
         )
         .await
         .unwrap();
@@ -1533,7 +1765,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "add_static_lease", "mac": "a", "ip": "b", "hostname": "c"})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "add_static_lease", "mac": "a", "ip": "b", "hostname": "c"})),
         )
         .await
         .unwrap();
@@ -1544,7 +1780,11 @@ async fn test_clients_tools() {
         .mount(&server)
         .await;
     registry
-        .call_tool("manage_clients", &client, &config, Some(json!({"action": "remove_static_lease", "mac": "a", "ip": "b", "hostname": "c"})),
+        .call_tool(
+            "manage_clients",
+            &client,
+            &config,
+            Some(json!({"action": "remove_static_lease", "mac": "a", "ip": "b", "hostname": "c"})),
         )
         .await
         .unwrap();

@@ -269,18 +269,27 @@ impl AppConfig {
         Ok(())
     }
 
-    pub fn get_instance(&self, name_or_index: Option<&str>) -> std::result::Result<&InstanceConfig, String> {
+    pub fn get_instance(
+        &self,
+        name_or_index: Option<&str>,
+    ) -> std::result::Result<&InstanceConfig, String> {
         match name_or_index {
-            None => self.instances.get(0).ok_or_else(|| "No instances configured".to_string()),
+            None => self
+                .instances
+                .first()
+                .ok_or_else(|| "No instances configured".to_string()),
             Some(s) => {
                 // Try as index
-                if let Ok(idx) = s.parse::<usize>() {
-                    if let Some(inst) = self.instances.get(idx) {
-                        return Ok(inst);
-                    }
+                if let Some(inst) = s
+                    .parse::<usize>()
+                    .ok()
+                    .and_then(|idx| self.instances.get(idx))
+                {
+                    return Ok(inst);
                 }
                 // Try as name
-                self.instances.iter()
+                self.instances
+                    .iter()
                     .find(|i| i.name.as_deref() == Some(s))
                     .ok_or_else(|| format!("Instance not found: {}", s))
             }
@@ -610,8 +619,10 @@ no_verify_ssl = false
 
     #[test]
     fn test_config_validation() {
-        let mut config = AppConfig::default();
-        config.instances = vec![];
+        let mut config = AppConfig {
+            instances: vec![],
+            ..Default::default()
+        };
         // Default has adguard_host = localhost, so it should validate by creating a default instance
         assert!(config.validate().is_ok());
         assert_eq!(config.instances.len(), 1);

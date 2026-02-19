@@ -38,7 +38,11 @@ pub fn register(registry: &mut ToolRegistry) {
     );
 }
 
-async fn sync_instances(client: &AdGuardClient, config: &crate::config::AppConfig, args: Option<Value>) -> Result<Value> {
+async fn sync_instances(
+    client: &AdGuardClient,
+    config: &crate::config::AppConfig,
+    args: Option<Value>,
+) -> Result<Value> {
     let mode = args
         .as_ref()
         .and_then(|a| a.get("mode"))
@@ -84,7 +88,7 @@ async fn sync_instances(client: &AdGuardClient, config: &crate::config::AppConfi
         let url = replica_config.url.clone();
         let _parsed_url =
             url::Url::parse(&url).map_err(|e| crate::error::Error::Config(e.to_string()))?;
-        
+
         let replica_instance = crate::config::InstanceConfig {
             name: Some("replica".to_string()),
             url: url.clone(),

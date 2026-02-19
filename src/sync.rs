@@ -51,7 +51,10 @@ impl SyncState {
         }
 
         let mut interval = interval(Duration::from_secs(config.sync_interval_seconds));
-        let master_instance = config.get_instance(None).expect("No instances configured").clone();
+        let master_instance = config
+            .get_instance(None)
+            .expect("No instances configured")
+            .clone();
         let master_client = AdGuardClient::new(master_instance);
 
         loop {

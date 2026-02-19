@@ -17,10 +17,7 @@ pub struct McpServer {
 }
 
 impl McpServer {
-    pub fn new(
-        registry: ToolRegistry,
-        config: AppConfig,
-    ) -> (Self, mpsc::Receiver<Notification>) {
+    pub fn new(registry: ToolRegistry, config: AppConfig) -> (Self, mpsc::Receiver<Notification>) {
         Self::with_registry(Arc::new(Mutex::new(registry)), config)
     }
 
@@ -173,7 +170,8 @@ impl McpServer {
                     self.handle_manage_tools(args).await
                 } else {
                     // 1. Extract instance
-                    let instance_name = args.as_ref()
+                    let instance_name = args
+                        .as_ref()
                         .and_then(|a| a.get("instance"))
                         .and_then(|i| i.as_str());
 

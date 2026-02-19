@@ -617,21 +617,23 @@ async fn test_handle_unknown_method() {
 #[tokio::test]
 async fn test_handle_call_tool_with_instance() {
     use crate::config::InstanceConfig;
-    let mut config = AppConfig::default();
-    config.instances = vec![
-        InstanceConfig {
-            name: Some("primary".to_string()),
-            url: "http://primary:80".to_string(),
-            ..Default::default()
-        },
-        InstanceConfig {
-            name: Some("secondary".to_string()),
-            url: "http://secondary:80".to_string(),
-            ..Default::default()
-        },
-    ];
+    let mut config = AppConfig {
+        instances: vec![
+            InstanceConfig {
+                name: Some("primary".to_string()),
+                url: "http://primary:80".to_string(),
+                ..Default::default()
+            },
+            InstanceConfig {
+                name: Some("secondary".to_string()),
+                url: "http://secondary:80".to_string(),
+                ..Default::default()
+            },
+        ],
+        ..Default::default()
+    };
     config.validate().unwrap();
-    
+
     let mut registry = ToolRegistry::new(&config);
     crate::tools::system::register(&mut registry);
     let (server, _rx) = McpServer::with_registry(Arc::new(std::sync::Mutex::new(registry)), config);
@@ -649,12 +651,17 @@ async fn test_handle_call_tool_with_instance() {
             }
         })),
     };
-    
+
     // We expect a connection error because http://secondary:80 doesn't exist,
     // but the point is that it TRIED to connect to "secondary".
     let resp = server.handle_request(req).await;
     if let Err(e) = resp {
         let err_str = e.to_string();
-        assert!(err_str.contains("secondary") || err_str.contains("dns") || err_str.contains("refused") || err_str.contains("connect"));
+        assert!(
+            err_str.contains("secondary")
+                || err_str.contains("dns")
+                || err_str.contains("refused")
+                || err_str.contains("connect")
+        );
     }
 }

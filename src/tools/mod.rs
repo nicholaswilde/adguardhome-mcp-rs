@@ -59,7 +59,9 @@ impl ToolRegistry {
             name: name.to_string(),
             description: description.to_string(),
             input_schema,
-            handler: Arc::new(move |client, config, params| Box::pin(handler(client, config, params))),
+            handler: Arc::new(move |client, config, params| {
+                Box::pin(handler(client, config, params))
+            }),
         };
         self.tools.insert(name.to_string(), tool);
 
@@ -75,16 +77,18 @@ impl ToolRegistry {
         for tool_name in &self.enabled_tools {
             if let Some(tool) = self.tools.get(tool_name) {
                 let mut input_schema = tool.input_schema.clone();
-                if let Some(obj) = input_schema.as_object_mut() {
-                    if let Some(properties) = obj.get_mut("properties").and_then(|p| p.as_object_mut()) {
-                        properties.insert(
-                            "instance".to_string(),
-                            serde_json::json!({
-                                "type": "string",
-                                "description": "The name or index of the AdGuard Home instance to target."
-                            }),
-                        );
-                    }
+                if let Some(properties) = input_schema
+                    .as_object_mut()
+                    .and_then(|obj| obj.get_mut("properties"))
+                    .and_then(|p| p.as_object_mut())
+                {
+                    properties.insert(
+                        "instance".to_string(),
+                        serde_json::json!({
+                            "type": "string",
+                            "description": "The name or index of the AdGuard Home instance to target."
+                        }),
+                    );
                 }
 
                 result.push(serde_json::json!({

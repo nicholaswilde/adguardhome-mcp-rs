@@ -36,9 +36,9 @@ Update the internal tool logic and MCP interface to target specific instances.
 ## Phase 3: Verification and Quality
 Ensure system-wide compliance and performance.
 
-- [ ] Task: Integration Testing
-    - [ ] Add a new test case to `tests/docker_integration_test.rs` that uses environment variables to configure two instances (targeting the same container with different "names") and verifies that both can be addressed via the MCP tool.
-- [ ] Task: Quality Gate Verification
-    - [ ] Run `task test:ci` to ensure all tests pass and coverage is >80%.
-    - [ ] Run `task lint` and `cargo clippy`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Verification and Quality' (Protocol in workflow.md)
+- [x] Task: Integration Testing
+    - [x] Add a new test case to `tests/docker_integration_test.rs` that uses environment variables to configure two instances (targeting the same container with different "names") and verifies that both can be addressed via the MCP tool.
+- [x] Task: Quality Gate Verification
+    - [x] Run `task test:ci` to ensure all tests pass and coverage is >80%.
+    - [x] Run `task lint` and `cargo clippy`.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Verification and Quality' (Protocol in workflow.md)

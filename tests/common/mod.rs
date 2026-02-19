@@ -192,8 +192,7 @@ impl TestContext {
             use adguardhome_mcp_rs::server::http::run_http_server;
             use adguardhome_mcp_rs::server::mcp::McpServer;
 
-            let (server, rx) =
-                McpServer::with_registry(registry.clone(), config.clone());
+            let (server, rx) = McpServer::with_registry(registry.clone(), config.clone());
 
             let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
             let port = listener.local_addr()?.port();
@@ -231,7 +230,9 @@ impl TestContext {
         args: serde_json::Value,
     ) -> Result<serde_json::Value> {
         match self.transport {
-            Transport::Stdio => call_mcp_tool(&self.registry, &self.client, &self.config, name, args).await,
+            Transport::Stdio => {
+                call_mcp_tool(&self.registry, &self.client, &self.config, name, args).await
+            }
             Transport::Http => {
                 let url = self.http_url.as_ref().expect("HTTP URL not set");
                 let client = reqwest::Client::new();

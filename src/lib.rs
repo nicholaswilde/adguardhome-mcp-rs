@@ -7,7 +7,6 @@ pub mod sync;
 pub mod tools;
 
 pub async fn run(args: Vec<String>) -> anyhow::Result<()> {
-    
     use crate::config::AppConfig;
     use crate::server::http::run_http_server;
     use crate::server::mcp::McpServer;
@@ -54,7 +53,6 @@ pub async fn run(args: Vec<String>) -> anyhow::Result<()> {
     Ok(())
 }
 
-#[cfg(test)]
 pub mod test_utils {
     use std::sync::Mutex;
     pub static ENV_LOCK: Mutex<()> = Mutex::new(());

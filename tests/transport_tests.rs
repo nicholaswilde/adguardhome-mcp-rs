@@ -105,7 +105,10 @@ users:
         adguard_port,
         ..Default::default()
     };
-    config_no_auth.validate().unwrap(); let client_no_auth = adguardhome_mcp_rs::adguard::AdGuardClient::new(config_no_auth.get_instance(None).unwrap().clone());
+    config_no_auth.validate().unwrap();
+    let client_no_auth = adguardhome_mcp_rs::adguard::AdGuardClient::new(
+        config_no_auth.get_instance(None).unwrap().clone(),
+    );
 
     let mut success = false;
     for _ in 0..5 {
@@ -132,7 +135,10 @@ users:
         adguard_password: Some("password".to_string()),
         ..Default::default()
     };
-    config_auth.validate().unwrap(); let client_auth = adguardhome_mcp_rs::adguard::AdGuardClient::new(config_auth.get_instance(None).unwrap().clone());
+    config_auth.validate().unwrap();
+    let client_auth = adguardhome_mcp_rs::adguard::AdGuardClient::new(
+        config_auth.get_instance(None).unwrap().clone(),
+    );
 
     let status = client_auth.get_status().await?;
     assert!(!status.version.is_empty());
