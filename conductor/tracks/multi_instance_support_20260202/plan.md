@@ -1,6 +1,6 @@
 # Implementation Plan: Multi-Instance Support
 
-## Phase 1: Configuration Refactoring
+## Phase 1: Configuration Refactoring [checkpoint: c7e0b01c771e60dad6c408f9be68cf66900966f5]
 Update the configuration system to handle multiple instances from both files and environment variables.
 
 - [~] Task: Update Configuration Models
