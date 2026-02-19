@@ -30,7 +30,8 @@ pub fn register(registry: &mut ToolRegistry) {
                 "anonymize_client_ip": { "type": "boolean" },
                 "allowed_clients": { "type": "array", "items": { "type": "string" } },
                 "disallowed_clients": { "type": "array", "items": { "type": "string" } },
-                "file_path": { "type": "string", "description": "For restore_backup" }
+                "file_path": { "type": "string", "description": "For restore_backup" },
+                "description": { "type": "string", "description": "Optional description for the backup" }
             },
             "required": ["action"]
         }),
@@ -135,7 +136,8 @@ pub fn register(registry: &mut ToolRegistry) {
                         Ok(serde_json::json!({ "content": [{ "type": "text", "text": "Update triggered" }] }))
                     }
                     "create_backup" => {
-                        let state = SyncState::fetch(&client).await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
+                        let description = params["description"].as_str().map(|s| s.to_string());
+                        let state = SyncState::fetch_full(&client, description).await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
                         let json = serde_json::to_vec_pretty(&state)?;
 
                         let backup_dir = PathBuf::from("backups");
@@ -148,6 +150,7 @@ pub fn register(registry: &mut ToolRegistry) {
 
                         let mut file = fs::File::create(&file_path).await?;
                         file.write_all(&json).await?;
+                        file.sync_all().await?;
 
                         Ok(serde_json::json!({ "content": [{ "type": "text", "text": format!("Backup: {}", file_path.display()) }] }))
                     }
@@ -155,6 +158,26 @@ pub fn register(registry: &mut ToolRegistry) {
                         let path = params["file_path"].as_str().unwrap_or_default();
                         let json = fs::read(path).await?;
                         let state: SyncState = serde_json::from_slice(&json)?;
+
+                        // Version safety check
+                        if let Some(ref metadata) = state.metadata {
+                            let target_status = client.get_status().await?;
+                            let backup_ver_str = metadata.version.trim_start_matches('v');
+                            let target_ver_str = target_status.version.trim_start_matches('v');
+
+                            if let (Ok(b_ver), Ok(t_ver)) = (semver::Version::parse(backup_ver_str), semver::Version::parse(target_ver_str)) {
+                                if b_ver.major != t_ver.major {
+                                    return Err(crate::error::Error::Generic(format!(
+                                        "Major version mismatch: Backup is {}, Target is {}. Restoration aborted for safety.",
+                                        metadata.version, target_status.version
+                                    )));
+                                }
+                                if b_ver.minor != t_ver.minor {
+                                    tracing::warn!("Minor version mismatch: Backup is {}, Target is {}. Proceeding with caution.", metadata.version, target_status.version);
+                                }
+                            }
+                        }
+
                         state.push_to_replica(&client, "full-overwrite").await.map_err(|e| crate::error::Error::Generic(e.to_string()))?;
                         Ok(serde_json::json!({ "content": [{ "type": "text", "text": "Backup restored" }] }))
                     }

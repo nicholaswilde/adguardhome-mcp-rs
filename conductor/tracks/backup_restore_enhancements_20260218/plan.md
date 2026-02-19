@@ -17,14 +17,14 @@ Enhance `AdGuardClient` and `SyncState` to include the missing configuration mod
 ## Phase 2: Metadata and Versioning
 Add metadata to the backup JSON and implement version safety checks.
 
-- [ ] Task: Update `SyncState` and `create_backup` logic
-    - [ ] Add `metadata` struct to `SyncState`: `version`, `timestamp`, `description`.
-    - [ ] Update `manage_system` tool's `create_backup` action to accept an optional `description`.
-    - [ ] **TDD:** Write unit tests in `src/tools/tests.rs` for backups with metadata.
-- [ ] Task: Implement version and instance safety checks
-    - [ ] Ensure `restore_backup` checks for the AdGuard Home version in the backup.
-    - [ ] **TDD:** Write unit tests for warning/preventing restoration from a drastically different version.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Metadata and Versioning' (Protocol in workflow.md)
+- [x] Task: Update `SyncState` and `create_backup` logic
+    - [x] Add `metadata` struct to `SyncState`: `version`, `timestamp`, `description`.
+    - [x] Update `manage_system` tool's `create_backup` action to accept an optional `description`.
+    - [x] **TDD:** Write unit tests in `src/tools/tests.rs` for backups with metadata.
+- [x] Task: Implement version and instance safety checks
+    - [x] Ensure `restore_backup` checks for the AdGuard Home version in the backup.
+    - [x] **TDD:** Write unit tests for warning/preventing restoration from a drastically different version.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Metadata and Versioning' (Protocol in workflow.md)
 
 ## Phase 3: Dry Run and Comparison
 Implement the ability to preview changes before a full restoration.

@@ -5,12 +5,21 @@ use crate::adguard::models::{
 };
 use crate::config::AppConfig;
 use anyhow::Result;
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::interval;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BackupMetadata {
+    pub version: String,
+    pub timestamp: String,
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SyncState {
+    pub metadata: Option<BackupMetadata>,
     pub filtering: FilteringConfig,
     pub clients: Vec<AdGuardClientDevice>,
     pub dns: DnsConfig,
@@ -73,6 +82,10 @@ impl SyncState {
     }
 
     pub async fn fetch(client: &AdGuardClient) -> Result<Self> {
+        Self::fetch_full(client, None).await
+    }
+
+    pub async fn fetch_full(client: &AdGuardClient, description: Option<String>) -> Result<Self> {
         let filtering = client.list_filters().await?;
         let clients = client.list_clients().await?;
         let dns = client.get_dns_info().await?;
@@ -87,7 +100,14 @@ impl SyncState {
         let tls = client.get_tls_status().await?;
         let profile_info = client.get_profile_info().await?;
 
+        let metadata = Some(BackupMetadata {
+            version: status.version.clone(),
+            timestamp: Utc::now().to_rfc3339(),
+            description,
+        });
+
         Ok(Self {
+            metadata,
             filtering,
             clients,
             dns,
@@ -238,6 +258,7 @@ mod tests {
 
         // Master state (Empty)
         let master_state = SyncState {
+            metadata: None,
             filtering: FilteringConfig {
                 enabled: true,
                 interval: 1,

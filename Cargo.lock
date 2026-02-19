@@ -8,12 +8,14 @@ version = "0.1.13"
 dependencies = [
  "anyhow",
  "axum",
+ "chrono",
  "clap",
  "config",
  "dashmap",
  "futures",
  "http-body-util",
  "reqwest",
+ "semver",
  "serde",
  "serde_json",
  "tempfile",
@@ -412,8 +414,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fac4744fb15ae8337dc853fee7fb3f4e48c0fbaa23d0afe49c447b4fab126118"
 dependencies = [
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "wasm-bindgen",
  "windows-link",
 ]
 
@@ -2304,6 +2308,12 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
+
+[[package]]
+name = "semver"
+version = "1.0.27"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d767eb0aabc880b29956c35734170f26ed551a859dbd361d140cdbeca61ab1e2"
 
 [[package]]
 name = "serde"
