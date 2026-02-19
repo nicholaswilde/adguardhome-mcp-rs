@@ -1,7 +1,8 @@
 use super::ToolRegistry;
 use crate::adguard::AdGuardClient;
 use crate::adguard::models::{
-    AccessList, DnsConfig, FilteringConfig, ParentalControlConfig, QueryLogConfig, SafeSearchConfig,
+    AccessList, DhcpStatus, DnsConfig, FilteringConfig, ParentalControlConfig, ProfileInfo,
+    QueryLogConfig, SafeSearchConfig, TlsConfig,
 };
 use crate::config::AppConfig;
 use crate::sync::SyncState;
@@ -339,6 +340,28 @@ async fn test_system_tools() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"enabled": true})))
         .mount(&server)
         .await;
+    Mock::given(method("GET"))
+        .and(path("/control/dhcp/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": false, "interface_name": "", "leases": [], "static_leases": []
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/tls/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": false, "server_name": "", "force_https": false, "port_https": 0, "port_dns_over_tls": 0, "port_dns_over_quic": 0,
+            "certificate_chain": "", "private_key": "", "certificate_path": "", "private_key_path": "", "valid_cert": false, "valid_key": false, "valid_pair": false
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/profile"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "name": "admin", "language": "en", "theme": "dark"
+        })))
+        .mount(&server)
+        .await;
 
     let resp = registry
         .call_tool(
@@ -412,6 +435,21 @@ async fn test_system_tools() {
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;
+    Mock::given(method("POST"))
+        .and(path("/control/dhcp/set_config"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/tls/configure"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path("/control/profile/update"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
 
     let backup_file = tempfile::NamedTempFile::new().unwrap();
     let backup_path = backup_file.path().to_str().unwrap().to_string();
@@ -464,11 +502,25 @@ async fn test_system_tools() {
             youtube: true,
         },
         safe_browsing: true,
-        parental_control: ParentalControlConfig {
-            enabled: true,
-            sensitivity: None,
-        },
-    };
+            parental_control: ParentalControlConfig {
+                enabled: true,
+                sensitivity: None,
+            },
+            dhcp: DhcpStatus {
+                enabled: false,
+                interface_name: "".to_string(),
+                v4: None,
+                v6: None,
+                leases: Vec::new(),
+                static_leases: Vec::new(),
+            },
+            tls: TlsConfig::default(),
+            profile_info: ProfileInfo {
+                name: "admin".to_string(),
+                language: "en".to_string(),
+                theme: "dark".to_string(),
+            },
+        };
     let json = serde_json::to_vec_pretty(&state).unwrap();
     std::fs::write(&backup_path, json).unwrap();
 
@@ -553,6 +605,28 @@ async fn test_sync_instances_tool() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({"enabled": true})))
         .mount(&server)
         .await;
+    Mock::given(method("GET"))
+        .and(path("/control/dhcp/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": false, "interface_name": "", "leases": [], "static_leases": []
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/tls/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "enabled": false, "server_name": "", "force_https": false, "port_https": 0, "port_dns_over_tls": 0, "port_dns_over_quic": 0,
+            "certificate_chain": "", "private_key": "", "certificate_path": "", "private_key_path": "", "valid_cert": false, "valid_key": false, "valid_pair": false
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/control/profile"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "name": "admin", "language": "en", "theme": "dark"
+        })))
+        .mount(&server)
+        .await;
 
     // Mock Replica calls
     Mock::given(method("POST"))
@@ -592,6 +666,21 @@ async fn test_sync_instances_tool() {
         .await;
     Mock::given(method("POST"))
         .and(path("/control/protection"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/dhcp/set_config"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/control/tls/configure"))
+        .respond_with(ResponseTemplate::new(200))
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path("/control/profile/update"))
         .respond_with(ResponseTemplate::new(200))
         .mount(&server)
         .await;

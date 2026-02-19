@@ -8,11 +8,11 @@ Enhance `AdGuardClient` and `SyncState` to include the missing configuration mod
 - [x] Task: Update `AdGuardClient` and `models.rs` for new modules
     - [x] Implement `get_dhcp_config`, `set_dhcp_config`, `get_profile_info`, and `set_profile_info`.
     - [x] **TDD:** Write unit tests for the new client methods in `src/adguard/tests.rs`.
-- [ ] Task: Update `SyncState` struct and logic in `src/sync.rs`
-    - [ ] Add fields for `dhcp`, `tls_status` (already has some), and `profile_info`.
-    - [ ] Update `fetch` and `push_to_replica` to include these modules.
-    - [ ] **TDD:** Write unit tests in `src/sync.rs` for fetching and pushing these new modules.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Configuration Expansion' (Protocol in workflow.md)
+- [x] Task: Update `SyncState` struct and logic in `src/sync.rs`
+    - [x] Add fields for `dhcp`, `tls_status` (already has some), and `profile_info`.
+    - [x] Update `fetch` and `push_to_replica` to include these modules.
+    - [x] **TDD:** Write unit tests in `src/sync.rs` for fetching and pushing these new modules.
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Configuration Expansion' (Protocol in workflow.md)
 
 ## Phase 2: Metadata and Versioning
 Add metadata to the backup JSON and implement version safety checks.

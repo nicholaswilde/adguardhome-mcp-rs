@@ -1,7 +1,7 @@
 use crate::adguard::AdGuardClient;
 use crate::adguard::models::{
-    AccessList, AdGuardClientDevice, DnsConfig, DnsRewrite, FilteringConfig, ParentalControlConfig,
-    QueryLogConfig, SafeSearchConfig,
+    AccessList, AdGuardClientDevice, DhcpStatus, DnsConfig, DnsRewrite, FilteringConfig,
+    ParentalControlConfig, ProfileInfo, QueryLogConfig, SafeSearchConfig, TlsConfig,
 };
 use crate::config::AppConfig;
 use anyhow::Result;
@@ -21,6 +21,9 @@ pub struct SyncState {
     pub safe_search: SafeSearchConfig,
     pub safe_browsing: bool,
     pub parental_control: ParentalControlConfig,
+    pub dhcp: DhcpStatus,
+    pub tls: TlsConfig,
+    pub profile_info: ProfileInfo,
 }
 
 impl SyncState {
@@ -80,6 +83,9 @@ impl SyncState {
         let safe_search = client.get_safe_search_settings().await?;
         let status = client.get_status().await?;
         let parental_control = client.get_parental_settings().await?;
+        let dhcp = client.get_dhcp_status().await?;
+        let tls = client.get_tls_status().await?;
+        let profile_info = client.get_profile_info().await?;
 
         Ok(Self {
             filtering,
@@ -92,6 +98,9 @@ impl SyncState {
             safe_search,
             safe_browsing: status.protection_enabled, // Approximation
             parental_control,
+            dhcp,
+            tls,
+            profile_info,
         })
     }
 
@@ -182,6 +191,15 @@ impl SyncState {
         // 9. Sync Protection
         client.set_protection(self.safe_browsing).await?;
 
+        // 10. Sync DHCP Config
+        client.set_dhcp_config(self.dhcp.clone()).await?;
+
+        // 11. Sync TLS Config
+        client.configure_tls(self.tls.clone()).await?;
+
+        // 12. Sync Profile Info
+        client.set_profile_info(self.profile_info.clone()).await?;
+
         Ok(())
     }
 }
@@ -271,6 +289,20 @@ mod tests {
             parental_control: ParentalControlConfig {
                 enabled: true,
                 sensitivity: None,
+            },
+            dhcp: DhcpStatus {
+                enabled: false,
+                interface_name: "".to_string(),
+                v4: None,
+                v6: None,
+                leases: Vec::new(),
+                static_leases: Vec::new(),
+            },
+            tls: TlsConfig::default(),
+            profile_info: ProfileInfo {
+                name: "admin".to_string(),
+                language: "en".to_string(),
+                theme: "dark".to_string(),
             },
         };
 
@@ -407,6 +439,24 @@ mod tests {
 
         Mock::given(method("POST"))
             .and(path("/control/protection"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/control/dhcp/set_config"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("POST"))
+            .and(path("/control/tls/configure"))
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&server)
+            .await;
+
+        Mock::given(method("PUT"))
+            .and(path("/control/profile/update"))
             .respond_with(ResponseTemplate::new(200))
             .mount(&server)
             .await;
