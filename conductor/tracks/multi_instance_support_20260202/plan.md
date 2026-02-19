@@ -17,7 +17,7 @@ Update the configuration system to handle multiple instances from both files and
     - [x] **TDD:** Write unit tests for various valid and invalid multi-instance configurations.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Configuration Refactoring' (Protocol in workflow.md)
 
-## Phase 2: Core and MCP Logic Update
+## Phase 2: Core and MCP Logic Update [checkpoint: 6ee77f61494142d32601751ef720a7f8a65010e4]
 Update the internal tool logic and MCP interface to target specific instances.
 
 - [x] Task: Update MCP Tool Definitions
