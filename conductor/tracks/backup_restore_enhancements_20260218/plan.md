@@ -14,7 +14,7 @@ Enhance `AdGuardClient` and `SyncState` to include the missing configuration mod
     - [x] **TDD:** Write unit tests in `src/sync.rs` for fetching and pushing these new modules.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Configuration Expansion' (Protocol in workflow.md)
 
-## Phase 2: Metadata and Versioning
+## Phase 2: Metadata and Versioning [checkpoint: f9a49c0]
 Add metadata to the backup JSON and implement version safety checks.
 
 - [x] Task: Update `SyncState` and `create_backup` logic
