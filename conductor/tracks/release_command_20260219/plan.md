@@ -12,7 +12,7 @@ Establish the command structure and implement the core version bumping logic.
     - [x] Update `Cargo.toml` with the new version string.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Command Definition & Versioning Logic' (Protocol in workflow.md)
 
-## Phase 2: Git Operations & Maintenance
+## Phase 2: Git Operations & Maintenance [checkpoint: 800fdb88e9f915b10c7ea8e2df19037ca6221cc1]
 Integrate git commands and ensure all project artifacts are kept in sync.
 
 - [x] Task: Implement Git Commit & Tag
