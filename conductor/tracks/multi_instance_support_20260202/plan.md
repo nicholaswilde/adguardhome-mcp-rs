@@ -3,19 +3,19 @@
 ## Phase 1: Configuration Refactoring
 Update the configuration system to handle multiple instances from both files and environment variables.
 
-- [ ] Task: Update Configuration Models
+- [~] Task: Update Configuration Models
     - [ ] Define `InstanceConfig` struct in `src/config.rs` with fields: `name`, `url`, `api_key`, `username`, `password`, `no_verify_ssl`.
     - [ ] Update `Config` struct to include `instances: Vec<InstanceConfig>`.
     - [ ] **TDD:** Write unit tests in `src/config.rs` for deserializing a list of instances from TOML.
-- [ ] Task: Implement Environment Variable Parsing
-    - [ ] Implement logic to parse `ADGUARD__INSTANCES__<N>__<FIELD>` environment variables.
-    - [ ] Ensure env-defined instances are merged/appended to file-defined instances.
-    - [ ] **TDD:** Write unit tests verifying that environment variables are correctly parsed and indices are respected.
-- [ ] Task: Implementation Validation
-    - [ ] Implement `validate()` logic for the new configuration structure.
-    - [ ] Ensure at least one instance is configured and has required fields (URL and Auth).
-    - [ ] **TDD:** Write unit tests for various valid and invalid multi-instance configurations.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Configuration Refactoring' (Protocol in workflow.md)
+- [x] Task: Implement Environment Variable Parsing
+    - [x] Implement logic to parse `ADGUARD__INSTANCES__<N>__<FIELD>` environment variables.
+    - [x] Ensure env-defined instances are merged/appended to file-defined instances.
+    - [x] **TDD:** Write unit tests verifying that environment variables are correctly parsed and indices are respected.
+- [x] Task: Implementation Validation
+    - [x] Implement `validate()` logic for the new configuration structure.
+    - [x] Ensure at least one instance is configured and has required fields (URL and Auth).
+    - [x] **TDD:** Write unit tests for various valid and invalid multi-instance configurations.
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Configuration Refactoring' (Protocol in workflow.md)
 
 ## Phase 2: Core and MCP Logic Update
 Update the internal tool logic and MCP interface to target specific instances.

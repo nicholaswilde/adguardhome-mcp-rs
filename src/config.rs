@@ -23,12 +23,24 @@ pub struct AppConfig {
     pub log_level: String,
     #[serde(default = "default_no_verify_ssl")]
     pub no_verify_ssl: bool,
+    #[serde(default, deserialize_with = "deserialize_instances")]
+    pub instances: Vec<InstanceConfig>,
     #[serde(default)]
     pub replicas: Vec<ReplicaConfig>,
     #[serde(default = "default_sync_interval")]
     pub sync_interval_seconds: u64,
     #[serde(default = "default_sync_mode")]
     pub default_sync_mode: String,
+}
+
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq, Default)]
+pub struct InstanceConfig {
+    pub name: Option<String>,
+    pub url: String,
+    pub api_key: Option<String>,
+    pub username: Option<String>,
+    pub password: Option<String>,
+    pub no_verify_ssl: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
@@ -78,11 +90,56 @@ impl Default for AppConfig {
             http_auth_token: None,
             log_level: "info".to_string(),
             no_verify_ssl: true,
+            instances: Vec::new(),
             replicas: Vec::new(),
             sync_interval_seconds: 3600,
             default_sync_mode: "additive-merge".to_string(),
         }
     }
+}
+
+fn deserialize_instances<'de, D>(deserializer: D) -> Result<Vec<InstanceConfig>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::{MapAccess, SeqAccess, Visitor};
+    use std::collections::BTreeMap;
+    use std::fmt;
+
+    struct InstancesVisitor;
+
+    impl<'de> Visitor<'de> for InstancesVisitor {
+        type Value = Vec<InstanceConfig>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a sequence or a map")
+        }
+
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: SeqAccess<'de>,
+        {
+            let mut vec = Vec::new();
+            while let Some(value) = seq.next_element()? {
+                vec.push(value);
+            }
+            Ok(vec)
+        }
+
+        fn visit_map<M>(self, mut map: M) -> Result<Self::Value, M::Error>
+        where
+            M: MapAccess<'de>,
+        {
+            let mut btree_map = BTreeMap::new();
+            while let Some((key, value)) = map.next_entry::<String, InstanceConfig>()? {
+                btree_map.insert(key, value);
+            }
+            // Sort by key if they are numeric to maintain order
+            Ok(btree_map.into_values().collect())
+        }
+    }
+
+    deserializer.deserialize_any(InstancesVisitor)
 }
 
 impl AppConfig {
@@ -171,7 +228,45 @@ impl AppConfig {
             builder = builder.set_override("log_level", level.as_str())?;
         }
 
-        builder.build()?.try_deserialize()
+        let mut config: AppConfig = builder.build()?.try_deserialize()?;
+        config.validate().map_err(ConfigError::Message)?;
+        Ok(config)
+    }
+
+    pub fn validate(&mut self) -> Result<(), String> {
+        if self.instances.is_empty() {
+            // Synthesis: if instances is empty, but host is present, create a default instance.
+            if !self.adguard_host.is_empty() {
+                let url = if self.adguard_host.starts_with("http") {
+                    self.adguard_host.clone()
+                } else {
+                    format!("http://{}:{}", self.adguard_host, self.adguard_port)
+                };
+
+                self.instances.push(InstanceConfig {
+                    name: Some("default".to_string()),
+                    url,
+                    username: self.adguard_username.clone(),
+                    password: self.adguard_password.clone(),
+                    no_verify_ssl: Some(self.no_verify_ssl),
+                    api_key: None,
+                });
+            }
+        }
+
+        if self.instances.is_empty() {
+            return Err("At least one AdGuard Home instance must be configured".to_string());
+        }
+
+        for (i, inst) in self.instances.iter().enumerate() {
+            if inst.url.is_empty() {
+                return Err(format!("Instance {} is missing URL", i));
+            }
+            // Ensure some form of auth is present, although it's not strictly required by AGH itself
+            // it's highly recommended and expected by this MCP server.
+        }
+
+        Ok(())
     }
 }
 
@@ -428,5 +523,87 @@ api_key = "key2"
         assert_eq!(config.replicas.len(), 1);
         assert_eq!(config.replicas[0].url, "http://env-replica.com");
         assert_eq!(config.replicas[0].api_key, "env-key");
+    }
+
+    #[test]
+    fn test_multi_instance_loading() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let mut file = tempfile::Builder::new().suffix(".toml").tempfile().unwrap();
+        writeln!(
+            file,
+            r#"
+adguard_host = "primary.com"
+
+[[instances]]
+name = "primary"
+url = "http://192.168.1.1"
+api_key = "key1"
+
+[[instances]]
+name = "secondary"
+url = "http://192.168.1.2"
+username = "admin"
+password = "password"
+no_verify_ssl = false
+"#
+        )
+        .unwrap();
+        let path = file.path().to_str().unwrap().to_string();
+
+        let config = AppConfig::load(Some(path), vec![]).unwrap();
+        assert_eq!(config.instances.len(), 2);
+        assert_eq!(config.instances[0].name, Some("primary".to_string()));
+        assert_eq!(config.instances[0].url, "http://192.168.1.1");
+        assert_eq!(config.instances[0].api_key, Some("key1".to_string()));
+        assert_eq!(config.instances[1].name, Some("secondary".to_string()));
+        assert_eq!(config.instances[1].url, "http://192.168.1.2");
+        assert_eq!(config.instances[1].username, Some("admin".to_string()));
+        assert_eq!(config.instances[1].password, Some("password".to_string()));
+        assert_eq!(config.instances[1].no_verify_ssl, Some(false));
+    }
+
+    #[test]
+    fn test_multi_instance_env_loading() {
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        unsafe {
+            std::env::set_var("ADGUARD_HOST", "primary.com");
+            std::env::set_var("ADGUARD_INSTANCES__0__NAME", "env-primary");
+            std::env::set_var("ADGUARD_INSTANCES__0__URL", "http://10.0.0.1");
+            std::env::set_var("ADGUARD_INSTANCES__1__NAME", "env-secondary");
+            std::env::set_var("ADGUARD_INSTANCES__1__URL", "http://10.0.0.2");
+        }
+
+        let config = AppConfig::load(None, vec![]).unwrap();
+
+        unsafe {
+            std::env::remove_var("ADGUARD_HOST");
+            std::env::remove_var("ADGUARD_INSTANCES__0__NAME");
+            std::env::remove_var("ADGUARD_INSTANCES__0__URL");
+            std::env::remove_var("ADGUARD_INSTANCES__1__NAME");
+            std::env::remove_var("ADGUARD_INSTANCES__1__URL");
+        }
+
+        assert_eq!(config.instances.len(), 2);
+        assert_eq!(config.instances[0].name, Some("env-primary".to_string()));
+        assert_eq!(config.instances[0].url, "http://10.0.0.1");
+        assert_eq!(config.instances[1].name, Some("env-secondary".to_string()));
+        assert_eq!(config.instances[1].url, "http://10.0.0.2");
+    }
+
+    #[test]
+    fn test_config_validation() {
+        let mut config = AppConfig::default();
+        config.instances = vec![];
+        // Default has adguard_host = localhost, so it should validate by creating a default instance
+        assert!(config.validate().is_ok());
+        assert_eq!(config.instances.len(), 1);
+        assert_eq!(config.instances[0].name, Some("default".to_string()));
+
+        // Invalid instance (missing URL)
+        config.instances = vec![InstanceConfig {
+            url: "".to_string(),
+            ..Default::default()
+        }];
+        assert!(config.validate().is_err());
     }
 }
