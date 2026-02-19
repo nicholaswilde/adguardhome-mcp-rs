@@ -4,7 +4,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [ ] **Track: Gemini CLI Release Command**
+- [~] **Track: Gemini CLI Release Command**
 *Link: [./tracks/release_command_20260219/](./tracks/release_command_20260219/)*
 
 ## Completed Tracks

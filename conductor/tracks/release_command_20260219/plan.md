@@ -3,14 +3,14 @@
 ## Phase 1: Command Definition & Versioning Logic
 Establish the command structure and implement the core version bumping logic.
 
-- [ ] Task: Create Command Definition
-    - [ ] Create the `.gemini/commands/release.toml` file with basic metadata.
-- [ ] Task: Implement Version Bumping
-    - [ ] Implement logic to read `Cargo.toml`.
-    - [ ] Implement regex or parsing logic to extract the current version.
-    - [ ] Implement logic to increment the patch version.
-    - [ ] Update `Cargo.toml` with the new version string.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Command Definition & Versioning Logic' (Protocol in workflow.md)
+- [x] Task: Create Command Definition
+    - [x] Create the `.gemini/commands/release.toml` file with basic metadata.
+- [x] Task: Implement Version Bumping
+    - [x] Implement logic to read `Cargo.toml`.
+    - [x] Implement regex or parsing logic to extract the current version.
+    - [x] Implement logic to increment the patch version.
+    - [x] Update `Cargo.toml` with the new version string.
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Command Definition & Versioning Logic' (Protocol in workflow.md)
 
 ## Phase 2: Git Operations & Maintenance
 Integrate git commands and ensure all project artifacts are kept in sync.
