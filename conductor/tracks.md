@@ -4,6 +4,9 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
+- [ ] **Track: Gemini CLI Release Command**
+*Link: [./tracks/release_command_20260219/](./tracks/release_command_20260219/)*
+
 ## Completed Tracks
 
 - [x] [Backup & Restore Enhancements](./archive/backup_restore_enhancements_20260218/index.md) - Full configuration coverage, metadata versioning, dry-run comparisons, and robust error tracking.
