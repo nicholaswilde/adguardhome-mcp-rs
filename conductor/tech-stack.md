@@ -13,6 +13,8 @@
 - **Axum:** A web framework for Rust, used to implement the HTTP/SSE transport.
 - **DashMap:** A high-performance concurrent hash map, used for session management.
 - **UUID:** Used for generating unique session identifiers.
+- **Chrono:** Used for handling timestamps in system backups and logs.
+- **Semver:** Used for safe version comparison during system restorations.
 
 ## Networking and API Interaction
 - **Reqwest:** An ergonomic and powerful HTTP client used to interact with the AdGuard Home REST API.

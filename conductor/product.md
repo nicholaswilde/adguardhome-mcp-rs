@@ -26,7 +26,7 @@ An AdGuard Home MCP server written in Rust to allow AI models to interact with a
 - System Maintenance & Control: Tools to clear historical statistics, reset query logs, and restart the AdGuard Home service for privacy and management.
 - Query Log Management: Tools to configure DNS query log retention, anonymization, and client-specific logging settings.
 - **Update & System Info:** Tools to retrieve version information, check for available updates, and trigger AdGuard Home updates.
-- **System Backup & Recovery:** Tools to create and manage AdGuard Home configuration backups for safe maintenance and disaster recovery.
+- **System Backup & Recovery:** Comprehensive tools to create and manage configuration backups, including metadata for version safety, dry-run previews of changes, and detailed restoration reporting.
 - **Blocked Services:** Tools to toggle blocking for platform-level services like YouTube, Facebook, and others.
 - Enhanced Analytics: Tools to retrieve top blocked domains and summarized activity reports for specific clients.
 - Custom Rules Management: Tools to manage user-defined filtering rules for granular control over network traffic.
