@@ -6,8 +6,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Completed Tracks
 
-- [x] [Multi-Instance Support](./tracks/multi_instance_support_20260202/index.md) - Manage and target multiple AdGuard Home instances via config and environment variables.
-
 - [x] [Backup & Restore Enhancements](./archive/backup_restore_enhancements_20260218/index.md) - Full configuration coverage, metadata versioning, dry-run comparisons, and robust error tracking.
 
 - [x] [Restore System Tools](./archive/restore_system_tools_20260218/index.md) - Re-implement backup, restore, and restart tools for v0.107+ compatibility.
