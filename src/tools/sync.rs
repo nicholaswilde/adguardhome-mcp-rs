@@ -92,7 +92,8 @@ async fn sync_instances(
         let replica_instance = crate::config::InstanceConfig {
             name: Some("replica".to_string()),
             url: url.clone(),
-            api_key: Some(replica_config.api_key.clone()),
+            username: Some("admin".to_string()),
+            password: Some(replica_config.api_key.clone()),
             ..Default::default()
         };
 

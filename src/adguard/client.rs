@@ -20,7 +20,8 @@ impl AdGuardClient {
     fn add_auth(&self, mut request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
         if let Some(api_key) = &self.config.api_key {
             request = request.header("X-API-Key", api_key);
-        } else if let (Some(user), Some(pass)) = (&self.config.username, &self.config.password) {
+        }
+        if let (Some(user), Some(pass)) = (&self.config.username, &self.config.password) {
             request = request.basic_auth(user, Some(pass));
         }
         request
