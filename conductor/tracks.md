@@ -4,13 +4,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ## Active Tracks
 
-- [x] **Track: Backup & Restore Enhancements**
-*Link: [./tracks/backup_restore_enhancements_20260218/](./tracks/backup_restore_enhancements_20260218/)*
-
 - [ ] **Track: Multi-Instance Support**
 *Link: [./tracks/multi_instance_support_20260202/](./tracks/multi_instance_support_20260202/)*
 
 ## Completed Tracks
+
+- [x] [Backup & Restore Enhancements](./archive/backup_restore_enhancements_20260218/index.md) - Full configuration coverage, metadata versioning, dry-run comparisons, and robust error tracking.
 
 - [x] [Restore System Tools](./archive/restore_system_tools_20260218/index.md) - Re-implement backup, restore, and restart tools for v0.107+ compatibility.
 
@@ -53,5 +52,3 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] [Update & System Info](./archive/system_info_updates_20260201/index.md) - Check for AdGuard Home updates and retrieve environment details.
 
 - [x] [Upstream DNS & Cache](./archive/dns_config_20260201/index.md) - Manage upstream servers and cache settings.
-
-
