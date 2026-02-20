@@ -46,7 +46,7 @@ async fn test_multi_instance_selection() -> Result<()> {
         .handle_request(adguardhome_mcp_rs::mcp::Request {
             jsonrpc: "2.0".to_string(),
             id: adguardhome_mcp_rs::mcp::RequestId::Number(1),
-            method: "call_tool".to_string(),
+            method: "tools/call".to_string(),
             params: Some(serde_json::json!({
                 "name": "manage_system",
                 "arguments": { "action": "get_status" }
@@ -65,7 +65,7 @@ async fn test_multi_instance_selection() -> Result<()> {
         .handle_request(adguardhome_mcp_rs::mcp::Request {
             jsonrpc: "2.0".to_string(),
             id: adguardhome_mcp_rs::mcp::RequestId::Number(2),
-            method: "call_tool".to_string(),
+            method: "tools/call".to_string(),
             params: Some(serde_json::json!({
                 "name": "manage_system",
                 "arguments": { "action": "get_status", "instance": "secondary" }
@@ -84,7 +84,7 @@ async fn test_multi_instance_selection() -> Result<()> {
         .handle_request(adguardhome_mcp_rs::mcp::Request {
             jsonrpc: "2.0".to_string(),
             id: adguardhome_mcp_rs::mcp::RequestId::Number(3),
-            method: "call_tool".to_string(),
+            method: "tools/call".to_string(),
             params: Some(serde_json::json!({
                 "name": "manage_system",
                 "arguments": { "action": "get_status", "instance": "1" }

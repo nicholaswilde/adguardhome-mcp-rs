@@ -36,12 +36,12 @@ async fn test_handle_initialize() {
 }
 
 #[tokio::test]
-async fn test_handle_list_tools() {
+async fn test_handle_tools_list() {
     let (server, _rx) = setup();
     let req = Request {
         jsonrpc: "2.0".to_string(),
         id: crate::mcp::RequestId::Number(1),
-        method: "list_tools".to_string(),
+        method: "tools/list".to_string(),
         params: None,
     };
     let resp = server.handle_request(req).await.unwrap();
@@ -57,7 +57,7 @@ async fn test_handle_manage_tools_list() {
     let req = Request {
         jsonrpc: "2.0".to_string(),
         id: crate::mcp::RequestId::Number(1),
-        method: "call_tool".to_string(),
+        method: "tools/call".to_string(),
         params: Some(json!({
             "name": "manage_tools",
             "arguments": {
@@ -77,7 +77,7 @@ async fn test_handle_manage_tools_enable_disable() {
     let req_disable = Request {
         jsonrpc: "2.0".to_string(),
         id: crate::mcp::RequestId::Number(2),
-        method: "call_tool".to_string(),
+        method: "tools/call".to_string(),
         params: Some(json!({
             "name": "manage_tools",
             "arguments": {
@@ -97,7 +97,7 @@ async fn test_handle_manage_tools_enable_disable() {
     let req_enable = Request {
         jsonrpc: "2.0".to_string(),
         id: crate::mcp::RequestId::Number(3),
-        method: "call_tool".to_string(),
+        method: "tools/call".to_string(),
         params: Some(json!({
             "name": "manage_tools",
             "arguments": {
@@ -120,7 +120,7 @@ async fn test_handle_manage_tools_invalid_action() {
     let req = Request {
         jsonrpc: "2.0".to_string(),
         id: crate::mcp::RequestId::Number(4),
-        method: "call_tool".to_string(),
+        method: "tools/call".to_string(),
         params: Some(json!({
             "name": "manage_tools",
             "arguments": {
@@ -306,7 +306,7 @@ async fn test_http_message_handler_mcp_error() {
             json!({
                 "jsonrpc": "2.0",
                 "id": crate::mcp::RequestId::Number(1),
-                "method": "call_tool",
+                "method": "tools/call",
                 "params": {
                     "name": "nonexistent_tool",
                     "arguments": {}
@@ -390,7 +390,7 @@ async fn test_mcp_run_errors() {
     let input = serde_json::to_string(&crate::mcp::Message::Request(Request {
         jsonrpc: "2.0".to_string(),
         id: crate::mcp::RequestId::Number(1),
-        method: "call_tool".to_string(),
+        method: "tools/call".to_string(),
         params: Some(json!({"name": "nonexistent"})),
     }))
     .unwrap()
@@ -567,7 +567,7 @@ async fn test_mcp_run_notification() {
     let input = serde_json::to_string(&crate::mcp::Message::Request(Request {
         jsonrpc: "2.0".to_string(),
         id: crate::mcp::RequestId::Number(1),
-        method: "call_tool".to_string(),
+        method: "tools/call".to_string(),
         params: Some(json!({
             "name": "manage_tools",
             "arguments": {
@@ -615,7 +615,7 @@ async fn test_handle_unknown_method() {
 }
 
 #[tokio::test]
-async fn test_handle_call_tool_with_instance() {
+async fn test_handle_tools_call_with_instance() {
     use crate::config::InstanceConfig;
     let mut config = AppConfig {
         instances: vec![
@@ -642,7 +642,7 @@ async fn test_handle_call_tool_with_instance() {
     let req = Request {
         jsonrpc: "2.0".to_string(),
         id: crate::mcp::RequestId::Number(1),
-        method: "call_tool".to_string(),
+        method: "tools/call".to_string(),
         params: Some(json!({
             "name": "manage_system",
             "arguments": {

@@ -274,7 +274,7 @@ impl TestContext {
                 let mcp_req = serde_json::json!({
                     "jsonrpc": "2.0",
                     "id": req_id,
-                    "method": "call_tool",
+                    "method": "tools/call",
                     "params": {
                         "name": name,
                         "arguments": args

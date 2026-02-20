@@ -119,7 +119,7 @@ impl McpServer {
                     "version": env!("CARGO_PKG_VERSION")
                 }
             })),
-            "list_tools" => {
+            "tools/list" => {
                 let mut tools = {
                     let registry = self.registry.lock().unwrap();
                     registry.list_tools()
@@ -152,7 +152,7 @@ impl McpServer {
                     "tools": tools
                 }))
             }
-            "call_tool" => {
+            "tools/call" => {
                 let tool_name = req
                     .params
                     .as_ref()
